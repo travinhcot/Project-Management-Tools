@@ -6,7 +6,8 @@ async function unexpected(): Promise<never> {
 }
 
 export function userRepository(overrides: Partial<UserRepository>): UserRepository {
-  return { createProfile: unexpected, findById: unexpected, updateName: unexpected, ...overrides };
+  return { createProfile: unexpected, findById: unexpected, updateName: unexpected,
+    listForAdmin: unexpected, updateAccess: unexpected, ...overrides };
 }
 
 export function authRepository(overrides: Partial<AuthRepository>): AuthRepository {
