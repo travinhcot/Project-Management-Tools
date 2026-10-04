@@ -1,4 +1,29 @@
-import type { AppUser } from '../../users/interface/user.interface.ts';
+import type { ActorLocals } from "../../../shared/request-actor.ts";
+
+export type AccountRole = "ADMIN" | "MEMBER";
+
+/** The profile shape auth needs. Implemented by the users module and wired in server.ts. */
+export interface AccountProfile {
+  readonly id: string;
+  readonly email: string;
+  readonly normalized_email: string;
+  readonly full_name: string;
+  readonly role: AccountRole;
+  readonly is_active: boolean;
+  readonly created_at: string;
+  readonly updated_at: string;
+}
+
+export interface ProfileIdentity {
+  readonly id: string;
+  readonly email: string;
+}
+
+/** Port: auth depends on this interface, never on the users module directly. */
+export interface ProfileGateway {
+  getActiveProfile(identity: ProfileIdentity): Promise<AccountProfile>;
+  updateOwnProfile(identity: ProfileIdentity, fullName: string): Promise<AccountProfile>;
+}
 
 /** In-memory identity obtained by verifying the caller with Supabase Auth.
  * Never construct this from unverified JWT claims or browser profile input.
@@ -16,11 +41,11 @@ export interface VerifiedAuthIdentity {
  */
 export interface AuthenticatedUser {
   readonly identity: VerifiedAuthIdentity;
-  readonly profile: AppUser;
+  readonly profile: AccountProfile;
 }
 
 /** Express response-local state; access token stays request-local. */
-export interface AuthLocals {
+export interface AuthLocals extends ActorLocals {
   auth?: AuthenticatedUser;
   accessToken?: string;
 }

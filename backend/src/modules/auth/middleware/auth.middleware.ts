@@ -1,7 +1,6 @@
 import type { RequestHandler } from "express";
-import type { UserRole } from "../../users/interface/user.interface.ts";
 import type { AuthService } from "../service/auth.service.ts";
-import type { AuthLocals } from "../model/auth.model.ts";
+import type { AuthLocals, AccountRole } from "../model/auth.model.ts";
 
 import { HttpError } from "../../../shared/http-error.ts";
 
@@ -12,13 +11,16 @@ export function createAuthMiddleware(service: AuthService) {
       const match = typeof header === "string" && header.length <= 8192
         ? /^Bearer ([^\s]+)$/i.exec(header) : null;
       if (!match) throw new HttpError(401, "AUTH_REQUIRED", "A Bearer access token is required.");
-      res.locals.auth = await service.authenticate(match[1]);
+      const context = await service.authenticate(match[1]);
+      res.locals.auth = context;
+      // Shared request contract (shared/request-actor.ts) read by other modules' routes.
+      res.locals.actor = { userId: context.profile.id, role: context.profile.role };
       res.locals.accessToken = match[1];
       next();
     } catch (error) { next(error); }
   };
 
-  function requireRole(...roles: UserRole[]): typeof requireAuth {
+  function requireRole(...roles: AccountRole[]): typeof requireAuth {
     if (!roles.length || roles.some((role) => !["ADMIN", "MEMBER"].includes(role))) {
       throw new TypeError("requireRole expects ADMIN or MEMBER.");
     }

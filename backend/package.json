@@ -8,7 +8,8 @@
     "seed": "node src/scripts/seed.ts",
     "test": "node --test test/*.test.ts",
     "provision:user": "node src/scripts/provision-user.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check:boundaries": "node src/scripts/check-module-boundaries.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

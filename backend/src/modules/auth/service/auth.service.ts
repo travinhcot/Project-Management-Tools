@@ -1,10 +1,14 @@
 import type { AuthRepository, ProviderSessionData, ProviderUser } from "../repository/auth.repository.ts";
-import type { UsersService, ProfileIdentity } from "../../users/interface/user.interface.ts";
-import type { AuthenticatedUser, VerifiedAuthIdentity } from "../model/auth.model.ts";
+import type {
+  AuthenticatedUser,
+  VerifiedAuthIdentity,
+  ProfileGateway,
+  ProfileIdentity,
+} from "../model/auth.model.ts";
 
 import { HttpError } from "../../../shared/http-error.ts";
 
-export function createAuthService(repository: AuthRepository, users: UsersService) {
+export function createAuthService(repository: AuthRepository, users: ProfileGateway) {
   function verifiedIdentity(user: ProviderUser | null): VerifiedAuthIdentity {
     if (!user?.id || !user.email || !user.email_confirmed_at) {
       throw new HttpError(
