@@ -43,10 +43,13 @@ export function createAuthService(repository: AuthRepository, users: UsersServic
     try {
       context = await authenticate(data.session.access_token);
     } catch (error) {
-      // Do not leave a renewable session behind when profile authorization fails.
-      try {
-        await repository.logout(data.session.access_token);
-      } catch {}
+      // Revoke the new session only when the account is genuinely not allowed in
+      // (401/403). Transient failures (e.g. 503 profile unavailable) must not log the user out.
+      if (error instanceof HttpError && (error.status === 401 || error.status === 403)) {
+        try {
+          await repository.logout(data.session.access_token);
+        } catch {}
+      }
       throw error;
     }
     return {

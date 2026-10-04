@@ -10,4 +10,10 @@ const app = createApplication({ auth });
 const port = Number(process.env.PORT || 3001);
 if (!Number.isInteger(port) || port < 1 || port > 65535)
   throw new Error("Invalid PORT.");
-app.listen(port, () => console.log(`Backend listening on port ${port}`));
+app.listen(port, (error?: Error) => {
+  if (error) {
+    console.error("Failed to start backend:", error);
+    process.exit(1);
+  }
+  console.log(`Backend listening on port ${port}`);
+});

@@ -8,9 +8,8 @@ config({ path: envPath, quiet: true });
 /**
  * Dept Tech Project Management seed script
  *
- * Run with Bun:
- *   bun add @supabase/supabase-js
- *   ALLOW_SEED=true bun run seed.ts
+ * Run from the backend folder:
+ *   ALLOW_SEED=true npm run seed
  *
  * Required env:
  *   SUPABASE_URL=...
