@@ -22,9 +22,13 @@ if (error || !data.user?.email || !data.user.email_confirmed_at) {
     "Provisioning requires an existing, verified Supabase Auth user.",
   );
 }
-await createUsersInterface(client).provisionVerifiedProfile({
-  id,
-  email: data.user.email,
-  email_verified_at: data.user.email_confirmed_at,
-}, fullName!, role as "ADMIN" | "MEMBER");
+await createUsersInterface(client).service.provisionVerifiedProfile(
+  {
+    id,
+    email: data.user.email,
+    email_verified_at: data.user.email_confirmed_at,
+  },
+  fullName!,
+  role as "ADMIN" | "MEMBER",
+);
 console.log("Application profile provisioned.");

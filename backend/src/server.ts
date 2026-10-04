@@ -5,8 +5,12 @@ import { createAuthInterface } from "./modules/auth/interface/auth.interface.ts"
 
 const adminClient = getAdminClient();
 const users = createUsersInterface(adminClient);
-const auth = createAuthInterface({ createAuthClient, adminClient, users });
-const app = createApplication({ auth });
+const auth = createAuthInterface({
+  createAuthClient,
+  adminClient,
+  users: users.service,
+});
+const app = createApplication({ auth, users });
 const port = Number(process.env.PORT || 3001);
 if (!Number.isInteger(port) || port < 1 || port > 65535)
   throw new Error("Invalid PORT.");

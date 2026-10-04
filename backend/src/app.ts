@@ -1,12 +1,18 @@
 import type { AuthInterface } from "./modules/auth/interface/auth.interface.ts";
+import type { UsersInterface } from "./modules/users/interface/user.interface.ts";
 
 import express from "express";
 import { HttpError, errorHandler } from "./shared/http-error.ts";
 
 export function createApplication({
   auth,
+  users,
   allowedOrigins = process.env.ALLOWED_ORIGINS || "http://localhost:5173",
-}: { auth: AuthInterface; allowedOrigins?: string }) {
+}: {
+  auth: AuthInterface;
+  users: UsersInterface;
+  allowedOrigins?: string;
+}) {
   const app = express();
   app.disable("x-powered-by");
   const origins = new Set(
@@ -34,6 +40,12 @@ export function createApplication({
 
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
   app.use("/api/auth", auth.router);
+  app.use(
+    "/api/admin/users",
+    auth.requireAuth,
+    auth.requireRole("ADMIN"),
+    users.adminRouter,
+  );
   app.use((_req, _res, next) =>
     next(new HttpError(404, "NOT_FOUND", "Endpoint not found.")),
   );
