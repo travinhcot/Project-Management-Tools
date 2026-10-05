@@ -3,6 +3,7 @@ import type { EmailsOptions } from "../model/email.model.ts";
 
 export type { KickoffGateway, EmailProvider } from "../model/email.model.ts";
 
+export { createResendEmailProvider } from "../provider/resend.provider.ts";
 import { createConsoleEmailProvider } from "../provider/console.provider.ts";
 import { createEmailRepository } from "../repository/email.repository.ts";
 import { createCampaignService } from "../service/campaign.service.ts";
