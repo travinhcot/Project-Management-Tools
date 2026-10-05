@@ -79,7 +79,6 @@ export function parseCsv(text: string): CsvRecord[] {
   if (quoted) throw new CsvSyntaxError("A quoted field is never closed.");
   if (field !== "" || fields.length) endRecord();
   // Drop fully blank lines (Excel often appends them).
-  return records.filter(
-    (r) => !(r.fields.length === 1 && r.fields[0]!.trim() === ""),
-  );
+  // Also covers comma-only rows such as ",,".
+  return records.filter((r) => !r.fields.every((f) => f.trim() === ""));
 }

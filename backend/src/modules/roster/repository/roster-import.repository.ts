@@ -95,9 +95,20 @@ export function createRosterImportRepository(client: SupabaseClient) {
       const rows = (data ?? []) as (ImportMissingMember & {
         total_count: number;
       })[];
+      let total = rows[0]?.total_count ?? 0;
+      if (rows.length === 0 && page > 1) {
+        // Past the last page the window count has no row to ride on; ask for the first row.
+        const { data: first, error: firstError } = await client.rpc(
+          "admin_list_import_missing",
+          { p_import_id: importId, p_limit: 1, p_offset: 0 },
+        );
+        if (firstError) throw firstError;
+        total =
+          ((first ?? []) as { total_count: number }[])[0]?.total_count ?? 0;
+      }
       return {
         rows: rows.map(({ total_count: _total, ...member }) => member),
-        total: rows[0]?.total_count ?? 0,
+        total,
       };
     },
 

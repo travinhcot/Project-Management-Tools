@@ -8,7 +8,9 @@ import type {
 
 export function createRosterMemberRepository(client: SupabaseClient) {
   return {
-    async list(query: RosterListQuery): Promise<{ rows: RosterMember[]; total: number }> {
+    async list(
+      query: RosterListQuery,
+    ): Promise<{ rows: RosterMember[]; total: number }> {
       const { data, error } = await client.rpc("admin_list_roster", {
         p_semester_id: query.semesterId,
         p_search: query.search ?? null,
@@ -19,9 +21,27 @@ export function createRosterMemberRepository(client: SupabaseClient) {
       });
       if (error) throw error;
       const rows = (data ?? []) as (RosterMember & { total_count: number })[];
+      let total = rows[0]?.total_count ?? 0;
+      if (rows.length === 0 && query.page > 1) {
+        // Past the last page the window count has no row to ride on; ask for the first row.
+        const { data: first, error: firstError } = await client.rpc(
+          "admin_list_roster",
+          {
+            p_semester_id: query.semesterId,
+            p_search: query.search ?? null,
+            p_status: query.status ?? null,
+            p_linked: query.linked ?? null,
+            p_limit: 1,
+            p_offset: 0,
+          },
+        );
+        if (firstError) throw firstError;
+        total =
+          ((first ?? []) as { total_count: number }[])[0]?.total_count ?? 0;
+      }
       return {
         rows: rows.map(({ total_count: _total, ...member }) => member),
-        total: rows[0]?.total_count ?? 0,
+        total,
       };
     },
 
@@ -68,7 +88,19 @@ export function createRosterMemberRepository(client: SupabaseClient) {
       if (error) throw error;
       return count ?? 0;
     },
+
+    /** ACTIVE members (matched by normalised email) present in both semesters. */
+    async countActiveOverlap(semesterA: string, semesterB: string): Promise<number> {
+      const { data, error } = await client.rpc("admin_count_roster_overlap", {
+        p_semester_a: semesterA,
+        p_semester_b: semesterB,
+      });
+      if (error) throw error;
+      return Number(data ?? 0);
+    },
   };
 }
 
-export type RosterMemberRepository = ReturnType<typeof createRosterMemberRepository>;
+export type RosterMemberRepository = ReturnType<
+  typeof createRosterMemberRepository
+>;

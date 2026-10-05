@@ -282,6 +282,19 @@ BEGIN
 END;
 $$;
 
+-- ---------- Active members present in both semesters (set-current impact preview) ----------
+CREATE FUNCTION public.admin_count_roster_overlap(p_semester_a uuid, p_semester_b uuid)
+RETURNS bigint
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = ''
+AS $$
+  SELECT count(DISTINCT a.normalized_email)
+    FROM public.roster_members a
+    JOIN public.roster_members b
+      ON b.normalized_email = a.normalized_email
+     AND b.semester_id = p_semester_b AND b.status = 'ACTIVE'
+   WHERE a.semester_id = p_semester_a AND a.status = 'ACTIVE';
+$$;
+
 -- ---------- Add single entry (FR-ROS-04) ----------
 CREATE FUNCTION public.admin_add_roster_member(
   p_actor_id uuid, p_semester_id uuid, p_email text, p_full_name text,
@@ -570,6 +583,7 @@ BEGIN
     'public.admin_update_semester(uuid, uuid, jsonb, text)',
     'public.admin_set_current_semester(uuid, uuid, text)',
     'public.admin_list_roster(uuid, text, text, boolean, integer, integer)',
+    'public.admin_count_roster_overlap(uuid, uuid)',
     'public.admin_add_roster_member(uuid, uuid, text, text, jsonb, text)',
     'public.admin_update_roster_member(uuid, uuid, jsonb, text)',
     'public.roster_create_import_preview(uuid, uuid, text, text, jsonb, text)',

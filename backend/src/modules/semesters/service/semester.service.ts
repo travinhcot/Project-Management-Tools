@@ -128,19 +128,22 @@ export function createSemesterService(
           current: { id: target.id, name: target.name },
           members_losing_access: 0,
           members_gaining_access: 0,
+          members_carried_over: 0,
         };
       }
-      const [losing, gaining] = await Promise.all([
+      const [currentActive, targetActive, shared] = await Promise.all([
         current
           ? rosterStats.countActiveMembers(current.id)
           : Promise.resolve(0),
         rosterStats.countActiveMembers(target.id),
+        current
+          ? rosterStats.countActiveOverlap(current.id, target.id)
+          : Promise.resolve(0),
       ]);
       return {
         target,
         current: current ? { id: current.id, name: current.name } : null,
-        members_losing_access: losing,
-        members_gaining_access: gaining,
+        ...switchImpactCounts(currentActive, targetActive, shared),
       };
     },
 
@@ -155,6 +158,19 @@ export function createSemesterService(
         throw semesterError(error);
       }
     },
+  };
+}
+
+/** Pure: access changes when switching, given active counts and the same-email overlap. */
+export function switchImpactCounts(
+  currentActive: number,
+  targetActive: number,
+  shared: number,
+) {
+  return {
+    members_losing_access: Math.max(currentActive - shared, 0),
+    members_gaining_access: Math.max(targetActive - shared, 0),
+    members_carried_over: shared,
   };
 }
 

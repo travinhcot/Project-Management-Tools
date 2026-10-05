@@ -39,9 +39,13 @@ export interface CurrentSwitchImpact {
   readonly members_losing_access: number;
   /** ACTIVE roster members of the target who gain access. */
   readonly members_gaining_access: number;
+  /** ACTIVE members (same email) on both rosters; their access does not change. */
+  readonly members_carried_over: number;
 }
 
 /** Port: semesters needs member counts. The roster module implements it; server.ts connects them. */
 export interface RosterStatsGateway {
   countActiveMembers(semesterId: string): Promise<number>;
+  /** ACTIVE members present in both semesters, matched by normalised email. */
+  countActiveOverlap(semesterA: string, semesterB: string): Promise<number>;
 }
