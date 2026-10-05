@@ -8,7 +8,6 @@ import type {
   ProjectDetail,
   ProjectListItem,
   ProjectListQuery,
-  ProjectMemberView,
   SemesterRef,
 } from "../model/project.model.ts";
 import type { ProjectRepository } from "../repository/project.repository.ts";
@@ -16,6 +15,7 @@ import type { Page } from "../../../shared/pagination.ts";
 
 import { HttpError } from "../../../shared/http-error.ts";
 import { projectError } from "../common/project-errors.ts";
+import { toMemberViews } from "../common/member-view.ts";
 
 export interface ProjectListResult extends Page<ProjectListItem> {
   readonly semester: SemesterRef | null;
@@ -91,23 +91,7 @@ export function createProjectService(
         const people = await roster.findByIds(
           assignments.map((a) => a.roster_member_id),
         );
-        const byId = new Map(people.map((p) => [p.id, p]));
-        const members: ProjectMemberView[] = assignments
-          .flatMap((assignment) => {
-            const person = byId.get(assignment.roster_member_id);
-            if (!person) return [];
-            return [
-              {
-                assignment_id: assignment.id,
-                roster_member_id: person.id,
-                full_name: person.full_name,
-                email: person.email,
-                roster_status: person.status,
-                added_at: assignment.added_at,
-              },
-            ];
-          })
-          .sort((a, b) => a.full_name.localeCompare(b.full_name));
+        const members = toMemberViews(assignments, people);
         return {
           project,
           semester,
