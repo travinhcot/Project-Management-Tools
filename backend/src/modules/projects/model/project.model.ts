@@ -1,6 +1,14 @@
 export const PROJECT_TYPES = ["SOFTWARE", "HARDWARE"] as const;
 export type ProjectType = (typeof PROJECT_TYPES)[number];
 
+export const PROJECT_STATUSES = [
+  "PLANNING",
+  "ONGOING",
+  "COMPLETED",
+  "FAILED",
+] as const;
+export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
+
 export const ARCHIVED_FILTERS = ["exclude", "include", "only"] as const;
 export type ArchivedFilter = (typeof ARCHIVED_FILTERS)[number];
 
@@ -10,6 +18,7 @@ export interface Project {
   readonly name: string;
   readonly description: string | null;
   readonly type: ProjectType;
+  readonly status: ProjectStatus;
   readonly archived_at: string | null;
   readonly created_by_user_id: string | null;
   readonly created_at: string;
@@ -22,12 +31,14 @@ export interface ProjectCreate {
   readonly name: string;
   readonly type: ProjectType;
   readonly description: string | null;
+  readonly status: ProjectStatus | null;
 }
 
 export interface ProjectChanges {
   readonly name?: string;
   readonly description?: string | null;
   readonly type?: ProjectType;
+  readonly status?: ProjectStatus;
   readonly semester_id?: string;
 }
 
@@ -41,6 +52,7 @@ export interface ProjectListQuery {
   readonly semesterId?: string;
   readonly search?: string;
   readonly type?: ProjectType;
+  readonly status?: ProjectStatus;
   readonly archived: ArchivedFilter;
   readonly page: number;
   readonly size: number;

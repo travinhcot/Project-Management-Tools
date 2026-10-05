@@ -3,6 +3,7 @@ import type {
   ProjectChanges,
   ProjectCreate,
   ProjectListQuery,
+  ProjectStatus,
   ProjectType,
   ProjectUpdate,
 } from "../model/project.model.ts";
@@ -16,7 +17,7 @@ import {
 } from "../../../shared/query-params.ts";
 import { pageOf } from "../../../shared/pagination.ts";
 import { semesterIdParam } from "../common/project-params.ts";
-import { ARCHIVED_FILTERS, PROJECT_TYPES } from "../model/project.model.ts";
+import { ARCHIVED_FILTERS, PROJECT_STATUSES, PROJECT_TYPES } from "../model/project.model.ts";
 
 const MAX_NAME_LENGTH = 150;
 const MAX_DESCRIPTION_LENGTH = 2000;
@@ -41,6 +42,16 @@ function typeValue(value: unknown): ProjectType {
     invalid("type must be SOFTWARE or HARDWARE.");
   }
   return value as ProjectType;
+}
+
+function statusValue(value: unknown): ProjectStatus {
+  if (
+    typeof value !== "string" ||
+    !PROJECT_STATUSES.includes(value as ProjectStatus)
+  ) {
+    invalid("status must be PLANNING, ONGOING, COMPLETED or FAILED.");
+  }
+  return value as ProjectStatus;
 }
 
 function descriptionValue(value: unknown): string | null {
@@ -68,16 +79,18 @@ export function listProjectsQuery(
 ): ProjectListQuery {
   rejectUnknownKeys(
     query,
-    ["semesterId", "search", "type", "archived", "page", "size"],
+    ["semesterId", "search", "type", "status", "archived", "page", "size"],
     "The request contains invalid query parameters.",
   );
   const semesterId = single(query, "semesterId");
   const type = single(query, "type");
+  const status = single(query, "status");
   return {
     semesterId:
       semesterId === undefined ? undefined : semesterIdParam(semesterId),
     search: searchQuery(query),
     type: type === undefined ? undefined : typeValue(type),
+    status: status === undefined ? undefined : statusValue(status),
     archived: archivedValue(single(query, "archived")),
     ...pageOf(query),
   };
@@ -87,8 +100,8 @@ export function createProjectBody(body: unknown): ProjectCreate {
   const input = objectBody(body);
   rejectUnknownKeys(
     input,
-    ["semester_id", "name", "type", "description"],
-    "Only semester_id, name, type and description can be provided.",
+    ["semester_id", "name", "type", "description", "status"],
+    "Only semester_id, name, type, description and status can be provided.",
   );
   if (input.semester_id === undefined) invalid("semester_id is required.");
   return {
@@ -99,6 +112,7 @@ export function createProjectBody(body: unknown): ProjectCreate {
       input.description === undefined
         ? null
         : descriptionValue(input.description),
+    status: input.status === undefined ? null : statusValue(input.status),
   };
 }
 
@@ -106,8 +120,8 @@ export function updateProjectBody(body: unknown): ProjectUpdate {
   const input = objectBody(body);
   rejectUnknownKeys(
     input,
-    ["expected_updated_at", "name", "description", "type", "semester_id"],
-    "Only expected_updated_at, name, description, type and semester_id can be provided.",
+    ["expected_updated_at", "name", "description", "type", "status", "semester_id"],
+    "Only expected_updated_at, name, description, type, status and semester_id can be provided.",
   );
   const expected = input.expected_updated_at;
   if (typeof expected !== "string" || !TIMESTAMP_PATTERN.test(expected)) {
@@ -121,6 +135,7 @@ export function updateProjectBody(body: unknown): ProjectUpdate {
   if (input.description !== undefined)
     changes.description = descriptionValue(input.description);
   if (input.type !== undefined) changes.type = typeValue(input.type);
+  if (input.status !== undefined) changes.status = statusValue(input.status);
   if (input.semester_id !== undefined)
     changes.semester_id = semesterIdParam(input.semester_id);
   if (Object.keys(changes).length === 0)

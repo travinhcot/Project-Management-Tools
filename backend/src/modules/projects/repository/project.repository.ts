@@ -9,7 +9,7 @@ import type {
 } from "../model/project.model.ts";
 
 const columns =
-  "id,semester_id,name,description,type,archived_at,created_by_user_id,created_at,updated_at";
+  "id,semester_id,name,description,type,status,archived_at,created_by_user_id,created_at,updated_at";
 
 /** The SQL functions return the whole row, including legacy columns; expose only Project. */
 function toProject(row: Project): Project {
@@ -19,6 +19,7 @@ function toProject(row: Project): Project {
     name: row.name,
     description: row.description,
     type: row.type,
+    status: row.status,
     archived_at: row.archived_at,
     created_by_user_id: row.created_by_user_id,
     created_at: row.created_at,
@@ -37,6 +38,7 @@ export function createProjectRepository(client: SupabaseClient) {
       p_semester_id: semesterId,
       p_search: query.search ?? null,
       p_type: query.type ?? null,
+      p_status: query.status ?? null,
       p_archived: query.archived,
       p_limit: limit,
       p_offset: offset,
@@ -116,6 +118,7 @@ export function createProjectRepository(client: SupabaseClient) {
         p_name: input.project.name,
         p_type: input.project.type,
         p_description: input.project.description,
+        p_status: input.project.status,
         p_request_id: input.requestId,
       });
       if (error) throw error;
