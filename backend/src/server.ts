@@ -5,6 +5,7 @@ import { createAuthInterface } from "./modules/auth/interface/auth.interface.ts"
 import { createRosterInterface } from "./modules/roster/interface/roster.interface.ts";
 import { createMembersInterface } from "./modules/members/interface/members.interface.ts";
 import { createSemestersInterface } from "./modules/semesters/interface/semester.interface.ts";
+import { createFilesInterface } from "./modules/files/interface/files.interface.ts";
 import { createProjectsInterface } from "./modules/projects/interface/projects.interface.ts";
 
 const adminClient = getAdminClient();
@@ -19,10 +20,14 @@ const roster = createRosterInterface(adminClient);
 const semesters = createSemestersInterface(adminClient, {
   rosterStats: members.service,
 });
+const files = createFilesInterface(adminClient, {
+  bucketId: process.env.PROJECT_FILES_BUCKET || "project-files",
+  internalSecret: process.env.INTERNAL_SECRET,
+});
 const projects = createProjectsInterface(adminClient, {
   semesters: semesters.service,
   roster: members.service,
-  // resources: resources.service  - add with the resources/files module
+  resources: files.service,
   // kickoffs: emails.kickoffs     - add with the emails module
 });
 const app = createApplication({
@@ -32,6 +37,7 @@ const app = createApplication({
   roster,
   members,
   projects,
+  files,
 });
 const port = Number(process.env.PORT || 3001);
 if (!Number.isInteger(port) || port < 1 || port > 65535)
