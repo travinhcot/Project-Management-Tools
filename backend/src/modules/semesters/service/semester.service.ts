@@ -83,6 +83,23 @@ export function createSemesterService(
 
     get: getOrThrow,
 
+    /** Public API for other modules (wired as a port in server.ts): null instead of 404. */
+    async findCurrent(): Promise<Semester | null> {
+      try {
+        return await repository.findCurrent();
+      } catch (error) {
+        throw semesterError(error);
+      }
+    },
+
+    async findById(id: string): Promise<Semester | null> {
+      try {
+        return await repository.findById(id);
+      } catch (error) {
+        throw semesterError(error);
+      }
+    },
+
     async create(
       actorId: string,
       semester: SemesterCreate,

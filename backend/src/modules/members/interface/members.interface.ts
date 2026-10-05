@@ -16,6 +16,7 @@ export function createMembersInterface(databaseClient: SupabaseClient) {
         members.countActiveMembers(semesterId),
       countActiveOverlap: (semesterA: string, semesterB: string) =>
         members.countActiveOverlap(semesterA, semesterB),
+      findByIds: (ids: readonly string[]) => members.findByIds(ids),
     },
     adminRouter: createMemberAdminRouter(members),
   };

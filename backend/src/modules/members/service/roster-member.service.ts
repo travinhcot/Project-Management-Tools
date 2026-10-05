@@ -74,7 +74,18 @@ export function createRosterMemberService(repository: RosterMemberRepository) {
       }
     },
 
-    async countActiveOverlap(semesterA: string, semesterB: string): Promise<number> {
+    async findByIds(ids: readonly string[]) {
+      try {
+        return await repository.findByIds(ids);
+      } catch (error) {
+        throw memberError(error);
+      }
+    },
+
+    async countActiveOverlap(
+      semesterA: string,
+      semesterB: string,
+    ): Promise<number> {
       try {
         return await repository.countActiveOverlap(semesterA, semesterB);
       } catch (error) {

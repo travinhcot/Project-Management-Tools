@@ -16,7 +16,14 @@ export function createSemestersInterface(
     createSemesterRepository(databaseClient),
     dependencies.rosterStats,
   );
-  return { adminRouter: createSemesterAdminRouter(service) };
+  return {
+    /** What other modules may ask of semesters, handed to them as a port in server.ts. */
+    service: {
+      findCurrent: () => service.findCurrent(),
+      findById: (id: string) => service.findById(id),
+    },
+    adminRouter: createSemesterAdminRouter(service),
+  };
 }
 
 export type SemestersInterface = ReturnType<typeof createSemestersInterface>;
