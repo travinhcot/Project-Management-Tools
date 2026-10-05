@@ -4,11 +4,30 @@ import type {
   VerifiedAuthIdentity,
   ProfileGateway,
   ProfileIdentity,
+  AuditRecorder,
+  AuthAuditEvent,
 } from "../model/auth.model.ts";
 
+import { createHash, randomUUID } from "node:crypto";
 import { HttpError } from "../../../shared/http-error.ts";
 
-export function createAuthService(repository: AuthRepository, users: ProfileGateway) {
+/** Audit rows carry only a hash of the email (FR-AUTH-01/02), never the address, code or tokens. */
+function emailHash(email: string): string {
+  return createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+}
+
+export function createAuthService(
+  repository: AuthRepository,
+  users: ProfileGateway,
+  audit?: AuditRecorder,
+) {
+  /** Never blocks or fails the sign-in flow. */
+  async function record(event: Omit<AuthAuditEvent, "entityType" | "requestId">) {
+    try {
+      await audit?.record({ ...event, entityType: "AUTH", requestId: randomUUID() });
+    } catch {}
+  }
+
   function verifiedIdentity(user: ProviderUser | null): VerifiedAuthIdentity {
     if (!user?.id || !user.email || !user.email_confirmed_at) {
       throw new HttpError(
@@ -73,14 +92,42 @@ export function createAuthService(repository: AuthRepository, users: ProfileGate
 
   return {
     authenticate,
-    requestOtp: (email: string) => repository.requestOtp(email),
+    async requestOtp(email: string) {
+      await repository.requestOtp(email);
+      await record({
+        actorId: null,
+        action: "AUTH_OTP_REQUESTED",
+        metadata: { email_hash: emailHash(email) },
+      });
+    },
     async verifyOtp(email: string, token: string) {
-      return completeSession(await repository.verifyOtp(email, token));
+      try {
+        const result = await completeSession(await repository.verifyOtp(email, token));
+        await record({
+          actorId: result.user.id,
+          action: "AUTH_SIGN_IN_SUCCEEDED",
+          metadata: { email_hash: emailHash(email), role: result.user.role },
+        });
+        return result;
+      } catch (error) {
+        await record({
+          actorId: null,
+          action: "AUTH_SIGN_IN_FAILED",
+          metadata: {
+            email_hash: emailHash(email),
+            reason: error instanceof HttpError ? error.code : "ERROR",
+          },
+        });
+        throw error;
+      }
     },
     async refresh(refreshToken: string) {
       return completeSession(await repository.refresh(refreshToken));
     },
-    logout: (accessToken: string) => repository.logout(accessToken),
+    async logout(accessToken: string, actorId?: string) {
+      await repository.logout(accessToken);
+      await record({ actorId: actorId ?? null, action: "AUTH_SIGNED_OUT" });
+    },
     updateProfile: (identity: ProfileIdentity, fullName: string) =>
       users.updateOwnProfile(identity, fullName),
   };
