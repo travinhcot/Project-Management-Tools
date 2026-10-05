@@ -4,3 +4,5 @@ export const projectIdParam = (value: unknown) =>
   uuidParam(value, "project id");
 export const semesterIdParam = (value: unknown) =>
   uuidParam(value, "semester id");
+export const rosterMemberIdParam = (value: unknown) =>
+  uuidParam(value, "roster member id");

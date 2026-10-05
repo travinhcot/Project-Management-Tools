@@ -43,7 +43,10 @@ export function createApplication({
       res.set("Access-Control-Allow-Origin", origin);
       res.vary("Origin");
       res.set("Access-Control-Allow-Headers", "Authorization, Content-Type");
-      res.set("Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS");
+      res.set(
+        "Access-Control-Allow-Methods",
+        "GET, POST, PATCH, DELETE, OPTIONS",
+      );
     }
     if (req.method === "OPTIONS") return res.status(204).end();
     next();
