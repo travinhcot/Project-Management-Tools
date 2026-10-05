@@ -20,6 +20,7 @@ export function createCampaignAdminRouter(service: CampaignService) {
   router.get("/campaigns/:campaignId/deliveries", controller.listDeliveries);
   router.get("/campaigns/:campaignId/preview", controller.preview);
   router.patch("/campaigns/:campaignId", controller.reschedule);
+  router.post("/campaigns/:campaignId/send-now", controller.sendNow);
   router.post("/campaigns/:campaignId/cancel", controller.cancel);
   router.post("/campaigns/:campaignId/retry-failures", controller.retryFailures);
   router.post("/campaigns/:campaignId/resend", controller.resend);

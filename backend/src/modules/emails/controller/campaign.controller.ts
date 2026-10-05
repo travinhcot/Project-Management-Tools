@@ -16,6 +16,7 @@ import {
   listDeliveriesQuery,
   resolveBody,
   scheduleBody,
+  scheduleOrSendNowBody,
 } from "../dto/campaign-admin.dto.ts";
 
 type CampaignRequest = Request<{ campaignId: string }>;
@@ -27,10 +28,12 @@ export function createCampaignController(service: CampaignService) {
       res: Response<unknown, ActorLocals>,
     ) {
       const actor = requireActor(res.locals);
+      const { scheduledAt, sendNow } = scheduleOrSendNowBody(req.body);
       const campaign = await service.scheduleKickoff(
         actor.userId,
         projectIdParam(req.params.projectId),
-        scheduleBody(req.body).scheduledAt,
+        scheduledAt,
+        sendNow,
         randomUUID(),
       );
       res.status(201).json({ campaign });
@@ -40,10 +43,12 @@ export function createCampaignController(service: CampaignService) {
       res: Response<unknown, ActorLocals>,
     ) {
       const actor = requireActor(res.locals);
+      const { scheduledAt, sendNow } = scheduleOrSendNowBody(req.body);
       const campaign = await service.scheduleDemo(
         actor.userId,
         semesterIdParam(req.params.semesterId),
-        scheduleBody(req.body).scheduledAt,
+        scheduledAt,
+        sendNow,
         randomUUID(),
       );
       res.status(201).json({ campaign });
@@ -89,6 +94,15 @@ export function createCampaignController(service: CampaignService) {
         actor.userId,
         campaignIdParam(req.params.campaignId),
         scheduleBody(req.body).scheduledAt,
+        randomUUID(),
+      );
+      res.json({ campaign });
+    },
+    async sendNow(req: CampaignRequest, res: Response<unknown, ActorLocals>) {
+      const actor = requireActor(res.locals);
+      const campaign = await service.sendNow(
+        actor.userId,
+        campaignIdParam(req.params.campaignId),
         randomUUID(),
       );
       res.json({ campaign });

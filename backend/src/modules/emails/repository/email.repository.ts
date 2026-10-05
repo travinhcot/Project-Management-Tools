@@ -179,13 +179,15 @@ export function createEmailRepository(client: SupabaseClient) {
     scheduleKickoff(input: {
       actorId: string;
       projectId: string;
-      scheduledAt: string;
+      scheduledAt: string | null;
+      sendNow: boolean;
       requestId: string;
     }) {
       return rowRpc("admin_schedule_kickoff", {
         p_actor_id: input.actorId,
         p_project_id: input.projectId,
         p_scheduled_at: input.scheduledAt,
+        p_send_now: input.sendNow,
         p_request_id: input.requestId,
       });
     },
@@ -193,13 +195,23 @@ export function createEmailRepository(client: SupabaseClient) {
     scheduleDemo(input: {
       actorId: string;
       semesterId: string;
-      scheduledAt: string;
+      scheduledAt: string | null;
+      sendNow: boolean;
       requestId: string;
     }) {
       return rowRpc("admin_schedule_demo", {
         p_actor_id: input.actorId,
         p_semester_id: input.semesterId,
         p_scheduled_at: input.scheduledAt,
+        p_send_now: input.sendNow,
+        p_request_id: input.requestId,
+      });
+    },
+
+    sendNow(input: { actorId: string; campaignId: string; requestId: string }) {
+      return rowRpc("admin_send_campaign_now", {
+        p_actor_id: input.actorId,
+        p_campaign_id: input.campaignId,
         p_request_id: input.requestId,
       });
     },
