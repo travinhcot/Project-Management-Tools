@@ -32,7 +32,7 @@ export function createAuthController(service: AuthService) {
       res.json(await service.refresh(refreshTokenInput(body.refresh_token)));
     },
     async logout(_req: Request, res: Response<unknown, AuthLocals>) {
-      await service.logout(res.locals.accessToken!);
+      await service.logout(res.locals.accessToken!, res.locals.auth?.profile.id);
       res.status(204).end();
     },
     me(_req: Request, res: Response<unknown, AuthLocals>) {

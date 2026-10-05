@@ -8,6 +8,8 @@ import { createSemestersInterface } from "./modules/semesters/interface/semester
 import { createFilesInterface } from "./modules/files/interface/files.interface.ts";
 import { createProjectsInterface } from "./modules/projects/interface/projects.interface.ts";
 import { createPortalInterface } from "./modules/portal/interface/portal.interface.ts";
+import { createAuditInterface } from "./modules/audit/interface/audit.interface.ts";
+import { createDashboardInterface } from "./modules/dashboard/interface/dashboard.interface.ts";
 import {
   createEmailsInterface,
   createResendEmailProvider,
@@ -15,10 +17,18 @@ import {
 
 const adminClient = getAdminClient();
 const users = createUsersInterface(adminClient);
+const audit = createAuditInterface(adminClient, {
+  internalSecret: process.env.INTERNAL_SECRET,
+  retentionDays: process.env.AUDIT_RETENTION_DAYS
+    ? Number(process.env.AUDIT_RETENTION_DAYS)
+    : undefined,
+});
+const dashboard = createDashboardInterface(adminClient);
 const auth = createAuthInterface({
   createAuthClient,
   adminClient,
   users: users.service,
+  audit: audit.recorder,
 });
 const members = createMembersInterface(adminClient);
 const roster = createRosterInterface(adminClient);
@@ -65,6 +75,8 @@ const app = createApplication({
   files,
   portal,
   emails,
+  audit,
+  dashboard,
 });
 const port = Number(process.env.PORT || 3001);
 if (!Number.isInteger(port) || port < 1 || port > 65535)
