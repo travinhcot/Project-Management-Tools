@@ -7,6 +7,7 @@ import { createMembersInterface } from "./modules/members/interface/members.inte
 import { createSemestersInterface } from "./modules/semesters/interface/semester.interface.ts";
 import { createFilesInterface } from "./modules/files/interface/files.interface.ts";
 import { createProjectsInterface } from "./modules/projects/interface/projects.interface.ts";
+import { createPortalInterface } from "./modules/portal/interface/portal.interface.ts";
 
 const adminClient = getAdminClient();
 const users = createUsersInterface(adminClient);
@@ -30,6 +31,11 @@ const projects = createProjectsInterface(adminClient, {
   resources: files.service,
   // kickoffs: emails.kickoffs     - add with the emails module
 });
+const portal = createPortalInterface(
+  adminClient,
+  { resources: files.service },
+  { allowPastSemesters: process.env.PORTAL_PAST_SEMESTERS === "true" },
+);
 const app = createApplication({
   auth,
   users,
@@ -38,6 +44,7 @@ const app = createApplication({
   members,
   projects,
   files,
+  portal,
 });
 const port = Number(process.env.PORT || 3001);
 if (!Number.isInteger(port) || port < 1 || port > 65535)

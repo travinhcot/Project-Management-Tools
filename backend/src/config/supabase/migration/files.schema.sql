@@ -10,7 +10,7 @@ ALTER TABLE public.project_files RENAME COLUMN category TO slot;
 ALTER TABLE public.project_files RENAME COLUMN checksum TO checksum_sha256;
 ALTER TABLE public.project_files
   DROP CONSTRAINT project_files_category_check,
-  ADD CONSTRAINT project_files_slot_check CHECK (slot IN ('SRS', 'CONTRIBUTION_TEMPLATE', 'BOM')),
+  ADD CONSTRAINT project_files_slot_check CHECK (slot IN ('SRS', 'BOM')),
   ADD COLUMN status text NOT NULL DEFAULT 'ACTIVE'
     CONSTRAINT project_files_status_check CHECK (status IN ('UPLOADING', 'ACTIVE', 'RETIRED')),
   ADD CONSTRAINT project_files_sha256_format CHECK (checksum_sha256 IS NULL OR checksum_sha256 ~ '^[0-9a-f]{64}$');
@@ -42,7 +42,7 @@ $$;
 CREATE TABLE public.project_resources (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE RESTRICT,
-  slot text NOT NULL CHECK (slot IN ('SRS', 'FIRST_MEETING', 'CONTRIBUTION_TEMPLATE', 'BOM')),
+  slot text NOT NULL CHECK (slot IN ('SRS', 'FIRST_MEETING', 'BOM')),
   source_type text NOT NULL CHECK (source_type IN ('LINK', 'FILE')),
   url text CHECK (url IS NULL OR char_length(url) <= 2048),
   file_id uuid REFERENCES public.project_files(id) ON DELETE RESTRICT,
@@ -54,8 +54,7 @@ CREATE TABLE public.project_resources (
   CONSTRAINT project_resources_one_source CHECK (
     (source_type = 'LINK' AND url ~ '^https://' AND file_id IS NULL)
     OR (source_type = 'FILE' AND file_id IS NOT NULL AND url IS NULL)),
-  CONSTRAINT project_resources_first_meeting_link CHECK (slot <> 'FIRST_MEETING' OR source_type = 'LINK'),
-  CONSTRAINT project_resources_template_file CHECK (slot <> 'CONTRIBUTION_TEMPLATE' OR source_type = 'FILE')
+  CONSTRAINT project_resources_first_meeting_link CHECK (slot <> 'FIRST_MEETING' OR source_type = 'LINK')
 );
 
 -- Carry existing data over: active files first, then links (a slot never had both).
@@ -143,11 +142,8 @@ DECLARE v_type text; v_row public.project_resources; v_retired uuid;
 BEGIN
   PERFORM public.assert_admin_actor(p_actor_id);
   v_type := public.files_lock_project(p_project_id);
-  IF p_slot NOT IN ('SRS', 'FIRST_MEETING', 'CONTRIBUTION_TEMPLATE', 'BOM') THEN
+  IF p_slot NOT IN ('SRS', 'FIRST_MEETING', 'BOM') THEN
     RAISE EXCEPTION 'INVALID_SLOT' USING ERRCODE = '22023';
-  END IF;
-  IF p_slot = 'CONTRIBUTION_TEMPLATE' THEN
-    RAISE EXCEPTION 'RESOURCE_SOURCE_NOT_ALLOWED' USING ERRCODE = 'P0001';
   END IF;
   IF p_slot = 'BOM' AND v_type <> 'HARDWARE' THEN
     RAISE EXCEPTION 'RESOURCE_SLOT_NOT_ALLOWED' USING ERRCODE = 'P0001';
@@ -205,7 +201,7 @@ DECLARE v_type text; v_row public.project_files;
 BEGIN
   PERFORM public.assert_admin_actor(p_actor_id);
   v_type := public.files_lock_project(p_project_id);
-  IF p_slot NOT IN ('SRS', 'CONTRIBUTION_TEMPLATE', 'BOM') THEN
+  IF p_slot NOT IN ('SRS', 'BOM') THEN
     RAISE EXCEPTION 'RESOURCE_SOURCE_NOT_ALLOWED' USING ERRCODE = 'P0001';
   END IF;
   IF p_slot = 'BOM' AND v_type <> 'HARDWARE' THEN

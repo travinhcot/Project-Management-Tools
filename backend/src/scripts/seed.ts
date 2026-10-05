@@ -73,11 +73,9 @@ const IDS = {
   projectMemberCharlie: "50000000-0000-4000-8000-000000000003",
 
   fileSoftwareSrs: "60000000-0000-4000-8000-000000000001",
-  fileSoftwareTemplate: "60000000-0000-4000-8000-000000000002",
   fileHardwareSrs: "60000000-0000-4000-8000-000000000003",
   fileHardwareBom: "60000000-0000-4000-8000-000000000004",
   resourceSoftwareSrs: "61000000-0000-4000-8000-000000000001",
-  resourceSoftwareTemplate: "61000000-0000-4000-8000-000000000002",
   resourceSoftwareMeeting: "61000000-0000-4000-8000-000000000003",
   resourceHardwareSrs: "61000000-0000-4000-8000-000000000004",
   resourceHardwareBom: "61000000-0000-4000-8000-000000000005",
@@ -436,7 +434,6 @@ async function main() {
   await ensurePrivateBucket(supabase);
 
   const softwareSrsPath = `${IDS.softwareProject}/srs/seed-srs.md`;
-  const softwareTemplatePath = `${IDS.softwareProject}/contribution-template/seed-template.csv`;
   const hardwareSrsPath = `${IDS.hardwareProject}/srs/seed-srs.md`;
   const hardwareBomPath = `${IDS.hardwareProject}/bom/seed-bom.csv`;
 
@@ -445,12 +442,6 @@ async function main() {
     softwareSrsPath,
     "# Seed SRS\n\nMock SRS document for backend API testing.\n",
     "text/markdown",
-  );
-  const softwareTemplateSize = await uploadSeedFile(
-    supabase,
-    softwareTemplatePath,
-    "member,contribution,percentage\nAlice,Frontend,50\nBob,Backend,50\n",
-    "text/csv",
   );
   const hardwareSrsSize = await uploadSeedFile(
     supabase,
@@ -477,20 +468,6 @@ async function main() {
           original_filename: "software-project-srs.md",
           content_type: "text/markdown",
           size_bytes: softwareSrsSize,
-          checksum_sha256: null,
-          status: "ACTIVE",
-          uploaded_by_user_id: admin.id,
-          retired_at: null,
-        },
-        {
-          id: IDS.fileSoftwareTemplate,
-          project_id: IDS.softwareProject,
-          slot: "CONTRIBUTION_TEMPLATE",
-          bucket_id: FILE_BUCKET,
-          object_path: softwareTemplatePath,
-          original_filename: "contribution-template.csv",
-          content_type: "text/csv",
-          size_bytes: softwareTemplateSize,
           checksum_sha256: null,
           status: "ACTIVE",
           uploaded_by_user_id: admin.id,
@@ -539,14 +516,6 @@ async function main() {
           slot: "SRS",
           source_type: "FILE",
           file_id: IDS.fileSoftwareSrs,
-          updated_by_user_id: admin.id,
-        },
-        {
-          id: IDS.resourceSoftwareTemplate,
-          project_id: IDS.softwareProject,
-          slot: "CONTRIBUTION_TEMPLATE",
-          source_type: "FILE",
-          file_id: IDS.fileSoftwareTemplate,
           updated_by_user_id: admin.id,
         },
         {

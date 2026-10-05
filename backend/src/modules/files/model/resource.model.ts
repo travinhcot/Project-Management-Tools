@@ -1,7 +1,6 @@
 export const RESOURCE_SLOTS = [
   "SRS",
   "FIRST_MEETING",
-  "CONTRIBUTION_TEMPLATE",
   "BOM",
 ] as const;
 export type ResourceSlot = (typeof RESOURCE_SLOTS)[number];
@@ -9,7 +8,7 @@ export type ResourceSlot = (typeof RESOURCE_SLOTS)[number];
 export type ProjectType = "SOFTWARE" | "HARDWARE";
 export type ResourceSource = "LINK" | "FILE";
 
-export const FILE_SLOTS = ["SRS", "CONTRIBUTION_TEMPLATE", "BOM"] as const;
+export const FILE_SLOTS = ["SRS", "BOM"] as const;
 export type FileSlot = (typeof FILE_SLOTS)[number];
 
 /** Slots a project of this type must fill to be complete. */
@@ -52,7 +51,6 @@ export const ALLOWED_FILE_TYPES: Record<
   Readonly<Record<string, FileType>>
 > = {
   SRS: { pdf: PDF, docx: DOCX },
-  CONTRIBUTION_TEMPLATE: { xlsx: XLSX, pdf: PDF },
   BOM: { xlsx: XLSX, pdf: PDF },
 };
 

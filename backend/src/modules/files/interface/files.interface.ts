@@ -36,8 +36,11 @@ export function createFilesInterface(
     adminRouter: createResourceAdminRouter(resources, files),
     memberRouter: createResourceMemberRouter(files),
     internalRouter: createFileInternalRouter(files, options.internalSecret),
-    /** What other modules may call; matches the projects module's ResourceSummaryGateway. */
-    service: { summarize: resources.summarize },
+    /** What other modules may call; matches the projects and portal modules' resource ports. */
+    service: {
+      summarize: resources.summarize,
+      listForProject: (projectId: string) => resources.list(projectId),
+    },
   };
 }
 export type FilesInterface = ReturnType<typeof createFilesInterface>;

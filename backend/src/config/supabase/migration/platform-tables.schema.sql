@@ -81,7 +81,7 @@ CREATE INDEX project_members_roster_project ON public.project_members (roster_me
 CREATE TABLE public.project_files (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id uuid NOT NULL REFERENCES public.projects(id) ON DELETE RESTRICT,
-  category text NOT NULL CHECK (category IN ('SRS', 'CONTRIBUTION_TEMPLATE', 'BOM')),
+  category text NOT NULL CHECK (category IN ('SRS', 'BOM')),
   bucket_id text NOT NULL CHECK (length(btrim(bucket_id)) > 0),
   object_path text NOT NULL CHECK (length(btrim(object_path)) > 0),
   original_filename text NOT NULL CHECK (length(btrim(original_filename)) > 0),
