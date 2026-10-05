@@ -8,6 +8,7 @@ import { createSemestersInterface } from "./modules/semesters/interface/semester
 import { createFilesInterface } from "./modules/files/interface/files.interface.ts";
 import { createProjectsInterface } from "./modules/projects/interface/projects.interface.ts";
 import { createPortalInterface } from "./modules/portal/interface/portal.interface.ts";
+import { createEmailsInterface } from "./modules/emails/interface/emails.interface.ts";
 
 const adminClient = getAdminClient();
 const users = createUsersInterface(adminClient);
@@ -25,11 +26,18 @@ const files = createFilesInterface(adminClient, {
   bucketId: process.env.PROJECT_FILES_BUCKET || "project-files",
   internalSecret: process.env.INTERNAL_SECRET,
 });
+const emails = createEmailsInterface(adminClient, {
+  appUrl: process.env.APP_URL || "http://localhost:5173",
+  internalSecret: process.env.INTERNAL_SECRET,
+  batchSize: process.env.EMAIL_BATCH_SIZE
+    ? Number(process.env.EMAIL_BATCH_SIZE)
+    : undefined,
+});
 const projects = createProjectsInterface(adminClient, {
   semesters: semesters.service,
   roster: members.service,
   resources: files.service,
-  // kickoffs: emails.kickoffs     - add with the emails module
+  kickoffs: emails.kickoffs,
 });
 const portal = createPortalInterface(
   adminClient,
@@ -45,6 +53,7 @@ const app = createApplication({
   projects,
   files,
   portal,
+  emails,
 });
 const port = Number(process.env.PORT || 3001);
 if (!Number.isInteger(port) || port < 1 || port > 65535)
