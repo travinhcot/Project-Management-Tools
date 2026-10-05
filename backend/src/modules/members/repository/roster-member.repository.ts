@@ -89,8 +89,26 @@ export function createRosterMemberRepository(client: SupabaseClient) {
       return count ?? 0;
     },
 
+    async findByIds(
+      ids: readonly string[],
+    ): Promise<Pick<RosterMember, "id" | "full_name" | "email" | "status">[]> {
+      if (ids.length === 0) return [];
+      const { data, error } = await client
+        .from("roster_members")
+        .select("id,full_name,email,status")
+        .in("id", [...ids]);
+      if (error) throw error;
+      return (data ?? []) as Pick<
+        RosterMember,
+        "id" | "full_name" | "email" | "status"
+      >[];
+    },
+
     /** ACTIVE members (matched by normalised email) present in both semesters. */
-    async countActiveOverlap(semesterA: string, semesterB: string): Promise<number> {
+    async countActiveOverlap(
+      semesterA: string,
+      semesterB: string,
+    ): Promise<number> {
       const { data, error } = await client.rpc("admin_count_roster_overlap", {
         p_semester_a: semesterA,
         p_semester_b: semesterB,

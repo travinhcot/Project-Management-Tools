@@ -3,6 +3,7 @@ import type { UsersInterface } from "./modules/users/interface/user.interface.ts
 import type { SemestersInterface } from "./modules/semesters/interface/semester.interface.ts";
 import type { RosterInterface } from "./modules/roster/interface/roster.interface.ts";
 import type { MembersInterface } from "./modules/members/interface/members.interface.ts";
+import type { ProjectsInterface } from "./modules/projects/interface/projects.interface.ts";
 
 import express from "express";
 import { HttpError, errorHandler } from "./shared/http-error.ts";
@@ -13,6 +14,7 @@ export function createApplication({
   semesters,
   roster,
   members,
+  projects,
   allowedOrigins = process.env.ALLOWED_ORIGINS || "http://localhost:5173",
 }: {
   auth: AuthInterface;
@@ -20,6 +22,7 @@ export function createApplication({
   semesters: SemestersInterface;
   roster: RosterInterface;
   members: MembersInterface;
+  projects: ProjectsInterface;
   allowedOrigins?: string;
 }) {
   const app = express();
@@ -54,6 +57,7 @@ export function createApplication({
   admin.use(auth.requireAuth, auth.requireRole("ADMIN"));
   admin.use("/users", users.adminRouter);
   admin.use("/semesters", semesters.adminRouter);
+  admin.use("/projects", projects.adminRouter);
   admin.use(members.adminRouter); // /semesters/:id/roster, /roster/:rosterMemberId
   admin.use(roster.adminRouter); // /semesters/:id/roster/imports, /roster/imports/...
   app.use("/api/admin", admin);
