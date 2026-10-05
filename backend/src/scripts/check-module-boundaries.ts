@@ -1,4 +1,5 @@
-// Fails if a module imports another module, or shared/ imports a module.
+// Fails if a module imports another module, shared/ imports a module, or a composition
+// root (app.ts, server.ts, scripts/) imports anything but a module's interface/.
 // Run: bun run check:boundaries  (from backend/)
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join, relative, resolve, sep } from "node:path";
@@ -29,6 +30,24 @@ for (const file of [...walk(modulesRoot), ...walk(sharedRoot)]) {
     if (!target.startsWith(modulesRoot)) continue; // shared/, packages and built-ins are allowed
     if (file.startsWith(sharedRoot) || moduleOf(target) !== moduleOf(file)) {
       violations.push(`${relative(srcRoot, file)}  ->  ${specifier}`);
+    }
+  }
+}
+
+// Composition roots (app.ts, server.ts, scripts/) may import a module only through its interface/.
+const rootFiles = [
+  join(srcRoot, "app.ts"),
+  join(srcRoot, "server.ts"),
+  ...walk(join(srcRoot, "scripts")),
+];
+for (const file of rootFiles) {
+  for (const match of readFileSync(file, "utf8").matchAll(importPattern)) {
+    const specifier = match[1] ?? match[2] ?? match[3];
+    if (!specifier || !specifier.startsWith(".")) continue;
+    const target = resolve(dirname(file), specifier);
+    if (!target.startsWith(modulesRoot)) continue;
+    if (relative(modulesRoot, target).split(sep)[1] !== "interface") {
+      violations.push(`${relative(srcRoot, file)}  ->  ${specifier}  (use the module's interface/)`);
     }
   }
 }

@@ -19,7 +19,12 @@ export function createRosterMemberService(repository: RosterMemberRepository) {
     async list(query: RosterListQuery): Promise<Page<RosterMemberView>> {
       try {
         const { rows, total } = await repository.list(query);
-        return { items: rows.map(view), page: query.page, size: query.size, total };
+        return {
+          items: rows.map(view),
+          page: query.page,
+          size: query.size,
+          total,
+        };
       } catch (error) {
         throw memberError(error);
       }
@@ -32,7 +37,9 @@ export function createRosterMemberService(repository: RosterMemberRepository) {
       requestId: string,
     ): Promise<RosterMemberView> {
       try {
-        return view(await repository.add({ actorId, semesterId, member, requestId }));
+        return view(
+          await repository.add({ actorId, semesterId, member, requestId }),
+        );
       } catch (error) {
         throw memberError(error);
       }
@@ -45,7 +52,14 @@ export function createRosterMemberService(repository: RosterMemberRepository) {
       requestId: string,
     ): Promise<RosterMemberView> {
       try {
-        return view(await repository.update({ actorId, rosterMemberId, changes, requestId }));
+        return view(
+          await repository.update({
+            actorId,
+            rosterMemberId,
+            changes,
+            requestId,
+          }),
+        );
       } catch (error) {
         throw memberError(error);
       }
