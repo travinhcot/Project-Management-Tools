@@ -69,9 +69,13 @@ export function createProjectService(
               rows.map((r) => ({ id: r.id, type: r.type })),
             )
           : null;
+        const kickoffSummaries = kickoffs
+          ? await kickoffs.summarize(rows.map((r) => r.id))
+          : null;
         const items = rows.map((row) => ({
           ...row,
           resources: summaries?.get(row.id) ?? null,
+          kickoff: kickoffSummaries?.get(row.id) ?? null,
         }));
         return { semester, items, page: query.page, size: query.size, total };
       });

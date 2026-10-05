@@ -8,6 +8,7 @@ import type {
   DeliveryListQuery,
   DeliveryOutcome,
   KickoffRef,
+  KickoffSummary,
   ResolveAction,
   SendJob,
 } from "../model/email.model.ts";
@@ -146,6 +147,33 @@ export function createEmailRepository(client: SupabaseClient) {
         .maybeSingle();
       if (error) throw error;
       return data as KickoffRef | null;
+    },
+
+    /** Latest non-cancelled kick-off per project, one query. */
+    async latestKickoffs(
+      projectIds: readonly string[],
+    ): Promise<Map<string, KickoffSummary>> {
+      const result = new Map<string, KickoffSummary>();
+      if (projectIds.length === 0) return result;
+      const { data, error } = await client
+        .from("email_campaigns")
+        .select("id,project_id,status,scheduled_at")
+        .eq("kind", "KICKOFF")
+        .neq("status", "CANCELLED")
+        .in("project_id", [...projectIds])
+        .order("scheduled_at", { ascending: false });
+      if (error) throw error;
+      for (const row of (data ?? []) as (KickoffSummary & {
+        project_id: string;
+      })[]) {
+        if (result.has(row.project_id)) continue;
+        result.set(row.project_id, {
+          id: row.id,
+          status: row.status,
+          scheduled_at: row.scheduled_at,
+        });
+      }
+      return result;
     },
 
     scheduleKickoff(input: {

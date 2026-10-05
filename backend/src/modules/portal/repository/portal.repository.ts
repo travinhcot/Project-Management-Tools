@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   Eligibility,
+  MemberRole,
+  PortalTeammate,
+  ProjectStatus,
   PortalProjectRow,
   ProjectType,
 } from "../model/portal.model.ts";
@@ -24,6 +27,8 @@ function toProject(row: Record<string, unknown>): PortalProjectRow {
     semester_id: String(row.semester_id),
     semester_name: String(row.semester_name),
     is_current: row.is_current === true,
+    status: row.status as ProjectStatus,
+    kickoff_at: (row.kickoff_at as string | null) ?? null,
   };
 }
 
@@ -73,14 +78,17 @@ export function createPortalRepository(client: SupabaseClient) {
       actorId: string,
       projectId: string,
       includePast: boolean,
-    ): Promise<string[]> {
+    ): Promise<PortalTeammate[]> {
       const { data, error } = await client.rpc("member_project_teammates", {
         p_actor_id: actorId,
         p_project_id: projectId,
         p_include_past: includePast,
       });
       if (error) throw error;
-      return asRows(data).map((row) => String(row.full_name));
+      return asRows(data).map((row) => ({
+        full_name: String(row.full_name),
+        role: row.role as MemberRole,
+      }));
     },
 
     async recentResourceCount(actorId: string, since: Date): Promise<number> {

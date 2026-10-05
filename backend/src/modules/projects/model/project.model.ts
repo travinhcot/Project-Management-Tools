@@ -72,6 +72,8 @@ export interface ProjectRow extends Project {
 }
 
 export interface ProjectListItem extends ProjectRow {
+  /** null when the project has no kick-off (or the emails module is not wired in). */
+  readonly kickoff: KickoffSummary | null;
   /** null until the resources module is wired in. */
   readonly resources: ResourceSummary | null;
 }
@@ -152,6 +154,13 @@ export interface ResourceSummaryGateway {
   ): Promise<ReadonlyMap<string, ResourceSummary>>;
 }
 
+export interface KickoffSummary {
+  /** Latest kick-off that was not cancelled; unlike KickoffRef it may be finished. */
+  readonly id: string;
+  readonly status: string;
+  readonly scheduled_at: string;
+}
+
 export interface KickoffRef {
   readonly id: string;
   readonly status: "DRAFT" | "SCHEDULED" | "PROCESSING";
@@ -161,6 +170,10 @@ export interface KickoffRef {
 /** Optional: implemented by the emails module when it exists. */
 export interface KickoffGateway {
   findActiveKickoff(projectId: string): Promise<KickoffRef | null>;
+  /** One call per page: the latest non-cancelled kick-off of each project that has one. */
+  summarize(
+    projectIds: readonly string[],
+  ): Promise<ReadonlyMap<string, KickoffSummary>>;
   /** Throws a 409-style error when the campaign is no longer cancellable. */
   cancel(input: {
     campaignId: string;

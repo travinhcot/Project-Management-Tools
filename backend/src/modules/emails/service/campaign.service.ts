@@ -161,6 +161,8 @@ export function createCampaignService(
     kickoffs: {
       findActiveKickoff: (projectId: string) =>
         guarded(() => repository.findActiveKickoff(projectId)),
+      summarize: (projectIds: readonly string[]) =>
+        guarded(() => repository.latestKickoffs(projectIds)),
       async cancel(input: {
         campaignId: string;
         actorId: string;
