@@ -6,6 +6,7 @@ import type {
 } from "../model/project-member.model.ts";
 import type { ProjectMemberRepository } from "../repository/project-member.repository.ts";
 
+import { HttpError } from "../../../shared/http-error.ts";
 import { toMemberViews } from "../common/member-view.ts";
 import {
   REASON_MESSAGES,
@@ -17,7 +18,7 @@ export function createProjectMemberService(
   repository: ProjectMemberRepository,
   roster: RosterLookup,
 ) {
-  async function guarded<T>(work: () => Promise<T>): Promise<T> {
+  async function withAssignmentErrors<T>(work: () => Promise<T>): Promise<T> {
     try {
       return await work();
     } catch (error) {
@@ -33,7 +34,7 @@ export function createProjectMemberService(
       request: AssignRequest,
       requestId: string,
     ): Promise<BulkAssignResult> {
-      return guarded(async () => {
+      return withAssignmentErrors(async () => {
         const outcome = await repository.assign({
           actorId,
           projectId,
@@ -50,6 +51,14 @@ export function createProjectMemberService(
                 outcome.accepted.map((a) => a.roster_member_id),
               )
             : [];
+        if (people.length < outcome.accepted.length) {
+          // The write is already committed; don't report it as "unavailable".
+          throw new HttpError(
+            500,
+            "ASSIGNMENT_VIEW_INCOMPLETE",
+            "The assignment was saved, but its roster details could not be loaded.",
+          );
+        }
         return {
           accepted: toMemberViews(
             outcome.accepted.map((a) => ({
@@ -75,7 +84,7 @@ export function createProjectMemberService(
       rosterMemberId: string,
       requestId: string,
     ): Promise<RemovedAssignment> {
-      return guarded(() =>
+      return withAssignmentErrors(() =>
         repository.remove({ actorId, projectId, rosterMemberId, requestId }),
       );
     },

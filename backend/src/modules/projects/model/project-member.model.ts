@@ -9,9 +9,10 @@ export const ASSIGNMENT_REJECT_REASONS = [
 export type AssignmentRejectReason = (typeof ASSIGNMENT_REJECT_REASONS)[number];
 
 /** Parsed POST body: one id (single mode) or a list (bulk mode). */
-export type AssignRequest =
-  | { readonly mode: "single"; readonly rosterMemberIds: readonly string[] }
-  | { readonly mode: "bulk"; readonly rosterMemberIds: readonly string[] };
+export interface AssignRequest {
+  readonly mode: "single" | "bulk";
+  readonly rosterMemberIds: readonly string[];
+}
 
 /** Raw result of admin_assign_project_members. */
 export interface AssignOutcome {

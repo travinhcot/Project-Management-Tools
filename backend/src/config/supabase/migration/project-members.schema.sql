@@ -9,10 +9,11 @@ BEGIN;
 --            Identity columns and removed rows are immutable, so history can't be
 --            rewritten and re-assigning always creates a new row.
 -- =============================================================================
-DROP TRIGGER project_members_guard_archived ON public.project_members;
-DROP FUNCTION public.project_members_guard_archived();
+DROP TRIGGER IF EXISTS project_members_guard_archived ON public.project_members;
+DROP TRIGGER IF EXISTS project_members_guard ON public.project_members;
+DROP FUNCTION IF EXISTS public.project_members_guard_archived();
 
-CREATE FUNCTION public.project_members_guard()
+CREATE OR REPLACE FUNCTION public.project_members_guard()
 RETURNS trigger LANGUAGE plpgsql SET search_path = '' AS $$
 DECLARE
   v_archived timestamptz;
@@ -55,7 +56,7 @@ FOR EACH ROW EXECUTE FUNCTION public.project_members_guard();
 --    Returns: { "accepted": [{assignment_id, roster_member_id, added_at}],
 --               "rejected": [{roster_member_id, reason}] }
 -- =============================================================================
-CREATE FUNCTION public.admin_assign_project_members(
+CREATE OR REPLACE FUNCTION public.admin_assign_project_members(
   p_actor_id uuid, p_project_id uuid, p_roster_member_ids uuid[], p_request_id text
 ) RETURNS jsonb
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
@@ -126,22 +127,27 @@ $$;
 -- =============================================================================
 -- 3. Remove (FR-ASG-01): soft delete of the ACTIVE assignment only.
 -- =============================================================================
-CREATE FUNCTION public.admin_remove_project_member(
+CREATE OR REPLACE FUNCTION public.admin_remove_project_member(
   p_actor_id uuid, p_project_id uuid, p_roster_member_id uuid, p_request_id text
 ) RETURNS public.project_members
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
-DECLARE v_row public.project_members;
+DECLARE
+  v_row      public.project_members;
+  v_archived timestamptz;
 BEGIN
   PERFORM public.assert_admin_actor(p_actor_id);
+  -- Archived projects are frozen (FR-PRJ-03). FOR SHARE serialises with archive.
+  SELECT archived_at INTO v_archived FROM public.projects WHERE id = p_project_id FOR SHARE;
+  IF NOT FOUND THEN RAISE EXCEPTION 'PROJECT_NOT_FOUND' USING ERRCODE = 'P0002'; END IF;
+  IF v_archived IS NOT NULL THEN
+    RAISE EXCEPTION 'PROJECT_ARCHIVED' USING ERRCODE = 'P0001';
+  END IF;
   UPDATE public.project_members
      SET removed_at = now(), removed_by_user_id = p_actor_id
    WHERE project_id = p_project_id AND roster_member_id = p_roster_member_id
      AND removed_at IS NULL
   RETURNING * INTO v_row;
   IF NOT FOUND THEN
-    IF NOT EXISTS (SELECT 1 FROM public.projects WHERE id = p_project_id) THEN
-      RAISE EXCEPTION 'PROJECT_NOT_FOUND' USING ERRCODE = 'P0002';
-    END IF;
     RAISE EXCEPTION 'ASSIGNMENT_NOT_FOUND' USING ERRCODE = 'P0002';   -- also: concurrent second remove
   END IF;
 

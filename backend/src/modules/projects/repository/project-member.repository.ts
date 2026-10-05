@@ -10,6 +10,33 @@ interface RemovedRow {
   removed_at: string;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null;
+}
+
+function asAssignOutcome(data: unknown): AssignOutcome {
+  if (
+    !isRecord(data) ||
+    !Array.isArray(data.accepted) ||
+    !Array.isArray(data.rejected)
+  ) {
+    throw new Error("admin_assign_project_members returned an unexpected shape");
+  }
+  return data as unknown as AssignOutcome;
+}
+
+function asRemovedRow(data: unknown): RemovedRow {
+  if (
+    !isRecord(data) ||
+    typeof data.id !== "string" ||
+    typeof data.roster_member_id !== "string" ||
+    typeof data.removed_at !== "string"
+  ) {
+    throw new Error("admin_remove_project_member returned an unexpected shape");
+  }
+  return data as unknown as RemovedRow;
+}
+
 export function createProjectMemberRepository(client: SupabaseClient) {
   return {
     async assign(input: {
@@ -25,7 +52,7 @@ export function createProjectMemberRepository(client: SupabaseClient) {
         p_request_id: input.requestId,
       });
       if (error) throw error;
-      return data as AssignOutcome;
+      return asAssignOutcome(data);
     },
 
     async remove(input: {
@@ -41,7 +68,7 @@ export function createProjectMemberRepository(client: SupabaseClient) {
         p_request_id: input.requestId,
       });
       if (error) throw error;
-      const row = data as RemovedRow;
+      const row = asRemovedRow(data);
       return {
         assignment_id: row.id,
         roster_member_id: row.roster_member_id,

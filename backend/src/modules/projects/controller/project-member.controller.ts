@@ -3,7 +3,6 @@ import type { ProjectMemberService } from "../service/project-member.service.ts"
 import type { ActorLocals } from "../../../shared/request-actor.ts";
 
 import { randomUUID } from "node:crypto";
-import { HttpError } from "../../../shared/http-error.ts";
 import { requireActor } from "../../../shared/request-actor.ts";
 import {
   projectIdParam,
@@ -27,13 +26,6 @@ export function createProjectMemberController(service: ProjectMemberService) {
       );
       if (request.mode === "single") {
         const member = result.accepted[0];
-        if (!member) {
-          throw new HttpError(
-            503,
-            "PROJECTS_UNAVAILABLE",
-            "Project management is temporarily unavailable.",
-          );
-        }
         res.status(201).json({ member });
         return;
       }

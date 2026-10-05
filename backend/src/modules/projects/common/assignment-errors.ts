@@ -24,10 +24,16 @@ export function reasonToHttpError(reason: AssignmentRejectReason): HttpError {
 export function assignmentError(error: unknown): HttpError {
   if (error instanceof HttpError) return error;
   const { code, message } = dbError(error);
-  // Must run before projectError, which maps these codes to project-specific errors.
-  if (code === "23505") return reasonToHttpError("ALREADY_ASSIGNED");
-  if (code === "23503")
+  // Only our own constraints are matched; anything else falls through to projectError.
+  if (code === "23505" && message?.includes("project_members_one_active")) {
+    return reasonToHttpError("ALREADY_ASSIGNED");
+  }
+  if (
+    code === "23503" &&
+    message?.includes("project_members_roster_member_id_semester_id_fkey")
+  ) {
     return reasonToHttpError("ROSTER_MEMBER_OTHER_SEMESTER");
+  }
   if (code === "P0002" && message === "ASSIGNMENT_NOT_FOUND") {
     return new HttpError(
       404,
@@ -41,7 +47,7 @@ export function assignmentError(error: unknown): HttpError {
         return new HttpError(
           409,
           "PROJECT_ARCHIVED",
-          "Archived projects can't get new members. Unarchive it first.",
+          "Archived projects can't be changed. Unarchive it first.",
         );
       case "ROSTER_MEMBER_INACTIVE":
         return reasonToHttpError("ROSTER_MEMBER_INACTIVE");
