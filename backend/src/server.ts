@@ -8,6 +8,10 @@ import { createSemestersInterface } from "./modules/semesters/interface/semester
 import { createFilesInterface } from "./modules/files/interface/files.interface.ts";
 import { createProjectsInterface } from "./modules/projects/interface/projects.interface.ts";
 import { createPortalInterface } from "./modules/portal/interface/portal.interface.ts";
+import {
+  createEmailsInterface,
+  createResendEmailProvider,
+} from "./modules/emails/interface/emails.interface.ts";
 
 const adminClient = getAdminClient();
 const users = createUsersInterface(adminClient);
@@ -25,11 +29,26 @@ const files = createFilesInterface(adminClient, {
   bucketId: process.env.PROJECT_FILES_BUCKET || "project-files",
   internalSecret: process.env.INTERNAL_SECRET,
 });
+function createEmailProvider() {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) return undefined; // console provider: logs instead of sending
+  const from = process.env.EMAIL_FROM;
+  if (!from) throw new Error("EMAIL_FROM is required when RESEND_API_KEY is set.");
+  return createResendEmailProvider({ apiKey, from });
+}
+const emails = createEmailsInterface(adminClient, {
+  provider: createEmailProvider(),
+  appUrl: process.env.APP_URL || "http://localhost:5173",
+  internalSecret: process.env.INTERNAL_SECRET,
+  batchSize: process.env.EMAIL_BATCH_SIZE
+    ? Number(process.env.EMAIL_BATCH_SIZE)
+    : undefined,
+});
 const projects = createProjectsInterface(adminClient, {
   semesters: semesters.service,
   roster: members.service,
   resources: files.service,
-  // kickoffs: emails.kickoffs     - add with the emails module
+  kickoffs: emails.kickoffs,
 });
 const portal = createPortalInterface(
   adminClient,
@@ -45,6 +64,7 @@ const app = createApplication({
   projects,
   files,
   portal,
+  emails,
 });
 const port = Number(process.env.PORT || 3001);
 if (!Number.isInteger(port) || port < 1 || port > 65535)

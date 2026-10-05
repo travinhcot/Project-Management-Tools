@@ -6,6 +6,7 @@ import type { MembersInterface } from "./modules/members/interface/members.inter
 import type { ProjectsInterface } from "./modules/projects/interface/projects.interface.ts";
 import type { FilesInterface } from "./modules/files/interface/files.interface.ts";
 import type { PortalInterface } from "./modules/portal/interface/portal.interface.ts";
+import type { EmailsInterface } from "./modules/emails/interface/emails.interface.ts";
 
 import express from "express";
 import { HttpError, errorHandler } from "./shared/http-error.ts";
@@ -19,6 +20,7 @@ export function createApplication({
   projects,
   files,
   portal,
+  emails,
   allowedOrigins = process.env.ALLOWED_ORIGINS || "http://localhost:5173",
 }: {
   auth: AuthInterface;
@@ -29,6 +31,7 @@ export function createApplication({
   projects: ProjectsInterface;
   files: FilesInterface;
   portal: PortalInterface;
+  emails: EmailsInterface;
   allowedOrigins?: string;
 }) {
   const app = express();
@@ -70,6 +73,7 @@ export function createApplication({
   admin.use("/projects", files.adminRouter); // /projects/:id/resources, /projects/:id/files
   admin.use(members.adminRouter); // /semesters/:id/roster, /roster/:rosterMemberId
   admin.use(roster.adminRouter); // /semesters/:id/roster/imports, /roster/imports/...
+  admin.use(emails.adminRouter); // /projects/:id/kickoff-campaign, /semesters/:id/demo-campaign, /campaigns/...
   app.use("/api/admin", admin);
   app.use(
     "/api/me",
@@ -78,7 +82,7 @@ export function createApplication({
     portal.memberRouter, // GET /, /projects, /projects/:id, /notifications/badge
     files.memberRouter, // POST /projects/:id/files/:fileId/download-url
   );
-  app.use("/api/internal", files.internalRouter);
+  app.use("/api/internal", files.internalRouter, emails.internalRouter);
   app.use((_req, _res, next) =>
     next(new HttpError(404, "NOT_FOUND", "Endpoint not found.")),
   );
