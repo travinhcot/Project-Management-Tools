@@ -1,5 +1,9 @@
 export type ProjectType = "SOFTWARE" | "HARDWARE";
 
+export type ProjectStatus = "PLANNING" | "ONGOING" | "COMPLETED" | "FAILED";
+
+export type MemberRole = "LEADER" | "MEMBER";
+
 export type ResourceSlot = "SRS" | "FIRST_MEETING" | "BOM";
 
 /** Order in which slots are shown on the project page. */
@@ -20,6 +24,14 @@ export interface PortalProjectRow {
   readonly semester_id: string;
   readonly semester_name: string;
   readonly is_current: boolean;
+  readonly status: ProjectStatus;
+  /** Latest kick-off date that members may see; null when none is scheduled. */
+  readonly kickoff_at: string | null;
+}
+
+export interface PortalTeammate {
+  readonly full_name: string;
+  readonly role: MemberRole;
 }
 
 export interface Eligibility {
@@ -37,6 +49,8 @@ export interface PortalListItem {
   readonly id: string;
   readonly name: string;
   readonly type: ProjectType;
+  readonly status: ProjectStatus;
+  readonly kickoff_at: string | null;
   readonly semester: { readonly id: string; readonly name: string };
   readonly resources: {
     readonly present: readonly ResourceSlot[];
@@ -80,9 +94,14 @@ export interface PortalProjectDetail {
   readonly name: string;
   readonly type: ProjectType;
   readonly description: string | null;
+  readonly status: ProjectStatus;
+  readonly kickoff_at: string | null;
   readonly semester: { readonly id: string; readonly name: string };
   readonly resources: readonly ResourceView[];
-  readonly teammates: readonly { readonly full_name: string }[];
+  readonly teammates: readonly {
+    readonly full_name: string;
+    readonly role: MemberRole;
+  }[];
 }
 
 // ---------------------------------------------------------------------------

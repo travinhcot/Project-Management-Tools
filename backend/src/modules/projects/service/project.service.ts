@@ -15,7 +15,7 @@ import type { Page } from "../../../shared/pagination.ts";
 
 import { HttpError } from "../../../shared/http-error.ts";
 import { projectError } from "../common/project-errors.ts";
-import { toMemberViews } from "../common/member-view.ts";
+import { leaderOf, toMemberViews } from "../common/member-view.ts";
 
 export interface ProjectListResult extends Page<ProjectListItem> {
   readonly semester: SemesterRef | null;
@@ -69,9 +69,13 @@ export function createProjectService(
               rows.map((r) => ({ id: r.id, type: r.type })),
             )
           : null;
+        const kickoffSummaries = kickoffs
+          ? await kickoffs.summarize(rows.map((r) => r.id))
+          : null;
         const items = rows.map((row) => ({
           ...row,
           resources: summaries?.get(row.id) ?? null,
+          kickoff: kickoffSummaries?.get(row.id) ?? null,
         }));
         return { semester, items, page: query.page, size: query.size, total };
       });
@@ -96,6 +100,7 @@ export function createProjectService(
           project,
           semester,
           members,
+          leader: leaderOf(members),
           resources: summaries?.get(project.id) ?? null,
           kickoff,
         };

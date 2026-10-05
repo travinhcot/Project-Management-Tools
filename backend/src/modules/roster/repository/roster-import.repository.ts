@@ -10,7 +10,7 @@ import type {
 
 const listColumns =
   "id,semester_id,initiated_by_user_id,filename,status,total_rows,valid_rows,update_rows,invalid_rows,deactivate_missing,deactivated_rows,expires_at,created_at,committed_at";
-const rowColumns = "row_number,full_name,email,other_info,status,errors";
+const rowColumns = "row_number,full_name,email,other_info,department,birth_year,status,errors";
 
 export function createRosterImportRepository(client: SupabaseClient) {
   return {

@@ -76,25 +76,51 @@ export function createCampaignService(
       );
     },
 
+    /** scheduledAt is null when sendNow is true. */
     scheduleKickoff(
       actorId: string,
       projectId: string,
-      scheduledAt: string,
+      scheduledAt: string | null,
+      sendNow: boolean,
       requestId: string,
     ): Promise<CampaignRow> {
       return guarded(() =>
-        repository.scheduleKickoff({ actorId, projectId, scheduledAt, requestId }),
+        repository.scheduleKickoff({
+          actorId,
+          projectId,
+          scheduledAt,
+          sendNow,
+          requestId,
+        }),
       );
     },
 
     scheduleDemo(
       actorId: string,
       semesterId: string,
-      scheduledAt: string,
+      scheduledAt: string | null,
+      sendNow: boolean,
       requestId: string,
     ): Promise<CampaignRow> {
       return guarded(() =>
-        repository.scheduleDemo({ actorId, semesterId, scheduledAt, requestId }),
+        repository.scheduleDemo({
+          actorId,
+          semesterId,
+          scheduledAt,
+          sendNow,
+          requestId,
+        }),
+      );
+    },
+
+    /** Moves a scheduled campaign to now; the processor sends it on its next run. */
+    sendNow(
+      actorId: string,
+      campaignId: string,
+      requestId: string,
+    ): Promise<CampaignRow> {
+      return guarded(() =>
+        repository.sendNow({ actorId, campaignId, requestId }),
       );
     },
 
@@ -161,6 +187,8 @@ export function createCampaignService(
     kickoffs: {
       findActiveKickoff: (projectId: string) =>
         guarded(() => repository.findActiveKickoff(projectId)),
+      summarize: (projectIds: readonly string[]) =>
+        guarded(() => repository.latestKickoffs(projectIds)),
       async cancel(input: {
         campaignId: string;
         actorId: string;

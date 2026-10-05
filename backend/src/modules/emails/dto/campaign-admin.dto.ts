@@ -63,6 +63,30 @@ export function scheduleBody(body: unknown): { scheduledAt: string } {
   return { scheduledAt: scheduledAtValue(input.scheduled_at) };
 }
 
+/** Body for kick-off and demo: exactly one of { "scheduled_at": ... } or { "send_now": true }. */
+export function scheduleOrSendNowBody(body: unknown): {
+  scheduledAt: string | null;
+  sendNow: boolean;
+} {
+  const input = objectBody(body);
+  rejectUnknownKeys(
+    input,
+    ["scheduled_at", "send_now"],
+    "Only scheduled_at or send_now can be provided.",
+  );
+  if (input.send_now !== undefined && typeof input.send_now !== "boolean") {
+    invalid("send_now must be true or false.");
+  }
+  const sendNow = input.send_now === true;
+  if (sendNow === (input.scheduled_at !== undefined)) {
+    invalid("Provide either scheduled_at or send_now: true.");
+  }
+  return {
+    scheduledAt: sendNow ? null : scheduledAtValue(input.scheduled_at),
+    sendNow,
+  };
+}
+
 export function resolveBody(body: unknown): { action: ResolveAction } {
   const input = objectBody(body);
   rejectUnknownKeys(input, ["action"], "Only action can be provided.");

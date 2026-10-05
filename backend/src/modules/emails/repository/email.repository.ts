@@ -8,6 +8,7 @@ import type {
   DeliveryListQuery,
   DeliveryOutcome,
   KickoffRef,
+  KickoffSummary,
   ResolveAction,
   SendJob,
 } from "../model/email.model.ts";
@@ -148,16 +149,45 @@ export function createEmailRepository(client: SupabaseClient) {
       return data as KickoffRef | null;
     },
 
+    /** Latest non-cancelled kick-off per project, one query. */
+    async latestKickoffs(
+      projectIds: readonly string[],
+    ): Promise<Map<string, KickoffSummary>> {
+      const result = new Map<string, KickoffSummary>();
+      if (projectIds.length === 0) return result;
+      const { data, error } = await client
+        .from("email_campaigns")
+        .select("id,project_id,status,scheduled_at")
+        .eq("kind", "KICKOFF")
+        .neq("status", "CANCELLED")
+        .in("project_id", [...projectIds])
+        .order("scheduled_at", { ascending: false });
+      if (error) throw error;
+      for (const row of (data ?? []) as (KickoffSummary & {
+        project_id: string;
+      })[]) {
+        if (result.has(row.project_id)) continue;
+        result.set(row.project_id, {
+          id: row.id,
+          status: row.status,
+          scheduled_at: row.scheduled_at,
+        });
+      }
+      return result;
+    },
+
     scheduleKickoff(input: {
       actorId: string;
       projectId: string;
-      scheduledAt: string;
+      scheduledAt: string | null;
+      sendNow: boolean;
       requestId: string;
     }) {
       return rowRpc("admin_schedule_kickoff", {
         p_actor_id: input.actorId,
         p_project_id: input.projectId,
         p_scheduled_at: input.scheduledAt,
+        p_send_now: input.sendNow,
         p_request_id: input.requestId,
       });
     },
@@ -165,13 +195,23 @@ export function createEmailRepository(client: SupabaseClient) {
     scheduleDemo(input: {
       actorId: string;
       semesterId: string;
-      scheduledAt: string;
+      scheduledAt: string | null;
+      sendNow: boolean;
       requestId: string;
     }) {
       return rowRpc("admin_schedule_demo", {
         p_actor_id: input.actorId,
         p_semester_id: input.semesterId,
         p_scheduled_at: input.scheduledAt,
+        p_send_now: input.sendNow,
+        p_request_id: input.requestId,
+      });
+    },
+
+    sendNow(input: { actorId: string; campaignId: string; requestId: string }) {
+      return rowRpc("admin_send_campaign_now", {
+        p_actor_id: input.actorId,
+        p_campaign_id: input.campaignId,
         p_request_id: input.requestId,
       });
     },

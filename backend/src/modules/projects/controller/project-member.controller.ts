@@ -8,7 +8,7 @@ import {
   projectIdParam,
   rosterMemberIdParam,
 } from "../common/project-params.ts";
-import { assignMembersBody } from "../dto/project-member.dto.ts";
+import { assignMembersBody, memberRoleBody } from "../dto/project-member.dto.ts";
 
 export function createProjectMemberController(service: ProjectMemberService) {
   return {
@@ -30,6 +30,22 @@ export function createProjectMemberController(service: ProjectMemberService) {
         return;
       }
       res.json(result);
+    },
+
+    async setRole(
+      req: Request<{ projectId: string; rosterMemberId: string }>,
+      res: Response<unknown, ActorLocals>,
+    ) {
+      const actor = requireActor(res.locals);
+      const { role } = memberRoleBody(req.body);
+      const member = await service.setRole(
+        actor.userId,
+        projectIdParam(req.params.projectId),
+        rosterMemberIdParam(req.params.rosterMemberId),
+        role,
+        randomUUID(),
+      );
+      res.json({ member });
     },
 
     async remove(

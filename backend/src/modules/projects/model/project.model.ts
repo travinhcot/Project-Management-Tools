@@ -1,6 +1,17 @@
 export const PROJECT_TYPES = ["SOFTWARE", "HARDWARE"] as const;
 export type ProjectType = (typeof PROJECT_TYPES)[number];
 
+export const PROJECT_STATUSES = [
+  "PLANNING",
+  "ONGOING",
+  "COMPLETED",
+  "FAILED",
+] as const;
+export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
+
+export const MEMBER_ROLES = ["LEADER", "MEMBER"] as const;
+export type MemberRole = (typeof MEMBER_ROLES)[number];
+
 export const ARCHIVED_FILTERS = ["exclude", "include", "only"] as const;
 export type ArchivedFilter = (typeof ARCHIVED_FILTERS)[number];
 
@@ -10,6 +21,7 @@ export interface Project {
   readonly name: string;
   readonly description: string | null;
   readonly type: ProjectType;
+  readonly status: ProjectStatus;
   readonly archived_at: string | null;
   readonly created_by_user_id: string | null;
   readonly created_at: string;
@@ -22,12 +34,14 @@ export interface ProjectCreate {
   readonly name: string;
   readonly type: ProjectType;
   readonly description: string | null;
+  readonly status: ProjectStatus | null;
 }
 
 export interface ProjectChanges {
   readonly name?: string;
   readonly description?: string | null;
   readonly type?: ProjectType;
+  readonly status?: ProjectStatus;
   readonly semester_id?: string;
 }
 
@@ -41,16 +55,25 @@ export interface ProjectListQuery {
   readonly semesterId?: string;
   readonly search?: string;
   readonly type?: ProjectType;
+  readonly status?: ProjectStatus;
   readonly archived: ArchivedFilter;
   readonly page: number;
   readonly size: number;
 }
 
+export interface ProjectLeader {
+  readonly roster_member_id: string;
+  readonly full_name: string;
+}
+
 export interface ProjectRow extends Project {
   readonly member_count: number;
+  readonly leader: ProjectLeader | null;
 }
 
 export interface ProjectListItem extends ProjectRow {
+  /** null when the project has no kick-off (or the emails module is not wired in). */
+  readonly kickoff: KickoffSummary | null;
   /** null until the resources module is wired in. */
   readonly resources: ResourceSummary | null;
 }
@@ -61,6 +84,9 @@ export interface ProjectMemberView {
   readonly full_name: string;
   readonly email: string;
   readonly roster_status: "ACTIVE" | "INACTIVE";
+  readonly department: string | null;
+  readonly birth_year: number | null;
+  readonly role: MemberRole;
   readonly added_at: string;
 }
 
@@ -68,6 +94,7 @@ export interface ProjectDetail {
   readonly project: Project;
   readonly semester: SemesterRef | null;
   readonly members: readonly ProjectMemberView[];
+  readonly leader: ProjectLeader | null;
   readonly resources: ResourceSummary | null;
   readonly kickoff: KickoffRef | null;
 }
@@ -81,6 +108,7 @@ export interface ArchiveImpact {
 export interface ProjectAssignment {
   readonly id: string;
   readonly roster_member_id: string;
+  readonly role: MemberRole;
   readonly added_at: string;
 }
 
@@ -106,6 +134,8 @@ export interface RosterMemberRef {
   readonly full_name: string;
   readonly email: string;
   readonly status: "ACTIVE" | "INACTIVE";
+  readonly department: string | null;
+  readonly birth_year: number | null;
 }
 
 /** Implemented by the members module. */
@@ -128,6 +158,13 @@ export interface ResourceSummaryGateway {
   ): Promise<ReadonlyMap<string, ResourceSummary>>;
 }
 
+export interface KickoffSummary {
+  /** Latest kick-off that was not cancelled; unlike KickoffRef it may be finished. */
+  readonly id: string;
+  readonly status: string;
+  readonly scheduled_at: string;
+}
+
 export interface KickoffRef {
   readonly id: string;
   readonly status: "DRAFT" | "SCHEDULED" | "PROCESSING";
@@ -137,6 +174,10 @@ export interface KickoffRef {
 /** Optional: implemented by the emails module when it exists. */
 export interface KickoffGateway {
   findActiveKickoff(projectId: string): Promise<KickoffRef | null>;
+  /** One call per page: the latest non-cancelled kick-off of each project that has one. */
+  summarize(
+    projectIds: readonly string[],
+  ): Promise<ReadonlyMap<string, KickoffSummary>>;
   /** Throws a 409-style error when the campaign is no longer cancellable. */
   cancel(input: {
     campaignId: string;

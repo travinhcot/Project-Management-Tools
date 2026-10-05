@@ -2,7 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   AssignOutcome,
   RemovedAssignment,
+  RoleChangeRow,
 } from "../model/project-member.model.ts";
+import type { MemberRole } from "../model/project.model.ts";
 
 interface RemovedRow {
   id: string;
@@ -39,6 +41,35 @@ function asRemovedRow(data: unknown): RemovedRow {
 
 export function createProjectMemberRepository(client: SupabaseClient) {
   return {
+    async setRole(input: {
+      actorId: string;
+      projectId: string;
+      rosterMemberId: string;
+      role: MemberRole;
+      requestId: string;
+    }): Promise<RoleChangeRow> {
+      const { data, error } = await client.rpc("admin_set_project_member_role", {
+        p_actor_id: input.actorId,
+        p_project_id: input.projectId,
+        p_roster_member_id: input.rosterMemberId,
+        p_role: input.role,
+        p_request_id: input.requestId,
+      });
+      if (error) throw error;
+      if (
+        !isRecord(data) ||
+        typeof data.id !== "string" ||
+        typeof data.roster_member_id !== "string" ||
+        typeof data.role !== "string" ||
+        typeof data.added_at !== "string"
+      ) {
+        throw new Error(
+          "admin_set_project_member_role returned an unexpected shape",
+        );
+      }
+      return data as unknown as RoleChangeRow;
+    },
+
     async assign(input: {
       actorId: string;
       projectId: string;

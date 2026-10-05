@@ -1,4 +1,6 @@
 import type {
+  MemberRole,
+  ProjectLeader,
   ProjectMemberView,
   RosterMemberRef,
 } from "../model/project.model.ts";
@@ -8,6 +10,7 @@ export function toMemberViews(
   assignments: readonly {
     id: string;
     roster_member_id: string;
+    role?: MemberRole;
     added_at: string;
   }[],
   people: readonly RosterMemberRef[],
@@ -24,9 +27,22 @@ export function toMemberViews(
           full_name: person.full_name,
           email: person.email,
           roster_status: person.status,
+          department: person.department,
+          birth_year: person.birth_year,
+          role: assignment.role ?? "MEMBER",
           added_at: assignment.added_at,
         },
       ];
     })
     .sort((a, b) => a.full_name.localeCompare(b.full_name));
+}
+
+/** The active leader among already-built member views, if any. */
+export function leaderOf(
+  members: readonly ProjectMemberView[],
+): ProjectLeader | null {
+  const leader = members.find((m) => m.role === "LEADER");
+  return leader
+    ? { roster_member_id: leader.roster_member_id, full_name: leader.full_name }
+    : null;
 }

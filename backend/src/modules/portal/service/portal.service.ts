@@ -59,6 +59,8 @@ export function createPortalService(
             id: row.id,
             name: row.name,
             type: row.type,
+            status: row.status,
+            kickoff_at: row.kickoff_at,
             semester: { id: row.semester_id, name: row.semester_name },
             resources: summary
               ? { present: summary.present, missing: summary.missing }
@@ -95,13 +97,15 @@ export function createPortalService(
           name: project.name,
           type: project.type,
           description: project.description,
+          status: project.status,
+          kickoff_at: project.kickoff_at,
           semester: { id: project.semester_id, name: project.semester_name },
           resources: toResourceViews(
             project.id,
             project.type,
             listed.resources,
           ),
-          teammates: teammates.map((full_name) => ({ full_name })),
+          teammates,
         };
       });
     },

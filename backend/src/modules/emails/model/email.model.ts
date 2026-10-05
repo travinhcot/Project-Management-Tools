@@ -151,9 +151,18 @@ export interface KickoffRef {
   readonly scheduled_at: string;
 }
 
+export interface KickoffSummary {
+  readonly id: string;
+  readonly status: string;
+  readonly scheduled_at: string;
+}
+
 /** Offered to the projects module (declared there too; the shapes match structurally). */
 export interface KickoffGateway {
   findActiveKickoff(projectId: string): Promise<KickoffRef | null>;
+  summarize(
+    projectIds: readonly string[],
+  ): Promise<ReadonlyMap<string, KickoffSummary>>;
   cancel(input: {
     campaignId: string;
     actorId: string;

@@ -16,6 +16,7 @@ export function createMemberAdminRouter(members: RosterMemberService) {
   router.use(adminOnly);
 
   router.get("/semesters/:semesterId/roster", controller.list);
+  router.get("/semesters/:semesterId/roster/departments", controller.departments);
   router.post("/semesters/:semesterId/roster", controller.add);
   router.patch("/roster/:rosterMemberId", controller.update);
   return router;

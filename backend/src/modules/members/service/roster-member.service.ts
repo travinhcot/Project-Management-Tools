@@ -30,6 +30,14 @@ export function createRosterMemberService(repository: RosterMemberRepository) {
       }
     },
 
+    async departments(semesterId: string): Promise<{ items: string[] }> {
+      try {
+        return { items: await repository.departments(semesterId) };
+      } catch (error) {
+        throw memberError(error);
+      }
+    },
+
     async add(
       actorId: string,
       semesterId: string,
