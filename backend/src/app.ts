@@ -4,6 +4,7 @@ import type { SemestersInterface } from "./modules/semesters/interface/semester.
 import type { RosterInterface } from "./modules/roster/interface/roster.interface.ts";
 import type { MembersInterface } from "./modules/members/interface/members.interface.ts";
 import type { ProjectsInterface } from "./modules/projects/interface/projects.interface.ts";
+import type { FilesInterface } from "./modules/files/interface/files.interface.ts";
 
 import express from "express";
 import { HttpError, errorHandler } from "./shared/http-error.ts";
@@ -15,6 +16,7 @@ export function createApplication({
   roster,
   members,
   projects,
+  files,
   allowedOrigins = process.env.ALLOWED_ORIGINS || "http://localhost:5173",
 }: {
   auth: AuthInterface;
@@ -23,6 +25,7 @@ export function createApplication({
   roster: RosterInterface;
   members: MembersInterface;
   projects: ProjectsInterface;
+  files: FilesInterface;
   allowedOrigins?: string;
 }) {
   const app = express();
@@ -45,7 +48,7 @@ export function createApplication({
       res.set("Access-Control-Allow-Headers", "Authorization, Content-Type");
       res.set(
         "Access-Control-Allow-Methods",
-        "GET, POST, PATCH, DELETE, OPTIONS",
+        "GET, POST, PUT, PATCH, DELETE, OPTIONS",
       );
     }
     if (req.method === "OPTIONS") return res.status(204).end();
@@ -61,9 +64,17 @@ export function createApplication({
   admin.use("/users", users.adminRouter);
   admin.use("/semesters", semesters.adminRouter);
   admin.use("/projects", projects.adminRouter);
+  admin.use("/projects", files.adminRouter); // /projects/:id/resources, /projects/:id/files
   admin.use(members.adminRouter); // /semesters/:id/roster, /roster/:rosterMemberId
   admin.use(roster.adminRouter); // /semesters/:id/roster/imports, /roster/imports/...
   app.use("/api/admin", admin);
+  app.use(
+    "/api/me",
+    auth.requireAuth,
+    auth.requireRole("MEMBER"),
+    files.memberRouter,
+  );
+  app.use("/api/internal", files.internalRouter);
   app.use((_req, _res, next) =>
     next(new HttpError(404, "NOT_FOUND", "Endpoint not found.")),
   );
