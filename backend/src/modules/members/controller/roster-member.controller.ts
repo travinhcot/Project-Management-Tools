@@ -21,6 +21,10 @@ export function createRosterMemberController(service: RosterMemberService) {
         ),
       );
     },
+    async departments(req: Request<{ semesterId: string }>, res: Response<unknown, ActorLocals>) {
+      requireActor(res.locals);
+      res.json(await service.departments(semesterIdParam(req.params.semesterId)));
+    },
     async add(req: Request<{ semesterId: string }>, res: Response<unknown, ActorLocals>) {
       const actor = requireActor(res.locals);
       const member = await service.add(

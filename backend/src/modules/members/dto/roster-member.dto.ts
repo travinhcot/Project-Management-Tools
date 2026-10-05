@@ -13,7 +13,14 @@ import {
   searchQuery,
   single,
 } from "../../../shared/query-params.ts";
-import { emailInput, fullNameInput, otherInfoInput } from "../../../shared/roster-rules.ts";
+import {
+  birthYearInput,
+  birthYearQuery,
+  departmentInput,
+  emailInput,
+  fullNameInput,
+  otherInfoInput,
+} from "../../../shared/roster-rules.ts";
 import { pageOf } from "../../../shared/pagination.ts";
 import { semesterIdParam } from "../common/member-params.ts";
 import { ROSTER_STATUSES } from "../model/roster-member.model.ts";
@@ -31,26 +38,34 @@ export function listRosterQuery(
 ): RosterListQuery {
   rejectUnknownKeys(
     query,
-    ["search", "status", "linked", "page", "size"],
+    ["search", "status", "linked", "department", "birth_year", "page", "size"],
     "The request contains invalid query parameters.",
   );
   const status = single(query, "status");
+  const department = single(query, "department")?.trim();
+  const birthYear = single(query, "birth_year");
   return {
     semesterId: semesterIdParam(semesterId),
     search: searchQuery(query),
     status: status === undefined ? undefined : statusValue(status),
     linked: booleanQuery(query, "linked"),
+    department: department || undefined,
+    birthYear: birthYear === undefined ? undefined : birthYearQuery(birthYear),
     ...pageOf(query),
   };
 }
 
 export function createRosterMemberBody(body: unknown): RosterMemberCreate {
   const input = objectBody(body);
-  rejectUnknownKeys(input, ["email", "full_name", "other_info"], "Only email, full_name and other_info can be provided.");
+  rejectUnknownKeys(input, ["email", "full_name", "other_info", "department", "birth_year"], "Only email, full_name, other_info, department and birth_year can be provided.");
   return {
     email: emailInput(input.email),
     full_name: fullNameInput(input.full_name),
     other_info: otherInfoInput(input.other_info),
+    department:
+      input.department === undefined ? null : departmentInput(input.department),
+    birth_year:
+      input.birth_year === undefined ? null : birthYearInput(input.birth_year),
   };
 }
 
@@ -58,19 +73,23 @@ export function updateRosterMemberBody(body: unknown): RosterMemberChanges {
   const input = objectBody(body);
   rejectUnknownKeys(
     input,
-    ["full_name", "other_info", "status", "deactivation_reason"],
-    "Only full_name, other_info, status and deactivation_reason can be changed.",
+    ["full_name", "other_info", "department", "birth_year", "status", "deactivation_reason"],
+    "Only full_name, other_info, department, birth_year, status and deactivation_reason can be changed.",
   );
   if (Object.keys(input).length === 0) invalid("Provide at least one field to change.");
 
   const changes: {
     full_name?: string;
     other_info?: ReturnType<typeof otherInfoInput>;
+    department?: string | null;
+    birth_year?: number | null;
     status?: RosterStatus;
     deactivation_reason?: string | null;
   } = {};
   if (input.full_name !== undefined) changes.full_name = fullNameInput(input.full_name);
   if (input.other_info !== undefined) changes.other_info = otherInfoInput(input.other_info);
+  if (input.department !== undefined) changes.department = departmentInput(input.department);
+  if (input.birth_year !== undefined) changes.birth_year = birthYearInput(input.birth_year);
   if (input.status !== undefined) changes.status = statusValue(input.status);
   if (input.deactivation_reason !== undefined) {
     if (changes.status === "ACTIVE") invalid("deactivation_reason cannot be set when reactivating.");

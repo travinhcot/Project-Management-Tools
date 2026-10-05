@@ -7,6 +7,9 @@ export type OtherInfo = { student_id?: string };
 export const MAX_NAME_LENGTH = 200;
 export const MAX_EMAIL_LENGTH = 320;
 export const MAX_STUDENT_ID_LENGTH = 50;
+export const MAX_DEPARTMENT_LENGTH = 100;
+export const MIN_BIRTH_YEAR = 1900;
+export const MAX_BIRTH_YEAR = 2100;
 
 const EMAIL_PATTERN = /^[^\s@,;<>"]+@[^\s@,;<>"]+\.[^\s@,;<>"]+$/;
 
@@ -38,6 +41,56 @@ export function studentIdProblem(value: string): string | null {
     return `Student ID must be at most ${MAX_STUDENT_ID_LENGTH} characters.`;
   }
   return null;
+}
+
+export function departmentProblem(value: string): string | null {
+  if ([...value.trim()].length > MAX_DEPARTMENT_LENGTH) {
+    return `Department must be at most ${MAX_DEPARTMENT_LENGTH} characters.`;
+  }
+  return null;
+}
+
+/** Empty text means "not set". */
+export function birthYearProblem(value: string): string | null {
+  const text = value.trim();
+  if (!text) return null;
+  const year = Number(text);
+  if (
+    !/^\d{4}$/.test(text) ||
+    year < MIN_BIRTH_YEAR ||
+    year > MAX_BIRTH_YEAR
+  ) {
+    return `Birth Year must be a 4-digit year between ${MIN_BIRTH_YEAR} and ${MAX_BIRTH_YEAR}.`;
+  }
+  return null;
+}
+
+/** API input: text trimmed, empty -> null. */
+export function departmentInput(value: unknown): string | null {
+  if (value === null) return null;
+  if (typeof value !== "string") invalid("department must be text or null.");
+  const department = value.trim();
+  const problem = departmentProblem(department);
+  if (problem) invalid(problem);
+  return department || null;
+}
+
+/** API input: an integer year, or null to clear. */
+export function birthYearInput(value: unknown): number | null {
+  if (value === null) return null;
+  if (typeof value !== "number" || !Number.isInteger(value)) {
+    invalid("birth_year must be a whole number or null.");
+  }
+  const problem = birthYearProblem(String(value));
+  if (problem) invalid(problem);
+  return value;
+}
+
+/** Query string value (already a string). */
+export function birthYearQuery(value: string): number {
+  const problem = birthYearProblem(value);
+  if (problem || !value.trim()) invalid(problem ?? "birth_year is invalid.");
+  return Number(value);
 }
 
 /** API input for other_info: only allowlisted keys, trimmed strings, empty values dropped. */

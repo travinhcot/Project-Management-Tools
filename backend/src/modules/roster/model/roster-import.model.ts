@@ -15,6 +15,8 @@ export interface ImportRowInput {
   readonly full_name: string;
   readonly email: string;
   readonly other_info: OtherInfo;
+  readonly department: string | null;
+  readonly birth_year: number | null;
   readonly status: "VALID" | "INVALID" | "DUPLICATE";
   readonly errors: readonly string[];
 }
@@ -51,6 +53,8 @@ export interface ImportRowView {
   readonly full_name: string | null;
   readonly email: string | null;
   readonly other_info: OtherInfo;
+  readonly department: string | null;
+  readonly birth_year: number | null;
   readonly status: ImportRowStatus;
   readonly errors: readonly string[];
 }

@@ -27,6 +27,8 @@ export function toMemberViews(
           full_name: person.full_name,
           email: person.email,
           roster_status: person.status,
+          department: person.department,
+          birth_year: person.birth_year,
           role: assignment.role ?? "MEMBER",
           added_at: assignment.added_at,
         },
