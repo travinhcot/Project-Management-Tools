@@ -1,5 +1,8 @@
 import type { AuthInterface } from "./modules/auth/interface/auth.interface.ts";
 import type { UsersInterface } from "./modules/users/interface/user.interface.ts";
+import type { SemestersInterface } from "./modules/semesters/interface/semester.interface.ts";
+import type { RosterInterface } from "./modules/roster/interface/roster.interface.ts";
+import type { MembersInterface } from "./modules/members/interface/members.interface.ts";
 
 import express from "express";
 import { HttpError, errorHandler } from "./shared/http-error.ts";
@@ -7,10 +10,16 @@ import { HttpError, errorHandler } from "./shared/http-error.ts";
 export function createApplication({
   auth,
   users,
+  semesters,
+  roster,
+  members,
   allowedOrigins = process.env.ALLOWED_ORIGINS || "http://localhost:5173",
 }: {
   auth: AuthInterface;
   users: UsersInterface;
+  semesters: SemestersInterface;
+  roster: RosterInterface;
+  members: MembersInterface;
   allowedOrigins?: string;
 }) {
   const app = express();
@@ -40,12 +49,14 @@ export function createApplication({
 
   app.get("/api/health", (_req, res) => res.json({ status: "ok" }));
   app.use("/api/auth", auth.router);
-  app.use(
-    "/api/admin/users",
-    auth.requireAuth,
-    auth.requireRole("ADMIN"),
-    users.adminRouter,
-  );
+  // Authenticate once for the whole admin area, then mount each module's router.
+  const admin = express.Router();
+  admin.use(auth.requireAuth, auth.requireRole("ADMIN"));
+  admin.use("/users", users.adminRouter);
+  admin.use("/semesters", semesters.adminRouter);
+  admin.use(members.adminRouter); // /semesters/:id/roster, /roster/:rosterMemberId
+  admin.use(roster.adminRouter); // /semesters/:id/roster/imports, /roster/imports/...
+  app.use("/api/admin", admin);
   app.use((_req, _res, next) =>
     next(new HttpError(404, "NOT_FOUND", "Endpoint not found.")),
   );
