@@ -113,11 +113,7 @@ export interface RosterLookup {
   findByIds(ids: readonly string[]): Promise<readonly RosterMemberRef[]>;
 }
 
-export type ResourceSlot =
-  | "SRS"
-  | "FIRST_MEETING"
-  | "CONTRIBUTION_TEMPLATE"
-  | "BOM";
+export type ResourceSlot = "SRS" | "FIRST_MEETING" | "BOM";
 
 export interface ResourceSummary {
   readonly present: readonly ResourceSlot[];

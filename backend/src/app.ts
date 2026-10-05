@@ -5,6 +5,7 @@ import type { RosterInterface } from "./modules/roster/interface/roster.interfac
 import type { MembersInterface } from "./modules/members/interface/members.interface.ts";
 import type { ProjectsInterface } from "./modules/projects/interface/projects.interface.ts";
 import type { FilesInterface } from "./modules/files/interface/files.interface.ts";
+import type { PortalInterface } from "./modules/portal/interface/portal.interface.ts";
 
 import express from "express";
 import { HttpError, errorHandler } from "./shared/http-error.ts";
@@ -17,6 +18,7 @@ export function createApplication({
   members,
   projects,
   files,
+  portal,
   allowedOrigins = process.env.ALLOWED_ORIGINS || "http://localhost:5173",
 }: {
   auth: AuthInterface;
@@ -26,6 +28,7 @@ export function createApplication({
   members: MembersInterface;
   projects: ProjectsInterface;
   files: FilesInterface;
+  portal: PortalInterface;
   allowedOrigins?: string;
 }) {
   const app = express();
@@ -72,7 +75,8 @@ export function createApplication({
     "/api/me",
     auth.requireAuth,
     auth.requireRole("MEMBER"),
-    files.memberRouter,
+    portal.memberRouter, // GET /, /projects, /projects/:id, /notifications/badge
+    files.memberRouter, // POST /projects/:id/files/:fileId/download-url
   );
   app.use("/api/internal", files.internalRouter);
   app.use((_req, _res, next) =>
