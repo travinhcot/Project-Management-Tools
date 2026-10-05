@@ -1,4 +1,4 @@
-import type { ProjectMemberView } from "./project.model.ts";
+import type { MemberRole, ProjectMemberView } from "./project.model.ts";
 
 export const ASSIGNMENT_REJECT_REASONS = [
   "ROSTER_MEMBER_NOT_FOUND",
@@ -12,6 +12,8 @@ export type AssignmentRejectReason = (typeof ASSIGNMENT_REJECT_REASONS)[number];
 export interface AssignRequest {
   readonly mode: "single" | "bulk";
   readonly rosterMemberIds: readonly string[];
+  /** LEADER is only accepted in single mode. */
+  readonly role: MemberRole;
 }
 
 /** Raw result of admin_assign_project_members. */
@@ -42,4 +44,12 @@ export interface RemovedAssignment {
   readonly assignment_id: string;
   readonly roster_member_id: string;
   readonly removed_at: string;
+}
+
+/** Raw row returned by admin_set_project_member_role. */
+export interface RoleChangeRow {
+  readonly id: string;
+  readonly roster_member_id: string;
+  readonly role: MemberRole;
+  readonly added_at: string;
 }

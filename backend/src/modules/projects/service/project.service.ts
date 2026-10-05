@@ -15,7 +15,7 @@ import type { Page } from "../../../shared/pagination.ts";
 
 import { HttpError } from "../../../shared/http-error.ts";
 import { projectError } from "../common/project-errors.ts";
-import { toMemberViews } from "../common/member-view.ts";
+import { leaderOf, toMemberViews } from "../common/member-view.ts";
 
 export interface ProjectListResult extends Page<ProjectListItem> {
   readonly semester: SemesterRef | null;
@@ -96,6 +96,7 @@ export function createProjectService(
           project,
           semester,
           members,
+          leader: leaderOf(members),
           resources: summaries?.get(project.id) ?? null,
           kickoff,
         };

@@ -46,6 +46,8 @@ export function createProjectRepository(client: SupabaseClient) {
     if (error) throw error;
     return (data ?? []) as (Project & {
       member_count: number | string;
+      leader_roster_member_id: string | null;
+      leader_name: string | null;
       total_count: number | string;
     })[];
   }
@@ -71,6 +73,12 @@ export function createProjectRepository(client: SupabaseClient) {
         rows: rows.map((row) => ({
           ...toProject(row),
           member_count: Number(row.member_count),
+          leader: row.leader_roster_member_id
+            ? {
+                roster_member_id: row.leader_roster_member_id,
+                full_name: row.leader_name ?? "",
+              }
+            : null,
         })),
         total,
       };
@@ -89,7 +97,7 @@ export function createProjectRepository(client: SupabaseClient) {
     async activeAssignments(projectId: string): Promise<ProjectAssignment[]> {
       const { data, error } = await client
         .from("project_members")
-        .select("id,roster_member_id,added_at")
+        .select("id,roster_member_id,role,added_at")
         .eq("project_id", projectId)
         .is("removed_at", null)
         .order("added_at", { ascending: true });

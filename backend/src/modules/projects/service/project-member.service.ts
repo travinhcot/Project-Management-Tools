@@ -1,4 +1,4 @@
-import type { RosterLookup } from "../model/project.model.ts";
+import type { MemberRole, ProjectMemberView, RosterLookup } from "../model/project.model.ts";
 import type {
   AssignRequest,
   BulkAssignResult,
@@ -45,6 +45,16 @@ export function createProjectMemberService(
           const rejection = outcome.rejected[0];
           if (rejection) throw reasonToHttpError(rejection.reason);
         }
+        const promoted =
+          request.role === "LEADER" && outcome.accepted[0]
+            ? await repository.setRole({
+                actorId,
+                projectId,
+                rosterMemberId: outcome.accepted[0].roster_member_id,
+                role: "LEADER",
+                requestId,
+              })
+            : null;
         const people =
           outcome.accepted.length > 0
             ? await roster.findByIds(
@@ -64,6 +74,7 @@ export function createProjectMemberService(
             outcome.accepted.map((a) => ({
               id: a.assignment_id,
               roster_member_id: a.roster_member_id,
+              role: promoted?.role,
               added_at: a.added_at,
             })),
             people,
@@ -74,6 +85,45 @@ export function createProjectMemberService(
             message: REASON_MESSAGES[r.reason],
           })),
         };
+      });
+    },
+
+    /** LEADER demotes the current leader in the same transaction; MEMBER leaves the project without one. */
+    setRole(
+      actorId: string,
+      projectId: string,
+      rosterMemberId: string,
+      role: MemberRole,
+      requestId: string,
+    ): Promise<ProjectMemberView> {
+      return withAssignmentErrors(async () => {
+        const row = await repository.setRole({
+          actorId,
+          projectId,
+          rosterMemberId,
+          role,
+          requestId,
+        });
+        const people = await roster.findByIds([row.roster_member_id]);
+        const [view] = toMemberViews(
+          [
+            {
+              id: row.id,
+              roster_member_id: row.roster_member_id,
+              role: row.role,
+              added_at: row.added_at,
+            },
+          ],
+          people,
+        );
+        if (!view) {
+          throw new HttpError(
+            500,
+            "ASSIGNMENT_VIEW_INCOMPLETE",
+            "The role was saved, but the roster details could not be loaded.",
+          );
+        }
+        return view;
       });
     },
 

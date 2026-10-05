@@ -9,6 +9,9 @@ export const PROJECT_STATUSES = [
 ] as const;
 export type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
+export const MEMBER_ROLES = ["LEADER", "MEMBER"] as const;
+export type MemberRole = (typeof MEMBER_ROLES)[number];
+
 export const ARCHIVED_FILTERS = ["exclude", "include", "only"] as const;
 export type ArchivedFilter = (typeof ARCHIVED_FILTERS)[number];
 
@@ -58,8 +61,14 @@ export interface ProjectListQuery {
   readonly size: number;
 }
 
+export interface ProjectLeader {
+  readonly roster_member_id: string;
+  readonly full_name: string;
+}
+
 export interface ProjectRow extends Project {
   readonly member_count: number;
+  readonly leader: ProjectLeader | null;
 }
 
 export interface ProjectListItem extends ProjectRow {
@@ -73,6 +82,7 @@ export interface ProjectMemberView {
   readonly full_name: string;
   readonly email: string;
   readonly roster_status: "ACTIVE" | "INACTIVE";
+  readonly role: MemberRole;
   readonly added_at: string;
 }
 
@@ -80,6 +90,7 @@ export interface ProjectDetail {
   readonly project: Project;
   readonly semester: SemesterRef | null;
   readonly members: readonly ProjectMemberView[];
+  readonly leader: ProjectLeader | null;
   readonly resources: ResourceSummary | null;
   readonly kickoff: KickoffRef | null;
 }
@@ -93,6 +104,7 @@ export interface ArchiveImpact {
 export interface ProjectAssignment {
   readonly id: string;
   readonly roster_member_id: string;
+  readonly role: MemberRole;
   readonly added_at: string;
 }
 

@@ -27,6 +27,10 @@ export function createProjectAdminRouter(
   router.post("/:projectId/archive", controller.archive);
   router.post("/:projectId/unarchive", controller.unarchive);
   router.post("/:projectId/members", memberController.assign);
+  router.patch(
+    "/:projectId/members/:rosterMemberId",
+    memberController.setRole,
+  );
   router.delete(
     "/:projectId/members/:rosterMemberId",
     memberController.remove,
