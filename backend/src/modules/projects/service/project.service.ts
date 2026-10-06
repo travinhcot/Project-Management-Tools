@@ -44,6 +44,11 @@ export function createProjectService(
   }
 
   return {
+    /** Offered to the semesters module as a port (see projects.interface.ts). */
+    countProjects(semesterId: string): Promise<number> {
+      return guarded(() => repository.countInSemester(semesterId));
+    },
+
     async list(query: ProjectListQuery): Promise<ProjectListResult> {
       const semester = await guarded(() =>
         query.semesterId

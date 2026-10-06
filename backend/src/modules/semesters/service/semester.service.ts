@@ -1,9 +1,11 @@
 import type {
   CurrentSwitchImpact,
+  ProjectStatsGateway,
   RosterStatsGateway,
   Semester,
   SemesterChanges,
   SemesterCreate,
+  SemesterListItem,
   SemesterListQuery,
 } from "../model/semester.model.ts";
 import type { SemesterRepository } from "../repository/semester.repository.ts";
@@ -59,6 +61,7 @@ function semesterError(error: unknown): HttpError {
 export function createSemesterService(
   repository: SemesterRepository,
   rosterStats: RosterStatsGateway,
+  projectStats: ProjectStatsGateway,
 ) {
   async function getOrThrow(id: string): Promise<Semester> {
     let semester: Semester | null;
@@ -73,9 +76,18 @@ export function createSemesterService(
   }
 
   return {
-    async list(query: SemesterListQuery): Promise<Semester[]> {
+    async list(query: SemesterListQuery): Promise<SemesterListItem[]> {
       try {
-        return await repository.list(query);
+        const semesters = await repository.list(query);
+        return await Promise.all(
+          semesters.map(async (semester) => {
+            const [roster_count, project_count] = await Promise.all([
+              rosterStats.countActiveMembers(semester.id),
+              projectStats.countProjects(semester.id),
+            ]);
+            return { ...semester, roster_count, project_count };
+          }),
+        );
       } catch (error) {
         throw semesterError(error);
       }
