@@ -28,7 +28,13 @@ export function createProjectsInterface(
     createProjectMemberRepository(databaseClient),
     dependencies.roster,
   );
-  return { adminRouter: createProjectAdminRouter(service, memberService) };
+  return {
+    /** What other modules may ask of projects, handed to them as a port in server.ts. */
+    stats: {
+      countProjects: (semesterId: string) => service.countProjects(semesterId),
+    },
+    adminRouter: createProjectAdminRouter(service, memberService),
+  };
 }
 
 export type ProjectsInterface = ReturnType<typeof createProjectsInterface>;

@@ -7,6 +7,8 @@ const variants = {
   "danger-outline":
     "border border-danger-line bg-surface text-danger hover:bg-danger-soft",
   link: "border border-link-line bg-surface text-accent hover:bg-accent-soft",
+  /** Borderless text action, e.g. "Edit" inside a table row. */
+  ghost: "text-accent hover:bg-accent-soft",
 } as const;
 
 const sizes = {

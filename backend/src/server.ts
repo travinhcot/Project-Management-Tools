@@ -1,3 +1,5 @@
+import type { ProjectStatsGateway } from "./modules/semesters/interface/semester.interface.ts";
+
 import { createApplication } from "./app.ts";
 import { createAuthClient, getAdminClient } from "./config/database.ts";
 import { createUsersInterface } from "./modules/users/interface/user.interface.ts";
@@ -32,8 +34,14 @@ const auth = createAuthInterface({
 });
 const members = createMembersInterface(adminClient);
 const roster = createRosterInterface(adminClient);
+// semesters needs project counts, while projects (built below) needs semesters.service.
+// The gateway resolves `projects` at call time, which breaks the construction cycle.
+const projectStats: ProjectStatsGateway = {
+  countProjects: (semesterId: string) => projects.stats.countProjects(semesterId),
+};
 const semesters = createSemestersInterface(adminClient, {
   rosterStats: members.service,
+  projectStats,
 });
 const files = createFilesInterface(adminClient, {
   bucketId: process.env.PROJECT_FILES_BUCKET || "project-files",

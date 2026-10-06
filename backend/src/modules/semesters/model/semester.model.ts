@@ -16,6 +16,14 @@ export interface Semester {
   readonly updated_at: string;
 }
 
+/** A semester as shown in the admin list: the row plus how much it holds. */
+export interface SemesterListItem extends Semester {
+  /** ACTIVE roster entries. */
+  readonly roster_count: number;
+  /** Non-archived projects. */
+  readonly project_count: number;
+}
+
 export interface SemesterCreate {
   readonly term: SemesterTerm;
   readonly year: number;
@@ -41,6 +49,11 @@ export interface CurrentSwitchImpact {
   readonly members_gaining_access: number;
   /** ACTIVE members (same email) on both rosters; their access does not change. */
   readonly members_carried_over: number;
+}
+
+/** Port: semesters needs project counts. The projects module implements it; server.ts connects them. */
+export interface ProjectStatsGateway {
+  countProjects(semesterId: string): Promise<number>;
 }
 
 /** Port: semesters needs member counts. The roster module implements it; server.ts connects them. */

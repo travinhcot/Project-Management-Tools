@@ -1,4 +1,5 @@
 import { Pill } from "@/shared/components/Pill";
+import { signOut } from "@/features/auth/actions";
 
 export function TopBar() {
   return (
@@ -12,6 +13,14 @@ export function TopBar() {
       </span>
       <Pill>EN / VI</Pill>
       <Pill tone="accent">EBMB</Pill>
+      <form action={signOut}>
+        <button
+          type="submit"
+          className="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-muted hover:bg-line/50 hover:text-ink"
+        >
+          Sign out
+        </button>
+      </form>
     </header>
   );
 }

@@ -105,6 +105,17 @@ export function createProjectRepository(client: SupabaseClient) {
       return (data ?? []) as ProjectAssignment[];
     },
 
+    /** Non-archived projects of a semester (archived ones are hidden from members and the UI). */
+    async countInSemester(semesterId: string): Promise<number> {
+      const { count, error } = await client
+        .from("projects")
+        .select("id", { count: "exact", head: true })
+        .eq("semester_id", semesterId)
+        .is("archived_at", null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+
     async countActiveAssignments(projectId: string): Promise<number> {
       const { count, error } = await client
         .from("project_members")
