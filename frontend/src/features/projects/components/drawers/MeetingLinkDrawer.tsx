@@ -20,7 +20,7 @@ export function MeetingLinkDrawer({
   onSave,
   onRemove,
 }: {
-  project: Project;
+  project: Pick<Project, "name" | "meetingUrl" | "meetingLabel">;
   semester: SemesterSummary;
   onClose: () => void;
   onSave: (link: { url: string; label: string | null }) => void;

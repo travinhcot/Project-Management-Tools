@@ -1,0 +1,135 @@
+import { Button } from "@/shared/components/Button";
+import { Pill, type PillTone } from "@/shared/components/Pill";
+import type { MeetingEmailProject } from "@/features/meeting-emails/models/meeting-email";
+import {
+  displayUrl,
+  getSendStatus,
+  type SendStatus,
+} from "@/features/meeting-emails/utils/send-status";
+import { formatGmt7 } from "@/features/projects/utils/format";
+
+const TYPE_LABEL = { software: "Software", hardware: "Hardware" } as const;
+
+function describe(status: SendStatus): { tone: PillTone; label: string } {
+  switch (status.key) {
+    case "ready":
+      return { tone: "success", label: "Ready" };
+    case "sending":
+      return { tone: "accent", label: "Sending…" };
+    case "sent":
+      return { tone: "success", label: `Sent · ${status.sent}/${status.total}` };
+    case "partial":
+      return {
+        tone: "warn",
+        label: `${status.sent}/${status.total} sent · ${status.failed} need attention`,
+      };
+    case "failed":
+      return { tone: "danger", label: "Failed" };
+    case "link-missing":
+      return { tone: "amber", label: "Link missing" };
+  }
+}
+
+export function MeetingEmailRow({
+  project,
+  selected,
+  onSelect,
+  onSend,
+  onViewDelivery,
+  onAddLink,
+}: {
+  project: MeetingEmailProject;
+  selected: boolean;
+  onSelect: () => void;
+  onSend: () => void;
+  onViewDelivery: () => void;
+  onAddLink: () => void;
+}) {
+  const status = getSendStatus(project);
+  const pill = describe(status);
+  const count = project.recipients.length;
+
+  const note =
+    status.key === "link-missing"
+      ? "Add a URL before sending"
+      : status.key === "ready"
+        ? `Sends immediately to ${count} ${count === 1 ? "recipient" : "recipients"}`
+        : status.key === "sending"
+          ? `Sending to ${count} ${count === 1 ? "recipient" : "recipients"}…`
+          : project.lastSentAt
+            ? `Last sent ${formatGmt7(project.lastSentAt)}`
+            : "";
+
+  return (
+    <article
+      aria-current={selected ? "true" : undefined}
+      onClick={onSelect}
+      className={`flex cursor-pointer flex-wrap items-start gap-[18px] rounded-[10px] border bg-surface p-[18px] ${
+        selected ? "border-primary ring-2 ring-primary/20" : "border-line"
+      }`}
+    >
+      <div className="flex min-w-[240px] flex-1 flex-col gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
+          <h3 className="text-[17px] font-semibold text-ink">
+            <button
+              type="button"
+              onClick={onSelect}
+              aria-label={`Preview email for ${project.name}`}
+              className="text-left hover:underline"
+            >
+              {project.name}
+            </button>
+          </h3>
+          <Pill tone={pill.tone} size="sm">
+            {pill.label}
+          </Pill>
+        </div>
+        <p className="whitespace-pre text-xs font-medium text-muted">
+          {`${TYPE_LABEL[project.type]}  ·  ${count} assigned ${count === 1 ? "member" : "members"}`}
+        </p>
+        <p className="text-[10px] font-bold text-muted">FIRST MEETING URL</p>
+        {project.meetingUrl ? (
+          <a
+            href={project.meetingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(event) => event.stopPropagation()}
+            className="break-all text-[13px] font-medium text-accent hover:underline"
+          >
+            {displayUrl(project.meetingUrl)}
+          </a>
+        ) : (
+          <p className="text-[13px] font-medium text-amber">
+            No meeting link added yet
+          </p>
+        )}
+        <p className="text-[11px] text-muted">{note}</p>
+      </div>
+
+      <div className="w-full sm:w-[170px]" onClick={(event) => event.stopPropagation()}>
+        {status.key === "ready" && (
+          <Button onClick={onSend} className="h-10 w-full">
+            Send email
+          </Button>
+        )}
+        {status.key === "sending" && (
+          <Button disabled className="h-10 w-full">
+            Sending…
+          </Button>
+        )}
+        {(status.key === "sent" ||
+          status.key === "partial" ||
+          status.key === "failed") && (
+          <Button variant="link" onClick={onViewDelivery} className="h-10 w-full">
+            View delivery
+          </Button>
+        )}
+        {status.key === "link-missing" && (
+          <Button variant="link" onClick={onAddLink} className="h-10 w-full">
+            Add meeting link
+          </Button>
+        )}
+      </div>
+    </article>
+  );
+}
