@@ -49,7 +49,7 @@ cd frontend
 bun run dev
 ```
 
-Open `http://localhost:3000`. Stop either server with `Ctrl+C`.
+Open `http://localhost:5173`. Stop either server with `Ctrl+C`.
 
 The backend's current `dev` and `start` package scripts refer to `src/server.js`, which does not exist. Use the direct `node` command above until those scripts are corrected. The frontend is not yet connected to the API.
 
