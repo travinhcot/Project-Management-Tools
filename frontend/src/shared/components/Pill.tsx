@@ -6,20 +6,29 @@ const tones = {
   accent: "bg-accent-soft text-accent",
   success: "bg-success-soft text-success",
   amber: "bg-amber-soft text-amber",
+  done: "bg-done-soft text-done",
+  danger: "bg-danger-soft text-danger-text",
+} as const;
+
+const sizes = {
+  md: "h-7 px-3",
+  sm: "h-[27px] px-[11px]",
 } as const;
 
 export type PillTone = keyof typeof tones;
 
 export function Pill({
   tone = "neutral",
+  size = "md",
   children,
 }: {
   tone?: PillTone;
+  size?: keyof typeof sizes;
   children: ReactNode;
 }) {
   return (
     <span
-      className={`inline-flex h-7 items-center whitespace-nowrap rounded-full px-3 text-xs font-semibold ${tones[tone]}`}
+      className={`inline-flex items-center whitespace-nowrap rounded-full text-xs font-semibold ${sizes[size]} ${tones[tone]}`}
     >
       {children}
     </span>

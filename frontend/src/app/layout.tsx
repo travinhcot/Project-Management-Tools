@@ -9,7 +9,10 @@ const notoSans = Noto_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Project Management",
+  title: {
+    default: "Project Management",
+    template: "%s · Project Management",
+  },
   description: "A clear view of this semester's people and projects.",
 };
 
