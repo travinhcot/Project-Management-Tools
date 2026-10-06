@@ -1,6 +1,6 @@
 // Shapes mirror backend/src/modules/dashboard/model/dashboard.model.ts.
 
-export type ProjectType = "software" | "hardware";
+import type { ProjectType } from "@/shared/models/project";
 
 export interface DashboardWarning {
   id: string;
