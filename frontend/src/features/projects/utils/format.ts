@@ -21,6 +21,12 @@ export function formatKickoff(iso: string): string {
   return `${pad(date.getUTCDate())} ${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()} · ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}`;
 }
 
+/** "29 Sep 2026 · 10:15 GMT+7" (Asia/Ho_Chi_Minh has no DST, so a fixed offset is exact). */
+export function formatGmt7(iso: string): string {
+  const date = new Date(new Date(iso).getTime() + 7 * 60 * 60 * 1000);
+  return `${pad(date.getUTCDate())} ${MONTHS[date.getUTCMonth()]} ${date.getUTCFullYear()} · ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())} GMT+7`;
+}
+
 /** Lower-case, diacritic-free text for search ("Nguyễn" matches "nguyen"). */
 export function normalizeText(value: string): string {
   return value

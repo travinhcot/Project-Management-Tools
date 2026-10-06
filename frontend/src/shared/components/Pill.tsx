@@ -6,6 +6,7 @@ const tones = {
   accent: "bg-accent-soft text-accent",
   success: "bg-success-soft text-success",
   amber: "bg-amber-soft text-amber",
+  warn: "bg-warn-soft text-warn-text",
   done: "bg-done-soft text-done",
   danger: "bg-danger-soft text-danger-text",
 } as const;
