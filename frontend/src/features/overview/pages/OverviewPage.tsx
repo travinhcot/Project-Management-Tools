@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AttentionCard } from "@/features/overview/components/AttentionCard";
 import { ProjectCard } from "@/features/overview/components/ProjectCard";
 import { StatCard } from "@/features/overview/components/StatCard";
-import { Pill } from "@/shared/components/Pill";
+import { SemesterBadge } from "@/shared/components/SemesterBadge";
 import { getDashboard } from "@/features/overview/service/dashboard.service";
 
 export async function OverviewPage() {
@@ -22,10 +22,7 @@ export async function OverviewPage() {
             A clear view of this semester’s people and projects.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Pill tone="surface">{semester.name} ▾</Pill>
-          {semester.active && <Pill tone="success">● Active</Pill>}
-        </div>
+        <SemesterBadge name={semester.name} active={semester.active} />
       </div>
 
       <section className="grid grid-cols-1 gap-3.5 md:grid-cols-3">

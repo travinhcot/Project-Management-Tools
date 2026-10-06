@@ -4,6 +4,25 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { workspaceNav } from "@/config/navigation";
 
+function NavIcon({ name }: { name: string }) {
+  const url = `url(/icons/${name}.svg)`;
+  // Masked so the icon follows the text colour in both active and inactive states.
+  return (
+    <span
+      aria-hidden="true"
+      className="size-[18px] shrink-0 bg-current"
+      style={{
+        maskImage: url,
+        WebkitMaskImage: url,
+        maskSize: "contain",
+        WebkitMaskSize: "contain",
+        maskRepeat: "no-repeat",
+        WebkitMaskRepeat: "no-repeat",
+      }}
+    />
+  );
+}
+
 export function Sidebar() {
   const pathname = usePathname();
 
@@ -12,7 +31,8 @@ export function Sidebar() {
       <p className="text-[11px] font-bold text-muted">WORKSPACE</p>
       <nav className="mt-3 flex flex-col gap-3">
         {workspaceNav.map((item) => {
-          const active = pathname === item.href;
+          const active =
+            pathname === item.href || pathname.startsWith(`${item.href}/`);
           return (
             <Link
               key={item.href}
@@ -24,13 +44,7 @@ export function Sidebar() {
                   : "font-medium text-muted hover:bg-accent-soft/60"
               }`}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`/icons/${item.icon}.svg`}
-                alt=""
-                width={18}
-                height={18}
-              />
+              <NavIcon name={item.icon} />
               {item.label}
             </Link>
           );
