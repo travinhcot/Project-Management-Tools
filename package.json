@@ -1,10 +1,18 @@
 {
   "private": true,
+  "scripts": {
+    "dev": "bun run --filter @pmt/backend --filter frontend dev",
+    "dev:backend": "bun run --filter @pmt/backend dev",
+    "dev:frontend": "bun run --filter frontend dev",
+    "build": "bun run --filter frontend build",
+    "start": "bun run --filter @pmt/backend --filter frontend start"
+  },
   "workspaces": [
     "backend",
     "frontend"
   ],
   "dependencies": {
+    "concurrently": "^10.0.5",
     "express": "^5.2.1",
     "resend": "^6.32.0"
   }
