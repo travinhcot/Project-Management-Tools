@@ -10,6 +10,7 @@ import type {
   DeliveryState,
   Kickoff,
   MeetingEmailProject,
+  ProjectResourcesCampaign,
   SemesterEmails,
 } from "@/features/meeting-emails/models/meeting-email";
 import type { SemesterSummary } from "@/features/projects/models/project";
@@ -157,16 +158,34 @@ export async function getMeetingEmails(semesterId?: string): Promise<{
     semesterId: data.semester.id,
     size: "20",
   });
-  const [campaigns, links, demoCampaigns, { semesters }] = await Promise.all([
+  const resourcesParams = new URLSearchParams({
+    kind: "PROJECT_RESOURCES",
+    semesterId: data.semester.id,
+    size: String(PROJECT_LIMIT),
+  });
+  const [campaigns, links, demoCampaigns, resourceCampaigns, { semesters }] = await Promise.all([
     backendFetch<{ items: CampaignDto[] }>(`/api/admin/campaigns?${params}`),
     Promise.all(data.items.map((project) => fetchMeetingLink(project.id))),
     backendFetch<{ items: CampaignDto[] }>(`/api/admin/campaigns?${demoParams}`),
+    backendFetch<{ items: CampaignDto[] }>(`/api/admin/campaigns?${resourcesParams}`),
     getSemesters(),
   ]);
   const semesterLinks = semesters.find((row) => row.id === data.semester!.id);
   const sharedUrl = semesterLinks?.kickoffMeetingUrl ?? null;
   // Newest first; a cancelled demo email is as good as none.
   const demo = demoCampaigns.items.find((campaign) => campaign.status !== "CANCELLED");
+  // Newest first: keep one non-cancelled follow-up per project.
+  const projectResources: ProjectResourcesCampaign[] = [];
+  for (const campaign of resourceCampaigns.items) {
+    if (campaign.status === "CANCELLED" || !campaign.project_id) continue;
+    if (projectResources.some((item) => item.projectId === campaign.project_id)) continue;
+    projectResources.push({
+      id: campaign.id,
+      projectId: campaign.project_id,
+      state: CAMPAIGN_STATES[campaign.status] ?? "scheduled",
+      scheduledAt: campaign.scheduled_at,
+    });
+  }
   const campaignById = new Map(campaigns.items.map((campaign) => [campaign.id, campaign]));
 
   return {
@@ -189,6 +208,7 @@ export async function getMeetingEmails(semesterId?: string): Promise<{
       kickoffMeetingUrl: sharedUrl,
       demoRegistrationUrl: semesterLinks?.demoRegistrationUrl ?? null,
       demo: demo ? mapDemo(demo) : null,
+      projectResources,
     },
   };
 }

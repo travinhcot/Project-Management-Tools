@@ -67,6 +67,14 @@ export interface DemoCampaign {
   estimatedRecipients: number;
 }
 
+/** The follow-up "project resources" email of one project, sent after the kick-start. */
+export interface ProjectResourcesCampaign {
+  id: string;
+  projectId: string;
+  state: CampaignState;
+  scheduledAt: string | null;
+}
+
 /** Links and emails that belong to the whole semester rather than to one project. */
 export interface SemesterEmails {
   semesterId: string;
@@ -75,6 +83,8 @@ export interface SemesterEmails {
   demoRegistrationUrl: string | null;
   /** Latest demo campaign that was not cancelled; null when none exists. */
   demo: DemoCampaign | null;
+  /** Latest non-cancelled resources follow-up per project. */
+  projectResources: ProjectResourcesCampaign[];
 }
 
 export type SendStatusKey =

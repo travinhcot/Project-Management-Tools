@@ -41,12 +41,13 @@ interface SlotRule {
 const ALL: readonly ProjectType[] = PROJECT_TYPES;
 
 /**
- * GITHUB_REPO and DEMO_GUIDE are set after the kick-start date, so they are available
- * on every project but never counted as missing.
+ * FIRST_MEETING is usually the semester-wide kick-start link (an own link is only an
+ * override), so it is never counted as missing. GITHUB_REPO and DEMO_GUIDE are set after
+ * the kick-start date, so they are available on every project but never counted as missing.
  */
 export const SLOT_RULES: Readonly<Record<ResourceSlot, SlotRule>> = {
   SRS: { appliesTo: ALL, requiredFor: ALL },
-  FIRST_MEETING: { appliesTo: ALL, requiredFor: ALL },
+  FIRST_MEETING: { appliesTo: ALL, requiredFor: [] },
   BOM: { appliesTo: ["HARDWARE"], requiredFor: ["HARDWARE"] },
   RESEARCH_TEMPLATE: { appliesTo: ["RESEARCH"], requiredFor: ["RESEARCH"] },
   GITHUB_REPO: { appliesTo: ALL, requiredFor: [] },

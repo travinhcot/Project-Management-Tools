@@ -23,7 +23,7 @@ import { BADGE_WINDOW_DAYS } from "../model/portal.model.ts";
 
 export function createPortalService(
   repository: PortalRepository,
-  { resources }: PortalDependencies,
+  { resources, meetingUrl }: PortalDependencies,
   { allowPastSemesters = false }: PortalOptions = {},
 ) {
   async function guarded<T>(work: () => Promise<T>): Promise<T> {
@@ -139,15 +139,19 @@ export function createPortalService(
           .sort((a, b) => a.kickoff_at!.localeCompare(b.kickoff_at!));
         const comingUp: ComingUpItem[] = [];
         for (const item of upcoming) {
-          const meeting = item.resource_views.find(
+          const own = item.resource_views.find(
             (view) => view.slot === "FIRST_MEETING" && view.kind === "LINK",
           );
+          const url =
+            own && own.kind === "LINK"
+              ? own.url
+              : ((await meetingUrl?.(item.id).catch(() => null)) ?? null);
           comingUp.push({
-            kind: meeting ? "FIRST_MEETING" : "KICKOFF",
+            kind: url ? "FIRST_MEETING" : "KICKOFF",
             project_id: item.id,
             project_name: item.name,
             at: item.kickoff_at,
-            url: meeting && meeting.kind === "LINK" ? meeting.url : null,
+            url,
             file: null,
             download_url_path: null,
           });

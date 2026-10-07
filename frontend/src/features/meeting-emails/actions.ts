@@ -206,3 +206,36 @@ export async function scheduleKickoffForAll(
   revalidatePath("/projects");
   return { ok: true, done, failed };
 }
+
+/**
+ * One date for every project's follow-up "project resources" email: projects without an active
+ * email get one scheduled, scheduled ones are moved. Sending or sent ones are left alone.
+ */
+export async function scheduleProjectResourcesForAll(
+  targets: { projectId: string; name: string; campaignId: string | null }[],
+  date: string,
+): Promise<ActionResult<{ done: number; failed: { name: string; message: string }[] }>> {
+  let done = 0;
+  const failed: { name: string; message: string }[] = [];
+  for (const target of targets) {
+    try {
+      if (target.campaignId) {
+        await backendFetch(`/api/admin/campaigns/${target.campaignId}`, {
+          method: "PATCH",
+          body: { scheduled_at: date },
+        });
+      } else {
+        await backendFetch(`/api/admin/projects/${target.projectId}/resources-campaign`, {
+          method: "POST",
+          body: { scheduled_at: date },
+        });
+      }
+      done += 1;
+    } catch (error) {
+      if (!(error instanceof ApiError)) throw error;
+      failed.push({ name: target.name, message: error.message });
+    }
+  }
+  revalidatePath(PATH);
+  return { ok: true, done, failed };
+}

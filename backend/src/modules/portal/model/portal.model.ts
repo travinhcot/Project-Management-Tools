@@ -200,6 +200,8 @@ export interface ResourceGateway {
 
 export interface PortalDependencies {
   readonly resources: ResourceGateway;
+  /** Kick-start meeting link for a project (own link, else the semester's shared one). */
+  readonly meetingUrl?: (projectId: string) => Promise<string | null>;
 }
 
 export interface PortalOptions {

@@ -34,7 +34,7 @@ export interface RawSummary {
     readonly research: number;
   };
   readonly upcoming_campaigns?: readonly (RawItem & {
-    readonly kind: "KICKOFF" | "DEMO";
+    readonly kind: "KICKOFF" | "DEMO" | "PROJECT_RESOURCES";
     readonly project_id: string | null;
     readonly scheduled_at: string;
     readonly overdue: boolean;

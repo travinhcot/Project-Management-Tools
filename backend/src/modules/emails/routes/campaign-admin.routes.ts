@@ -14,6 +14,10 @@ export function createCampaignAdminRouter(service: CampaignService) {
   });
   router.use(adminOnly);
   router.post("/projects/:projectId/kickoff-campaign", controller.scheduleKickoff);
+  router.post(
+    "/projects/:projectId/resources-campaign",
+    controller.scheduleProjectResources,
+  );
   router.post("/semesters/:semesterId/demo-campaign", controller.scheduleDemo);
   router.get("/campaigns", controller.list);
   router.get("/campaigns/:campaignId", controller.get);
