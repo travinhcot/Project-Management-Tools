@@ -1,92 +1,147 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { Button } from "@/shared/components/Button";
 import { SemesterBadge } from "@/shared/components/SemesterBadge";
 import { ImportRosterModal } from "@/features/members/components/import/ImportRosterModal";
 import { MemberCard } from "@/features/members/components/MemberCard";
 import { MembersToolbar } from "@/features/members/components/MembersToolbar";
-import type { Member } from "@/features/members/models/member";
-import type { SemesterSummary } from "@/features/projects/models/project";
-import { normalizeText } from "@/features/projects/utils/format";
+import type { MemberFilters, MemberListPage } from "@/features/members/models/member";
 
+// Filters live in the URL and the list is fetched by the server component; committing an
+// import revalidates the route, so this page keeps no copy of the members.
 export function MembersPage({
-  semester,
-  initialMembers,
+  list,
+  filters,
 }: {
-  semester: SemesterSummary;
-  initialMembers: Member[];
+  list: MemberListPage;
+  filters: MemberFilters;
 }) {
-  const [members, setMembers] = useState(initialMembers);
-  const [query, setQuery] = useState("");
-  const [department, setDepartment] = useState("all");
+  const router = useRouter();
+  const pathname = usePathname();
+  const { semester, items: members } = list;
+  const [search, setSearch] = useState(filters.search);
   const [importing, setImporting] = useState(false);
 
-  // A member is an active roster entry; deactivated ones drop out of the grid.
-  const visible = useMemo(() => {
-    const needle = normalizeText(query.trim());
-    return members.filter((member) => {
-      if (member.status !== "active") return false;
-      if (department !== "all" && member.department !== department) return false;
-      if (!needle) return true;
-      return normalizeText(`${member.fullName} ${member.email}`).includes(needle);
-    });
-  }, [members, query, department]);
+  function navigate(next: Partial<MemberFilters>) {
+    const merged = { ...filters, page: 1, ...next };
+    const params = new URLSearchParams();
+    if (merged.search) params.set("q", merged.search);
+    if (merged.status !== "active") params.set("status", merged.status);
+    if (merged.page > 1) params.set("page", String(merged.page));
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  }
+
+  // Debounce typing into the URL; skip when the box already matches it.
+  useEffect(() => {
+    const trimmed = search.trim();
+    if (trimmed === filters.search) return;
+    const timer = setTimeout(() => navigate({ search: trimmed }), 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
+
+  const pageCount = Math.max(1, Math.ceil(list.total / list.size));
+  const hasFilters = filters.search !== "" || filters.status !== "active";
 
   return (
     <div className="flex flex-col gap-[22px]">
-      <p className="whitespace-pre text-[13px] font-medium text-muted">
+      <p className="whitespace-pre-wrap break-words text-[13px] font-medium text-muted">
         {"Workspace  /  Project Management  /  Members"}
       </p>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="flex min-w-0 flex-col gap-1">
           <h1 className="text-[30px] font-bold text-ink">Members</h1>
           <p className="text-sm text-muted">
-            Browse the {semester.name} roster and member contact details.
+            {semester
+              ? `Browse the ${semester.name} roster and member contact details.`
+              : "Browse the roster and member contact details."}
           </p>
         </div>
-        <SemesterBadge name={semester.name} active={semester.active} />
+        {semester && <SemesterBadge name={semester.name} active={semester.active} />}
       </div>
 
-      <MembersToolbar
-        query={query}
-        onQueryChange={setQuery}
-        department={department}
-        onDepartmentChange={setDepartment}
-        onImport={() => setImporting(true)}
-      />
-
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-sm font-semibold text-ink" aria-live="polite">
-          {visible.length} {visible.length === 1 ? "member" : "members"}
-        </p>
-        <p className="text-xs font-medium text-muted">{semester.name}</p>
-      </div>
-
-      {visible.length > 0 ? (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {visible.map((member) => (
-            <MemberCard key={member.id} member={member} />
-          ))}
-        </div>
+      {!semester ? (
+        <section className="flex flex-col items-start gap-2 rounded-[10px] border border-line bg-surface p-5">
+          <h2 className="text-lg font-semibold text-ink">No current semester</h2>
+          <p className="text-[13px] text-muted">
+            Set a current semester to see and import its roster.
+          </p>
+          <Link href="/semesters" className="text-[13px] font-semibold text-accent">
+            Go to semesters →
+          </Link>
+        </section>
       ) : (
-        <div className="rounded-[10px] border border-line bg-surface p-8 text-center">
-          <p className="text-[15px] font-semibold text-ink">
-            No members match your filters
-          </p>
-          <p className="mt-1 text-xs text-muted">
-            Try a different name, email or department.
-          </p>
-        </div>
+        <>
+          <MembersToolbar
+            query={search}
+            onQueryChange={setSearch}
+            status={filters.status}
+            onStatusChange={(value) => navigate({ status: value as MemberFilters["status"] })}
+            onImport={() => setImporting(true)}
+          />
+
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+            <p className="text-sm font-semibold text-ink" aria-live="polite">
+              {list.total} {list.total === 1 ? "member" : "members"}
+            </p>
+            <p className="text-xs font-medium text-muted">{semester.name}</p>
+          </div>
+
+          {members.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {members.map((member) => (
+                <MemberCard key={member.id} member={member} />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[10px] border border-line bg-surface p-8 text-center">
+              <p className="text-[15px] font-semibold text-ink">
+                {hasFilters ? "No members match your filters" : "No members yet"}
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                {hasFilters
+                  ? "Try a different name, email or status."
+                  : "Import a roster CSV to add members."}
+              </p>
+            </div>
+          )}
+
+          {pageCount > 1 && (
+            <nav
+              aria-label="Pagination"
+              className="flex flex-wrap items-center justify-between gap-3 sm:justify-end"
+            >
+              <span className="mr-auto text-xs text-muted sm:mr-0">
+                Page {list.page} of {pageCount}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={list.page <= 1}
+                onClick={() => navigate({ page: list.page - 1 })}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={list.page >= pageCount}
+                onClick={() => navigate({ page: list.page + 1 })}
+              >
+                Next
+              </Button>
+            </nav>
+          )}
+        </>
       )}
 
-      {importing && (
-        <ImportRosterModal
-          semester={semester}
-          members={members}
-          onClose={() => setImporting(false)}
-          onCommit={setMembers}
-        />
+      {semester && importing && (
+        <ImportRosterModal semester={semester} onClose={() => setImporting(false)} />
       )}
     </div>
   );

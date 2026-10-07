@@ -59,7 +59,7 @@ export function ArchiveProjectDrawer({
       subtitle={`${semester.label}  ·  ${projectTypeMeta[project.type].label}`}
       onClose={onClose}
     >
-      <div className="flex gap-2.5">
+      <div className="flex flex-wrap gap-2.5">
         <div className="flex flex-1 flex-col gap-0.5 rounded-[10px] bg-chrome p-3">
           <span className="text-[22px] font-bold text-danger">
             {impact ? members : "–"}
@@ -115,7 +115,7 @@ export function ArchiveProjectDrawer({
         member access.
       </p>
 
-      <div className="flex gap-2.5">
+      <div className="flex flex-wrap gap-2.5">
         <Button variant="outline" onClick={onClose} disabled={pending}>
           Cancel
         </Button>

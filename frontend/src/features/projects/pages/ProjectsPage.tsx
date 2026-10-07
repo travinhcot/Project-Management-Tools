@@ -111,12 +111,12 @@ export function ProjectsPage({
 
   return (
     <div className="flex flex-col gap-[22px]">
-      <p className="whitespace-pre text-[13px] font-medium text-muted">
+      <p className="whitespace-pre-wrap break-words text-[13px] font-medium text-muted">
         {"Workspace  /  Project Management  /  Projects"}
       </p>
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="flex min-w-0 flex-col gap-1">
           <h1 className="text-[30px] font-bold text-ink">Projects</h1>
           <p className="text-sm text-muted">
             Track every project, its team, status, and setup resources.
@@ -149,7 +149,7 @@ export function ProjectsPage({
             onCreate={() => open({ kind: "create" })}
           />
 
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
             <p className="text-sm font-semibold text-ink" aria-live="polite">
               {list.total} {list.total === 1 ? "project" : "projects"}
             </p>
@@ -185,8 +185,8 @@ export function ProjectsPage({
           )}
 
           {pageCount > 1 && (
-            <nav aria-label="Pagination" className="flex items-center justify-end gap-3">
-              <span className="text-xs text-muted">
+            <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3 sm:justify-end">
+              <span className="mr-auto text-xs text-muted sm:mr-0">
                 Page {list.page} of {pageCount}
               </span>
               <Button

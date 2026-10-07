@@ -1,5 +1,3 @@
-import type { OtherInfo } from "../../../shared/roster-rules.ts";
-
 export const ROSTER_STATUSES = ["ACTIVE", "INACTIVE"] as const;
 export type RosterStatus = (typeof ROSTER_STATUSES)[number];
 
@@ -9,9 +7,7 @@ export interface RosterMember {
   readonly user_id: string | null;
   readonly email: string;
   readonly full_name: string;
-  readonly other_info: OtherInfo & Record<string, unknown>;
-  readonly department: string | null;
-  readonly birth_year: number | null;
+  readonly major: string | null;
   readonly status: RosterStatus;
   readonly deactivated_at: string | null;
   readonly deactivation_reason: string | null;
@@ -30,8 +26,6 @@ export interface RosterListQuery {
   readonly search?: string;
   readonly status?: RosterStatus;
   readonly linked?: boolean;
-  readonly department?: string;
-  readonly birthYear?: number;
   readonly page: number;
   readonly size: number;
 }
@@ -39,16 +33,12 @@ export interface RosterListQuery {
 export interface RosterMemberCreate {
   readonly email: string;
   readonly full_name: string;
-  readonly other_info: OtherInfo;
-  readonly department: string | null;
-  readonly birth_year: number | null;
+  readonly major: string | null;
 }
 
 export interface RosterMemberChanges {
   readonly full_name?: string;
-  readonly other_info?: OtherInfo;
-  readonly department?: string | null;
-  readonly birth_year?: number | null;
+  readonly major?: string | null;
   readonly status?: RosterStatus;
   readonly deactivation_reason?: string | null;
 }

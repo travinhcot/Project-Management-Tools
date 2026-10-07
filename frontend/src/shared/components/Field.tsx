@@ -5,7 +5,7 @@ import type {
 } from "react";
 
 export const controlClass =
-  "w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-[13px] text-ink outline-none placeholder:text-placeholder focus:border-primary focus:ring-2 focus:ring-primary/20";
+  "w-full rounded-lg border border-line bg-surface px-3 py-2.5 text-base text-ink outline-none sm:text-[13px] placeholder:text-placeholder focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 export function Field({
   label,
@@ -70,7 +70,7 @@ export function SelectBox({
     <div
       className={`relative rounded-lg border border-line bg-surface focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 ${className}`}
     >
-      <span className="pointer-events-none block whitespace-pre px-3 py-[11px] text-[13px] font-medium text-ink">
+      <span className="pointer-events-none block truncate whitespace-pre px-3 py-[11px] text-[13px] font-medium text-ink">
         {current?.label}
         {"  ▾"}
       </span>

@@ -13,7 +13,7 @@ const variants = {
 
 const sizes = {
   md: "px-[18px] py-[11px] text-[13px]",
-  sm: "h-[30px] px-2.5 text-xs",
+  sm: "h-9 px-2.5 text-xs sm:h-[30px]",
 } as const;
 
 export function Button({

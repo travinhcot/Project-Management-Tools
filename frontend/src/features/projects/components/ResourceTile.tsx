@@ -6,7 +6,7 @@ type ResourceTileProps = {
   | { state: "na"; value: string; note: string }
 );
 
-const base = "flex h-[142px] flex-col items-start gap-3 rounded-lg p-3 text-left";
+const base = "flex min-h-[96px] flex-col items-start gap-3 sm:min-h-[142px] rounded-lg p-3 text-left";
 
 export function ResourceTile(props: ResourceTileProps) {
   const heading = (
@@ -36,7 +36,7 @@ export function ResourceTile(props: ResourceTileProps) {
       >
         {props.value}
       </span>
-      <span className="whitespace-pre text-[11px] font-medium text-accent">
+      <span className="whitespace-pre-wrap text-[11px] font-medium text-accent">
         {missing ? "Add details  →" : "View / edit  →"}
       </span>
     </button>

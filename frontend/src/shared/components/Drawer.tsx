@@ -30,15 +30,15 @@ export function Drawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex h-full w-[460px] max-w-full flex-col gap-4 overflow-y-auto rounded-l-[10px] border border-line bg-surface p-6"
+        className="relative flex h-dvh w-full max-w-[460px] flex-col gap-4 overflow-y-auto rounded-l-[10px] border border-line bg-surface p-4 sm:p-6"
       >
         <div className="flex items-start justify-between gap-4">
-          <div className="flex flex-col gap-[3px]">
-            <h2 id={titleId} className="text-xl font-semibold text-ink">
+          <div className="flex min-w-0 flex-col gap-[3px]">
+            <h2 id={titleId} className="break-words text-xl font-semibold text-ink">
               {title}
             </h2>
             {subtitle && (
-              <p className="whitespace-pre text-xs font-medium text-muted">
+              <p className="whitespace-pre-wrap break-words text-xs font-medium text-muted">
                 {subtitle}
               </p>
             )}
@@ -47,7 +47,7 @@ export function Drawer({
             type="button"
             aria-label="Close"
             onClick={onClose}
-            className="text-2xl leading-none text-muted hover:text-ink"
+            className="-m-2 shrink-0 p-2 text-2xl leading-none text-muted hover:text-ink"
           >
             ×
           </button>

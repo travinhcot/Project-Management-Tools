@@ -154,7 +154,7 @@ export function ProjectFormDrawer(props: Props) {
               : undefined
           }
         >
-          <div role="radiogroup" aria-label="Type" className="flex gap-2">
+          <div role="radiogroup" aria-label="Type" className="flex flex-wrap gap-2">
             {TYPES.map((option) => {
               const selected = type === option.value;
               return (
@@ -222,7 +222,7 @@ export function ProjectFormDrawer(props: Props) {
           </p>
         )}
 
-        <div className="flex gap-2.5">
+        <div className="flex flex-wrap gap-2.5">
           {editing ? (
             <>
               <Button variant="outline" onClick={handleReload} disabled={pending}>

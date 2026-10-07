@@ -3,19 +3,13 @@
 import { useState } from "react";
 import { Button } from "@/shared/components/Button";
 import { Modal } from "@/shared/components/Modal";
+import { commitImport, uploadRosterImport } from "@/features/members/actions";
 import { ImportDropzone } from "@/features/members/components/import/ImportDropzone";
 import { ImportReview } from "@/features/members/components/import/ImportReview";
-import type { Member } from "@/features/members/models/member";
+import type { ImportSummary } from "@/features/members/models/member";
 import type { SemesterSummary } from "@/features/projects/models/project";
 import { formatKickoff } from "@/features/projects/utils/format";
-import {
-  applyImport,
-  buildPreview,
-  validateCsvFile,
-  type ImportPreview,
-} from "@/features/members/utils/roster-import";
-
-type Loaded = { file: File; preview: ImportPreview; uploadedAt: string };
+import { validateCsvFile } from "@/features/members/utils/roster-import";
 
 function Stepper({ step }: { step: 1 | 2 }) {
   const items = [
@@ -24,7 +18,7 @@ function Stepper({ step }: { step: 1 | 2 }) {
     { n: 3, label: "Commit" },
   ];
   return (
-    <ol aria-label="Import steps" className="flex items-center gap-2.5">
+    <ol aria-label="Import steps" className="flex flex-wrap items-center gap-2.5">
       {items.map((item, index) => {
         const done = item.n < step;
         const active = item.n === step;
@@ -55,108 +49,124 @@ function Stepper({ step }: { step: 1 | 2 }) {
   );
 }
 
-// Commit only changes local state until the roster import API is wired.
+// Upload, review and commit all run against the backend; the preview lives there for 30 minutes.
 export function ImportRosterModal({
   semester,
-  members,
   onClose,
-  onCommit,
 }: {
   semester: SemesterSummary;
-  members: Member[];
   onClose: () => void;
-  onCommit: (members: Member[]) => void;
 }) {
-  const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const [summary, setSummary] = useState<ImportSummary | null>(null);
+  const [ignoredColumns, setIgnoredColumns] = useState<string[]>([]);
   const [error, setError] = useState<string>();
-  const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [committing, setCommitting] = useState(false);
   const [deactivateMissing, setDeactivateMissing] = useState(false);
 
   async function handleFile(file: File) {
     const problem = validateCsvFile(file);
     if (problem) return setError(problem);
-    setBusy(true);
+    setUploading(true);
     setError(undefined);
     try {
-      const result = buildPreview(await file.text(), members);
-      if (!result.ok) return setError(result.error);
+      const data = new FormData();
+      data.set("file", file);
+      const result = await uploadRosterImport(semester.id, data);
+      if (!result.ok) return setError(result.message);
       setDeactivateMissing(false);
-      setLoaded({
-        file,
-        preview: result.preview,
-        uploadedAt: formatKickoff(new Date().toISOString()),
-      });
+      setIgnoredColumns(result.ignoredColumns);
+      setSummary(result.summary);
     } catch {
-      setError("We couldn't read that file. Try exporting it as CSV again.");
+      setError("We couldn't upload that file. Try again.");
     } finally {
-      setBusy(false);
+      setUploading(false);
+    }
+  }
+
+  async function handleCommit() {
+    if (!summary) return;
+    setCommitting(true);
+    setError(undefined);
+    try {
+      const result = await commitImport(summary.id, deactivateMissing);
+      if (result.ok) return onClose();
+      setError(result.message);
+    } finally {
+      setCommitting(false);
     }
   }
 
   function discard() {
-    setLoaded(null);
+    setSummary(null);
+    setIgnoredColumns([]);
     setError(undefined);
   }
 
-  const usable = loaded ? loaded.preview.counts.new + loaded.preview.counts.update : 0;
+  const usable = summary ? summary.validRows + summary.updateRows : 0;
 
   return (
     <Modal
       title="Import roster"
       subtitle={
-        loaded
+        summary
           ? `Check every row before it changes the ${semester.name} roster.`
           : `Upload a CSV to add or update members in the ${semester.name} roster.`
       }
       onClose={onClose}
     >
-      <Stepper step={loaded ? 2 : 1} />
+      <Stepper step={summary ? 2 : 1} />
 
-      {loaded ? (
+      {summary ? (
         <>
           <div className="flex flex-wrap items-center gap-3 rounded-[10px] border border-line bg-surface p-[18px]">
             <div className="flex min-w-0 flex-col gap-0.5">
-              <p className="break-all text-[15px] font-semibold text-ink">
-                {loaded.file.name}
-              </p>
+              <p className="break-all text-[15px] font-semibold text-ink">{summary.filename}</p>
               <p className="text-xs text-muted">
-                Uploaded {loaded.uploadedAt} · {semester.label}
+                Uploaded {formatKickoff(summary.createdAt)} · {semester.label}
               </p>
             </div>
-            <span className="ml-auto inline-flex rounded-full bg-amber-soft px-2.5 py-1 text-xs font-semibold text-warn-text">
-              Preview expires in 30 min
+            <span className="inline-flex rounded-full bg-amber-soft px-2.5 py-1 text-xs font-semibold text-warn-text sm:ml-auto">
+              Preview expires {formatKickoff(summary.expiresAt)} UTC
             </span>
           </div>
 
+          {ignoredColumns.length > 0 && (
+            <p className="rounded-[10px] bg-accent-soft p-3 text-xs text-info-text">
+              Ignored columns: {ignoredColumns.join(", ")}.
+            </p>
+          )}
+
           <ImportReview
-            preview={loaded.preview}
+            summary={summary}
             deactivateMissing={deactivateMissing}
             onDeactivateMissingChange={setDeactivateMissing}
           />
 
+          {error && (
+            <p role="alert" className="text-xs font-medium text-danger">
+              {error}
+            </p>
+          )}
+
           <div className="flex flex-wrap items-center gap-3">
             <p className="text-[13px] text-muted">
-              Invalid and duplicate rows are skipped. Nothing changes until you
-              commit.
+              Invalid and duplicate rows are skipped. Nothing changes until you commit.
             </p>
-            <div className="ml-auto flex gap-3">
-              <Button variant="outline" onClick={discard}>
+            <div className="flex flex-wrap gap-3 sm:ml-auto">
+              <Button variant="outline" onClick={discard} disabled={committing}>
                 Discard preview
               </Button>
-              <Button
-                disabled={usable === 0}
-                onClick={() => {
-                  onCommit(applyImport(members, loaded.preview, deactivateMissing));
-                  onClose();
-                }}
-              >
-                Commit {usable} {usable === 1 ? "row" : "rows"}
+              <Button disabled={usable === 0 || committing} onClick={handleCommit}>
+                {committing
+                  ? "Committing…"
+                  : `Commit ${usable} ${usable === 1 ? "row" : "rows"}`}
               </Button>
             </div>
           </div>
         </>
       ) : (
-        <ImportDropzone busy={busy} error={error} onFile={handleFile} />
+        <ImportDropzone busy={uploading} error={error} onFile={handleFile} />
       )}
     </Modal>
   );

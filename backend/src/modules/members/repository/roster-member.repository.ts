@@ -6,6 +6,24 @@ import type {
   RosterMemberCreate,
 } from "../model/roster-member.model.ts";
 
+/** Keeps only the roster fields the API exposes (the table still has older columns). */
+function toRosterMember(row: RosterMember): RosterMember {
+  return {
+    id: row.id,
+    semester_id: row.semester_id,
+    user_id: row.user_id,
+    email: row.email,
+    full_name: row.full_name,
+    major: row.major,
+    status: row.status,
+    deactivated_at: row.deactivated_at,
+    deactivation_reason: row.deactivation_reason,
+    last_import_id: row.last_import_id,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
 export function createRosterMemberRepository(client: SupabaseClient) {
   return {
     async list(
@@ -16,13 +34,15 @@ export function createRosterMemberRepository(client: SupabaseClient) {
         p_search: query.search ?? null,
         p_status: query.status ?? null,
         p_linked: query.linked ?? null,
-        p_department: query.department ?? null,
-        p_birth_year: query.birthYear ?? null,
+        p_department: null,
+        p_birth_year: null,
         p_limit: query.size,
         p_offset: (query.page - 1) * query.size,
       });
       if (error) throw error;
       const rows = (data ?? []) as (RosterMember & { total_count: number })[];
+      const pick = ({ total_count: _total, ...member }: RosterMember & { total_count: number }) =>
+        toRosterMember(member);
       let total = rows[0]?.total_count ?? 0;
       if (rows.length === 0 && query.page > 1) {
         // Past the last page the window count has no row to ride on; ask for the first row.
@@ -33,8 +53,8 @@ export function createRosterMemberRepository(client: SupabaseClient) {
             p_search: query.search ?? null,
             p_status: query.status ?? null,
             p_linked: query.linked ?? null,
-            p_department: query.department ?? null,
-            p_birth_year: query.birthYear ?? null,
+            p_department: null,
+            p_birth_year: null,
             p_limit: 1,
             p_offset: 0,
           },
@@ -44,7 +64,7 @@ export function createRosterMemberRepository(client: SupabaseClient) {
           ((first ?? []) as { total_count: number }[])[0]?.total_count ?? 0;
       }
       return {
-        rows: rows.map(({ total_count: _total, ...member }) => member),
+        rows: rows.map(pick),
         total,
       };
     },
@@ -60,13 +80,14 @@ export function createRosterMemberRepository(client: SupabaseClient) {
         p_semester_id: input.semesterId,
         p_email: input.member.email,
         p_full_name: input.member.full_name,
-        p_other_info: input.member.other_info,
-        p_department: input.member.department,
-        p_birth_year: input.member.birth_year,
+        p_other_info: {},
+        p_department: null,
+        p_birth_year: null,
+        p_major: input.member.major,
         p_request_id: input.requestId,
       });
       if (error) throw error;
-      return data as RosterMember;
+      return toRosterMember(data as RosterMember);
     },
 
     async update(input: {
@@ -82,16 +103,7 @@ export function createRosterMemberRepository(client: SupabaseClient) {
         p_request_id: input.requestId,
       });
       if (error) throw error;
-      return data as RosterMember;
-    },
-
-    async departments(semesterId: string): Promise<string[]> {
-      const { data, error } = await client.rpc(
-        "admin_list_roster_departments",
-        { p_semester_id: semesterId },
-      );
-      if (error) throw error;
-      return ((data ?? []) as { department: string }[]).map((r) => r.department);
+      return toRosterMember(data as RosterMember);
     },
 
     async countActive(semesterId: string): Promise<number> {
@@ -109,18 +121,18 @@ export function createRosterMemberRepository(client: SupabaseClient) {
     ): Promise<
       Pick<
         RosterMember,
-        "id" | "full_name" | "email" | "status" | "department" | "birth_year"
+        "id" | "full_name" | "email" | "status"
       >[]
     > {
       if (ids.length === 0) return [];
       const { data, error } = await client
         .from("roster_members")
-        .select("id,full_name,email,status,department,birth_year")
+        .select("id,full_name,email,status")
         .in("id", [...ids]);
       if (error) throw error;
       return (data ?? []) as Pick<
         RosterMember,
-        "id" | "full_name" | "email" | "status" | "department" | "birth_year"
+        "id" | "full_name" | "email" | "status"
       >[];
     },
 

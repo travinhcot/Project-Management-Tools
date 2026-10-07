@@ -117,7 +117,7 @@ export function BomFileDrawer({
 
       <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
         <Field label="Source">
-          <div role="radiogroup" aria-label="Source" className="flex gap-2">
+          <div role="radiogroup" aria-label="Source" className="flex flex-wrap gap-2">
             {SOURCES.map((option) => {
               const selected = source === option.value;
               return (
@@ -208,7 +208,7 @@ export function BomFileDrawer({
             {error}
           </p>
         )}
-        <div className="flex gap-2.5">
+        <div className="flex flex-wrap gap-2.5">
           <Button variant="outline" onClick={onClose} disabled={busy}>
             Cancel
           </Button>

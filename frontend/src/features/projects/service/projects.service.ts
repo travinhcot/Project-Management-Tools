@@ -151,7 +151,6 @@ interface ProjectMemberDto {
   full_name: string;
   email: string;
   roster_status: "ACTIVE" | "INACTIVE";
-  department: string | null;
   role: "LEADER" | "MEMBER";
 }
 
@@ -160,7 +159,6 @@ export function mapProjectMember(dto: ProjectMemberDto): ProjectMember {
     rosterMemberId: dto.roster_member_id,
     fullName: dto.full_name,
     email: dto.email,
-    department: dto.department,
     role: dto.role,
     active: dto.roster_status === "ACTIVE",
   };
@@ -183,12 +181,11 @@ export async function fetchRosterCandidates(
   const params = new URLSearchParams({ status: "ACTIVE", size: String(CANDIDATE_LIMIT) });
   if (search) params.set("search", search);
   const { items } = await backendFetch<{
-    items: { id: string; full_name: string; email: string; department: string | null }[];
+    items: { id: string; full_name: string; email: string }[];
   }>(`/api/admin/semesters/${semesterId}/roster?${params}`);
   return items.map((item) => ({
     id: item.id,
     fullName: item.full_name,
     email: item.email,
-    department: item.department,
   }));
 }

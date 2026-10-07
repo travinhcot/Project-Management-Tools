@@ -304,7 +304,6 @@ async function main() {
           email: "admin.depttech@example.com",
           normalized_email: "admin.depttech@example.com",
           full_name: "Dept Tech Admin",
-          other_info: { student_id: "ADMIN-SEED", track: "Management" },
           status: "ACTIVE",
         },
         {
@@ -314,7 +313,6 @@ async function main() {
           email: "alice.nguyen@example.com",
           normalized_email: "alice.nguyen@example.com",
           full_name: "Alice Nguyen",
-          other_info: { student_id: "S4000001", track: "Software" },
           status: "ACTIVE",
         },
         {
@@ -324,7 +322,6 @@ async function main() {
           email: "bob.tran@example.com",
           normalized_email: "bob.tran@example.com",
           full_name: "Bob Tran",
-          other_info: { student_id: "S4000002", track: "Software" },
           status: "ACTIVE",
         },
         {
@@ -334,7 +331,6 @@ async function main() {
           email: "charlie.le@example.com",
           normalized_email: "charlie.le@example.com",
           full_name: "Charlie Le",
-          other_info: { student_id: "S4000003", track: "Hardware" },
           status: "ACTIVE",
         },
         {
@@ -344,7 +340,6 @@ async function main() {
           email: "not-signed-in-yet@example.com",
           normalized_email: "not-signed-in-yet@example.com",
           full_name: "Unlinked Seed Member",
-          other_info: { student_id: "S4000004", track: "Hardware" },
           status: "ACTIVE",
         },
       ],

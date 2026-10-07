@@ -84,8 +84,6 @@ export interface ProjectMemberView {
   readonly full_name: string;
   readonly email: string;
   readonly roster_status: "ACTIVE" | "INACTIVE";
-  readonly department: string | null;
-  readonly birth_year: number | null;
   readonly role: MemberRole;
   readonly added_at: string;
 }
@@ -134,8 +132,6 @@ export interface RosterMemberRef {
   readonly full_name: string;
   readonly email: string;
   readonly status: "ACTIVE" | "INACTIVE";
-  readonly department: string | null;
-  readonly birth_year: number | null;
 }
 
 /** Implemented by the members module. */

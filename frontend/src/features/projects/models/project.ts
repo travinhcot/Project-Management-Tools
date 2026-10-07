@@ -101,7 +101,6 @@ export interface ProjectMember {
   rosterMemberId: string;
   fullName: string;
   email: string;
-  department: string | null;
   role: MemberRole;
   /** False when the roster entry was deactivated after the assignment. */
   active: boolean;
@@ -112,5 +111,4 @@ export interface RosterCandidate {
   id: string;
   fullName: string;
   email: string;
-  department: string | null;
 }

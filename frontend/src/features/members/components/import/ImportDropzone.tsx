@@ -80,7 +80,7 @@ export function ImportDropzone({
         </button>
         <p className="text-[15px] font-semibold text-ink">
           {busy
-            ? "Reading file…"
+            ? "Uploading…"
             : dragging
               ? "Drop the file to upload"
               : "Drag your roster CSV here"}
@@ -97,8 +97,10 @@ export function ImportDropzone({
       )}
 
       <p className="rounded-[10px] bg-accent-soft p-3 text-xs text-info-text">
-        CSV up to 1 MB. Required columns: Full Name, Email. Optional: Department
-        (Software or Hardware), Birth Year. Nothing changes until you review the
+        CSV up to 1 MB and 5,000 rows, UTF-8. Required columns: Full Name, Email.
+        Optional: Major. Other columns are ignored. Column names
+        must match exactly, for example &ldquo;Full Name&rdquo;. A repeated email
+        marks every copy as a duplicate. Nothing changes until you review the
         rows and commit.
       </p>
     </div>

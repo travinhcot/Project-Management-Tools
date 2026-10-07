@@ -100,50 +100,42 @@ describe("send now", () => {
   });
 });
 
-describe("roster department and birth year", () => {
-  it("reads both on create and trims the department", () => {
+describe("roster major", () => {
+  it("reads and trims the major on create", () => {
     const member = createRosterMemberBody({
       email: "a@example.com",
       full_name: "A",
-      department: "  Software  ",
-      birth_year: 2003,
+      major: "  Robotics  ",
     });
-    assert.equal(member.department, "Software");
-    assert.equal(member.birth_year, 2003);
+    assert.equal(member.major, "Robotics");
+    assert.equal(createRosterMemberBody({ email: "a@example.com", full_name: "A" }).major, null);
   });
 
-  it("rejects an out-of-range or non-integer birth year", () => {
+  it("rejects fields that are no longer part of the roster", () => {
     const body = { email: "a@example.com", full_name: "A" };
-    assert.throws(() => createRosterMemberBody({ ...body, birth_year: 1800 }), badRequest);
-    assert.throws(() => createRosterMemberBody({ ...body, birth_year: "2003" }), badRequest);
+    assert.throws(() => createRosterMemberBody({ ...body, department: "Software" }), badRequest);
+    assert.throws(() => createRosterMemberBody({ ...body, birth_year: 2003 }), badRequest);
+    assert.throws(() => createRosterMemberBody({ ...body, other_info: {} }), badRequest);
+    assert.throws(() => listRosterQuery(SEMESTER, { department: "Software" }), badRequest);
   });
 
-  it("filters the list by department and birth_year", () => {
-    const query = listRosterQuery(SEMESTER, { department: "Software", birth_year: "2003" });
-    assert.equal(query.department, "Software");
-    assert.equal(query.birthYear, 2003);
-    assert.throws(() => listRosterQuery(SEMESTER, { birth_year: "abc" }), badRequest);
-  });
-
-  it("imports the optional department and birth year columns", () => {
-    const { rows } = parseRosterCsv(
+  it("imports the optional major column and ignores the removed ones", () => {
+    const { rows, ignored_columns } = parseRosterCsv(
       [
-        "Full Name,Email,Department,Birth Year",
-        "Alice,alice@example.com,Software,2003",
-        "Bob,bob@example.com,,",
-        "Cy,cy@example.com,Hardware,1700",
+        "Full Name,Email,Major,Department,Birth Year,Student ID",
+        "Alice,alice@example.com,Robotics,Software,2003,S1",
+        "Bob,bob@example.com,,,,",
       ].join("\n"),
     );
-    assert.equal(rows[0]?.department, "Software");
-    assert.equal(rows[0]?.birth_year, 2003);
-    assert.equal(rows[1]?.department, null);
-    assert.equal(rows[1]?.birth_year, null);
-    assert.equal(rows[2]?.status, "INVALID");
+    assert.equal(rows[0]?.major, "Robotics");
+    assert.equal(rows[1]?.major, null);
+    assert.equal(rows[0]?.status, "VALID");
+    assert.deepEqual(ignored_columns, ["Department", "Birth Year", "Student ID"]);
   });
 
-  it("still imports files without the new columns", () => {
+  it("still imports files without a major column", () => {
     const { rows } = parseRosterCsv("Full Name,Email\nAlice,alice@example.com");
     assert.equal(rows[0]?.status, "VALID");
-    assert.equal(rows[0]?.department, null);
+    assert.equal(rows[0]?.major, null);
   });
 });

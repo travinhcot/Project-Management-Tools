@@ -1,5 +1,3 @@
-import type { OtherInfo } from "../../../shared/roster-rules.ts";
-
 export const IMPORT_ROW_STATUSES = [
   "VALID",
   "UPDATE",
@@ -14,9 +12,7 @@ export interface ImportRowInput {
   readonly row_number: number;
   readonly full_name: string;
   readonly email: string;
-  readonly other_info: OtherInfo;
-  readonly department: string | null;
-  readonly birth_year: number | null;
+  readonly major: string | null;
   readonly status: "VALID" | "INVALID" | "DUPLICATE";
   readonly errors: readonly string[];
 }
@@ -52,9 +48,7 @@ export interface ImportRowView {
   readonly row_number: number;
   readonly full_name: string | null;
   readonly email: string | null;
-  readonly other_info: OtherInfo;
-  readonly department: string | null;
-  readonly birth_year: number | null;
+  readonly major: string | null;
   readonly status: ImportRowStatus;
   readonly errors: readonly string[];
 }

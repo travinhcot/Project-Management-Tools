@@ -5,14 +5,12 @@ import type {
 
 import {
   MAX_EMAIL_LENGTH,
-  MAX_DEPARTMENT_LENGTH,
+  MAX_MAJOR_LENGTH,
   MAX_NAME_LENGTH,
-  birthYearProblem,
-  departmentProblem,
   emailProblem,
+  majorProblem,
   nameProblem,
   normalizeEmail,
-  studentIdProblem,
 } from "../../../shared/roster-rules.ts";
 import { CsvSyntaxError, parseCsv } from "./csv-parser.ts";
 
@@ -41,14 +39,8 @@ export function parseRosterCsv(text: string): ParsedRosterCsv {
   const ignored: string[] = [];
   header.forEach((cell, index) => {
     const key = headerKey(cell);
-    const canonical = key === "birth_year" ? "birth year" : key;
-    if (
-      canonical === "full name" ||
-      canonical === "email" ||
-      canonical === "student id" ||
-      canonical === "department" ||
-      canonical === "birth year"
-    ) {
+    const canonical = key;
+    if (canonical === "full name" || canonical === "email" || canonical === "major") {
       if (columns.has(canonical))
         throw new RosterCsvError(`Duplicate column: ${cell.trim()}.`);
       columns.set(canonical, index);
@@ -73,18 +65,14 @@ export function parseRosterCsv(text: string): ParsedRosterCsv {
 
   const nameIndex = columns.get("full name")!;
   const emailIndex = columns.get("email")!;
-  const studentIdIndex = columns.get("student id");
-  const departmentIndex = columns.get("department");
-  const birthYearIndex = columns.get("birth year");
+  const majorIndex = columns.get("major");
 
   const rows: ImportRowInput[] = dataRecords.map((record) => {
     const cell = (index: number | undefined) =>
       index === undefined ? "" : (record.fields[index] ?? "").trim();
     const fullName = cell(nameIndex);
     const email = cell(emailIndex);
-    const studentId = cell(studentIdIndex);
-    const department = cell(departmentIndex);
-    const birthYear = cell(birthYearIndex);
+    const major = cell(majorIndex);
     const errors: string[] = [];
 
     if (record.fields.length !== header.length) {
@@ -96,20 +84,14 @@ export function parseRosterCsv(text: string): ParsedRosterCsv {
     if (nameError) errors.push(nameError);
     const emailError = emailProblem(email);
     if (emailError) errors.push(emailError);
-    const studentIdError = studentIdProblem(studentId);
-    if (studentIdError) errors.push(studentIdError);
-    const departmentError = departmentProblem(department);
-    if (departmentError) errors.push(departmentError);
-    const birthYearError = birthYearProblem(birthYear);
-    if (birthYearError) errors.push(birthYearError);
+    const majorError = majorProblem(major);
+    if (majorError) errors.push(majorError);
 
     return {
       row_number: record.line,
       full_name: clip(fullName, MAX_NAME_LENGTH),
       email: clip(email, MAX_EMAIL_LENGTH),
-      other_info: studentId && !studentIdError ? { student_id: studentId } : {},
-      department: department ? clip(department, MAX_DEPARTMENT_LENGTH) : null,
-      birth_year: birthYear && !birthYearError ? Number(birthYear) : null,
+      major: major ? clip(major, MAX_MAJOR_LENGTH) : null,
       status: errors.length ? "INVALID" : "VALID",
       errors,
     };

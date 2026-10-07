@@ -207,7 +207,7 @@ export function ProjectMembersDrawer({
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search roster by name or email"
             aria-label="Search roster by name or email"
-            className="min-w-0 flex-1 bg-transparent text-[13px] text-ink outline-none placeholder:text-muted"
+            className="min-w-0 flex-1 bg-transparent text-base text-ink outline-none placeholder:text-muted sm:text-[13px]"
           />
         </label>
         {available.length === 0 ? (
@@ -229,7 +229,6 @@ export function ProjectMembersDrawer({
                   </span>
                   <span className="truncate text-xs text-muted">
                     {candidate.email}
-                    {candidate.department ? ` · ${candidate.department}` : ""}
                   </span>
                 </div>
                 <Button
