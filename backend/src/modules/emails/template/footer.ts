@@ -1,5 +1,9 @@
 /** Club footer shared by every email template (HTML and plain-text forms). */
 
+/** Signed Supabase Storage URL (download scope) of the club logo. */
+const LOGO_URL =
+  "https://wjafetaegvbnxrijziib.supabase.co/storage/v1/object/sign/project-files/logo.png?token=eyJraWQiOiJhZjM3NDUwOS1iZjk5LTQ5NGEtYjBhOC1hOTFjNjRmNWY5YTgiLCJhbGciOiJIUzUxMiJ9.eyJ1cmwiOiJwcm9qZWN0LWZpbGVzL2xvZ28ucG5nIiwic2NvcGUiOiJkb3dubG9hZCIsImlhdCI6MTc5MTMwMDMxNCwiZXhwIjozMTcxNTEzMDAzMTR9.JcV0qDmnuupLXxUh9alYO_5d55qJ8tJEqQOXh4LetczlqKZyDpuoFXMbzHtkEuJdPvHuHHoEMlKSmfBF0uXU3A";
+
 const LINK_STYLE = "color: #191919; font-weight: bold; text-decoration: underline;";
 const HEADING_FONT = "font-family: &quot;Times New Roman&quot;, serif; margin: 0; font-size: 16px; line-height: 1.3;";
 
@@ -41,6 +45,7 @@ const linksHtml = LINKS.map(
 export const FOOTER_HTML = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
 <td style="padding: 28px 32px 36px; font-family: Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #9aa0a6;">
 <h1 style="${HEADING_FONT} color: #6d9eeb;">RMIT VIETNAM NEO CULTURE TECHNOLOGY CLUB</h1>
+<img src="${LOGO_URL}" alt="Club logo" width="100" height="100" style="display: block; width: 100px; max-width: 100%; height: 100px; border: 0; outline: none; text-decoration: none;" />
 <h3 style="${HEADING_FONT} font-weight: normal; color: #bf9000;">RMIT University Vietnam (SGS campus)</h3>
 <h3 style="${HEADING_FONT} font-weight: normal; color: #bf9000;">702 Nguyen Van Linh Blvd, Tan Hung Ward, HCMC</h3>
 <h3 style="${HEADING_FONT} color: #191919;">${linksHtml}</h3>
