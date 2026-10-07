@@ -9,6 +9,7 @@ import type { PortalInterface } from "./modules/portal/interface/portal.interfac
 import type { EmailsInterface } from "./modules/emails/interface/emails.interface.ts";
 import type { AuditInterface } from "./modules/audit/interface/audit.interface.ts";
 import type { DashboardInterface } from "./modules/dashboard/interface/dashboard.interface.ts";
+import type { GithubInterface } from "./modules/github/interface/github.interface.ts";
 
 import express from "express";
 import { HttpError, errorHandler } from "./shared/http-error.ts";
@@ -25,6 +26,7 @@ export function createApplication({
   emails,
   audit,
   dashboard,
+  github,
   allowedOrigins = process.env.ALLOWED_ORIGINS || "http://localhost:5173",
 }: {
   auth: AuthInterface;
@@ -38,6 +40,7 @@ export function createApplication({
   emails: EmailsInterface;
   audit: AuditInterface;
   dashboard: DashboardInterface;
+  github: GithubInterface;
   allowedOrigins?: string;
 }) {
   const app = express();
@@ -77,6 +80,7 @@ export function createApplication({
   admin.use("/semesters", semesters.adminRouter);
   admin.use("/projects", projects.adminRouter);
   admin.use("/projects", files.adminRouter); // /projects/:id/resources, /projects/:id/files
+  admin.use("/projects", github.adminRouter); // /projects/:id/github, /projects/:id/github/refresh
   admin.use(members.adminRouter); // /semesters/:id/roster, /roster/:rosterMemberId
   admin.use(roster.adminRouter); // /semesters/:id/roster/imports, /roster/imports/...
   admin.use(emails.adminRouter); // /projects/:id/kickoff-campaign, /semesters/:id/demo-campaign, /campaigns/...
@@ -89,12 +93,14 @@ export function createApplication({
     auth.requireRole("MEMBER"),
     portal.memberRouter, // GET /, /projects, /projects/:id, /overview, /profile, /notifications/badge
     files.memberRouter, // POST /projects/:id/files/:fileId/download-url
+    github.memberRouter, // GET /projects/:id/github
   );
   app.use(
     "/api/internal",
     files.internalRouter,
     emails.internalRouter,
     audit.internalRouter, // POST /audit/retention
+    github.internalRouter, // POST /github/refresh-all
   );
   app.use((_req, _res, next) =>
     next(new HttpError(404, "NOT_FOUND", "Endpoint not found.")),
