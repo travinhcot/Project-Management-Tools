@@ -15,7 +15,7 @@ export function ProjectCard({ project }: { project: DashboardProject }) {
   const memberLabel = project.memberCount === 1 ? "member" : "members";
 
   return (
-    <article className="flex flex-col items-start gap-3 rounded-[10px] border border-line bg-surface p-5">
+    <article className="flex flex-col items-start gap-3 rounded-2xl bg-surface shadow-card p-5">
       <div
         className={`h-1 w-full rounded-sm ${projectTypeMeta[project.type].bar}`}
       />

@@ -22,7 +22,7 @@ const STATUS_PILL: Record<ImportRowStatus, { tone: PillTone; label: string }> = 
 
 function SummaryCard({ label, value, tone }: { label: string; value: number; tone: string }) {
   return (
-    <div className="flex min-w-0 flex-1 basis-[130px] flex-col gap-1 rounded-[10px] border border-line bg-surface px-[18px] py-[14px]">
+    <div className="flex min-w-0 flex-1 basis-[130px] flex-col gap-1 rounded-2xl bg-surface shadow-card px-[18px] py-[14px]">
       <p className="text-xs font-medium text-muted">{label}</p>
       <p className={`text-2xl font-bold ${tone}`}>{value}</p>
     </div>
@@ -105,7 +105,7 @@ export function ImportReview({
 
       <section
         aria-label="Import rows"
-        className="flex flex-col rounded-[10px] border border-line bg-surface py-1.5"
+        className="flex flex-col rounded-2xl bg-surface shadow-card py-1.5"
       >
         <div role="group" aria-label="Filter rows" className="flex flex-wrap gap-2 px-4 py-2.5">
           {filters.map((item) => {

@@ -149,7 +149,7 @@ export function UsersAccessPage({
       </p>
 
       {list.users.length === 0 ? (
-        <div className="rounded-[10px] border border-line bg-surface p-8 text-center text-[13px] text-muted">
+        <div className="rounded-2xl bg-surface shadow-card p-8 text-center text-[13px] text-muted">
           {hasFilters ? "No users match these filters." : "No users yet."}
         </div>
       ) : (

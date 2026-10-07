@@ -7,10 +7,10 @@ export default function Loading() {
       <div className="h-[76px] w-[420px] max-w-full animate-pulse rounded-[10px] bg-chrome" />
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_414px]">
         <div className="flex flex-col gap-3">
-          <div className="h-[140px] animate-pulse rounded-[10px] border border-line bg-surface" />
-          <div className="h-[140px] animate-pulse rounded-[10px] border border-line bg-surface" />
+          <div className="h-[140px] animate-pulse rounded-2xl bg-surface shadow-card" />
+          <div className="h-[140px] animate-pulse rounded-2xl bg-surface shadow-card" />
         </div>
-        <div className="h-[260px] animate-pulse rounded-[10px] border border-line bg-surface" />
+        <div className="h-[260px] animate-pulse rounded-2xl bg-surface shadow-card" />
       </div>
       <span className="sr-only">Loading meeting emails…</span>
     </div>

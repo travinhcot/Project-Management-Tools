@@ -221,7 +221,7 @@ export function ProjectMembersDrawer({
             {available.map((candidate) => (
               <li
                 key={candidate.id}
-                className="flex items-center justify-between gap-3 rounded-[10px] border border-line bg-surface p-3"
+                className="flex items-center justify-between gap-3 rounded-2xl bg-surface shadow-card p-3"
               >
                 <div className="flex min-w-0 flex-col gap-0.5">
                   <span className="truncate text-[13px] font-semibold text-ink">

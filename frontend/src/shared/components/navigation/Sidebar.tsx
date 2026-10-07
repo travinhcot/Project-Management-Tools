@@ -48,7 +48,7 @@ export function Sidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="hidden w-[234px] shrink-0 flex-col gap-3 border border-line bg-chrome p-5 md:flex">
+    <aside className="hidden w-[234px] shrink-0 flex-col gap-3 border border-line bg-sidebar p-5 md:flex">
       <p className="text-[11px] font-bold text-muted">{heading}</p>
       <nav className="mt-3 flex flex-col gap-3">
         {items.map((item) => {
@@ -73,8 +73,8 @@ export function Sidebar({
               aria-current={active ? "page" : undefined}
               className={`flex h-[42px] shrink-0 items-start gap-2 whitespace-nowrap rounded-lg p-3 text-sm ${
                 active
-                  ? "bg-accent-soft font-semibold text-accent"
-                  : "font-medium text-muted hover:bg-accent-soft/60"
+                  ? "bg-white/40 font-semibold text-accent"
+                  : "font-medium text-muted hover:bg-white/40"
               }`}
             >
               <NavIcon name={item.icon} />
@@ -86,7 +86,7 @@ export function Sidebar({
       <p className="mt-7 text-[11px] font-bold text-muted">TOOLS</p>
       <Link
         href={toolHref}
-        className="flex h-11 items-start gap-2 rounded-lg bg-accent-soft p-3 text-accent"
+        className="flex h-11 items-start gap-2 rounded-lg bg-white/40 p-3 text-accent"
       >
         <span className="text-base font-bold leading-none">◈</span>
         <span className="text-[13px] font-semibold leading-none">
@@ -94,7 +94,7 @@ export function Sidebar({
         </span>
       </Link>
       {note && (
-        <div className="flex flex-col gap-1 rounded-lg border border-line bg-surface p-3">
+        <div className="flex flex-col gap-1 rounded-lg bg-surface p-3 shadow-card">
           <p className="text-xs font-semibold text-ink">{note.title}</p>
           <p className="text-[11px] text-muted">{note.body}</p>
         </div>

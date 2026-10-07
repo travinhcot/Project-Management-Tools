@@ -69,7 +69,7 @@ export function SemesterForm({
       noValidate
       onSubmit={handleSubmit}
       aria-labelledby={`${id}-title`}
-      className="flex flex-col gap-3.5 rounded-[10px] border border-line bg-surface p-[18px]"
+      className="flex flex-col gap-3.5 rounded-2xl bg-surface shadow-card p-[18px]"
     >
       <h2 id={`${id}-title`} className="text-[18px] font-bold text-ink">
         {semester ? `Edit ${semester.name}` : "New semester"}

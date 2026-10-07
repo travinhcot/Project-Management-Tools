@@ -6,8 +6,8 @@ export default function Loading() {
       </p>
       <div className="h-[76px] w-[420px] max-w-full animate-pulse rounded-[10px] bg-chrome" />
       <div className="h-11 animate-pulse rounded-lg bg-chrome" />
-      <div className="h-[170px] animate-pulse rounded-[10px] border border-line bg-surface" />
-      <div className="h-[170px] animate-pulse rounded-[10px] border border-line bg-surface" />
+      <div className="h-[170px] animate-pulse rounded-2xl bg-surface shadow-card" />
+      <div className="h-[170px] animate-pulse rounded-2xl bg-surface shadow-card" />
       <span className="sr-only">Loading projects…</span>
     </div>
   );

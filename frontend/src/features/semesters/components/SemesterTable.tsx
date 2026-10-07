@@ -27,7 +27,7 @@ export function SemesterTable({
   onSetCurrent: (semester: Semester) => void;
 }) {
   return (
-    <div className="min-w-0 flex-1 overflow-x-auto rounded-[10px] border border-line bg-surface py-1.5">
+    <div className="min-w-0 flex-1 overflow-x-auto rounded-2xl bg-surface shadow-card py-1.5">
       <table className="w-full min-w-[560px] border-collapse text-left">
         <thead>
           <tr className="text-[11px] font-bold text-muted">

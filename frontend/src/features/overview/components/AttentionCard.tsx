@@ -4,10 +4,10 @@ import type { DashboardWarning } from "@/features/overview/models/dashboard";
 
 export function AttentionCard({ warnings }: { warnings: DashboardWarning[] }) {
   return (
-    <section className="flex flex-col gap-3 rounded-[10px] border border-line bg-surface p-5">
+    <section className="flex flex-col gap-3 rounded-2xl bg-surface shadow-card p-5">
       <div className="flex h-7 items-center justify-between">
         <h2 className="text-lg font-semibold text-ink">Needs attention</h2>
-        <Pill tone="amber">
+        <Pill tone="cyan">
           {warnings.length} {warnings.length === 1 ? "item" : "items"}
         </Pill>
       </div>

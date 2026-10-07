@@ -5,7 +5,7 @@ export default function Loading() {
         {"Workspace  /  Project Management  /  Users & access"}
       </p>
       <div className="h-[76px] w-[420px] max-w-full animate-pulse rounded-[10px] bg-chrome" />
-      <div className="h-[320px] animate-pulse rounded-[10px] border border-line bg-surface" />
+      <div className="h-[320px] animate-pulse rounded-2xl bg-surface shadow-card" />
       <span className="sr-only">Loading users…</span>
     </div>
   );

@@ -8,7 +8,7 @@ export function ProjectPreviewCard({ project }: { project: MemberProject }) {
   return (
     <Link
       href={`/member/projects/${project.id}`}
-      className="flex flex-col items-start gap-3 rounded-[10px] border border-line bg-surface p-5 hover:border-link-line"
+      className="flex flex-col items-start gap-3 rounded-2xl bg-surface shadow-card p-5 hover:ring-1 hover:ring-link-line"
     >
       <div className={`h-1 w-full rounded-sm ${projectTypeMeta[project.type].bar}`} />
       <ProjectTypePill type={project.type} />

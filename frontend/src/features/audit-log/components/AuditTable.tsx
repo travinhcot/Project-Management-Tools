@@ -11,7 +11,7 @@ export function AuditTable({
   onSelect: (event: AuditEvent) => void;
 }) {
   return (
-    <div className="overflow-x-auto rounded-[10px] border border-line bg-surface py-1.5">
+    <div className="overflow-x-auto rounded-2xl bg-surface shadow-card py-1.5">
       <table className="w-full min-w-[820px] border-collapse text-left">
         <thead>
           <tr className="text-[11px] font-bold text-muted">

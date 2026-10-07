@@ -123,7 +123,7 @@ export function AuditLogPage({
       </p>
 
       {list.events.length === 0 ? (
-        <div className="rounded-[10px] border border-line bg-surface p-8 text-center text-[13px] text-muted">
+        <div className="rounded-2xl bg-surface shadow-card p-8 text-center text-[13px] text-muted">
           {hasFilters ? "No events match these filters." : "No events recorded yet."}
         </div>
       ) : (

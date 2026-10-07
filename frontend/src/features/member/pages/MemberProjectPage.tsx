@@ -68,7 +68,7 @@ function Resources({ project }: { project: MemberProjectDetail }) {
   const bom = findResource(project.resources, "BOM");
 
   return (
-    <section className="flex min-w-0 flex-1 flex-col gap-3.5 rounded-[10px] border border-line bg-surface p-5">
+    <section className="flex min-w-0 flex-1 flex-col gap-3.5 rounded-2xl bg-surface shadow-card p-5">
       <h2 className="text-xl font-semibold text-ink">Resources</h2>
       {srs && (
         <ResourceItem
@@ -125,7 +125,7 @@ function Resources({ project }: { project: MemberProjectDetail }) {
 
 function TeamCard({ teammates, me }: { teammates: Teammate[]; me: string | null }) {
   return (
-    <section className="flex flex-col gap-2.5 rounded-[10px] border border-line bg-surface p-5">
+    <section className="flex flex-col gap-2.5 rounded-2xl bg-surface shadow-card p-5">
       <h2 className="text-xl font-semibold text-ink">Your team · {teammates.length}</h2>
       {teammates.map((mate) => {
         const you = me !== null && mate.fullName === me;
@@ -186,7 +186,7 @@ export async function MemberProjectPage({ id }: { id: string }) {
         <Resources project={project} />
         <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[360px]">
           <TeamCard teammates={project.teammates} me={status.fullName} />
-          <section className="flex flex-col gap-2 rounded-[10px] border border-line bg-surface p-5">
+          <section className="flex flex-col gap-2 rounded-2xl bg-surface shadow-card p-5">
             <h2 className="text-sm font-semibold text-ink">Need a change?</h2>
             <p className="text-xs text-muted">
               Team changes and resource updates are handled by EBMB admins. Contact your project

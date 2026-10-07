@@ -34,6 +34,7 @@ export async function MemberOverviewPage() {
           caption={`${software} software · ${hardware} hardware`}
         />
         <StatCard
+          featured
           label="Next meeting"
           value={nextMeeting ? formatShortDay(nextMeeting.at) : "None"}
           caption={

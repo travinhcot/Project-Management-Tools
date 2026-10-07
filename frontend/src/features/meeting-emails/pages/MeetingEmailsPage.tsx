@@ -159,7 +159,7 @@ export function MeetingEmailsPage({
               />
             ))
           ) : (
-            <div className="rounded-[10px] border border-line bg-surface p-8 text-center">
+            <div className="rounded-2xl bg-surface shadow-card p-8 text-center">
               <p className="text-[15px] font-semibold text-ink">No projects yet</p>
               <p className="mt-1 text-xs text-muted">
                 {semester

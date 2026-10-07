@@ -34,7 +34,7 @@ export default async function MemberLayout({ children }: { children: React.React
               : undefined
           }
         />
-        <main className="min-w-0 flex-1 p-4 sm:p-6 lg:p-11">{children}</main>
+        <main className="min-w-0 flex-1 bg-hub p-4 sm:p-6 lg:p-11">{children}</main>
       </div>
     </div>
   );

@@ -1,15 +1,20 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-canvas: #f8f6f1;
-  --color-surface: #fffdf9;
-  --color-chrome: #f2efe8;
-  --color-line: #dad6cd;
-  --color-ink: #26313e;
-  --color-muted: #596471;
-  --color-accent: #49669c;
-  --color-primary: #5674ab;
-  --color-accent-soft: #e6ecf4;
+  --color-canvas: #f2fbff;
+  --color-surface: #ffffff;
+  --color-chrome: #eef8fd;
+  --color-topbar: #f7fcff;
+  --color-sidebar: #cdf5fd;
+  --color-line: #d3eaf5;
+  --color-ink: #020d33;
+  --color-muted: #5a6785;
+  --color-accent: #116af8;
+  --color-primary: #116af8;
+  --color-accent-soft: #e3edfe;
+  --color-cyan: #20bced;
+  --color-cyan-soft: #cdf5fd;
+  --color-cyan-text: #0b7fa8;
   --color-success: #0b7564;
   --color-success-soft: #e0f0ea;
   --color-amber: #80510a;
@@ -25,8 +30,20 @@
   --color-warn-line: #ecd3a2;
   --color-info-text: #3b4f75;
   --color-placeholder: #8a929c;
-  --color-link-line: #6681b2;
+  --color-link-line: #116af8;
   --font-sans: var(--font-roboto);
+  --shadow-card: 0 8px 24px 0 rgb(17 106 248 / 0.08);
+  --shadow-hero: 0 10px 28px 0 rgb(17 106 248 / 0.25);
+}
+
+/* Page backdrop used behind the main column of every screen. */
+@utility bg-hub {
+  background-image: linear-gradient(to bottom, #f2fbff 0%, #cdf5fd 55%, #a0e9ff 100%);
+}
+
+/* Featured stat card. */
+@utility bg-hero {
+  background-image: linear-gradient(160deg, #116af8 0%, #20bced 71.4%);
 }
 
 body {

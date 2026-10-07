@@ -7,9 +7,9 @@ export default function Loading() {
       <div className="h-[76px] w-[420px] max-w-full animate-pulse rounded-[10px] bg-chrome" />
       <div className="h-11 animate-pulse rounded-lg bg-chrome" />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <div className="h-[140px] animate-pulse rounded-[10px] border border-line bg-surface" />
-        <div className="h-[140px] animate-pulse rounded-[10px] border border-line bg-surface" />
-        <div className="h-[140px] animate-pulse rounded-[10px] border border-line bg-surface" />
+        <div className="h-[140px] animate-pulse rounded-2xl bg-surface shadow-card" />
+        <div className="h-[140px] animate-pulse rounded-2xl bg-surface shadow-card" />
+        <div className="h-[140px] animate-pulse rounded-2xl bg-surface shadow-card" />
       </div>
       <span className="sr-only">Loading members…</span>
     </div>

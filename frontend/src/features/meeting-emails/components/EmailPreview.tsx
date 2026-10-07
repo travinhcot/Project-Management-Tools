@@ -42,7 +42,7 @@ export function EmailPreview({ project }: { project: MeetingEmailProject }) {
   return (
     <aside
       aria-label="Email preview"
-      className="flex flex-col gap-[15px] rounded-[10px] border border-line bg-surface p-[22px]"
+      className="flex flex-col gap-[15px] rounded-2xl bg-surface shadow-card p-[22px]"
     >
       <h2 className="text-[19px] font-semibold text-ink">Email preview</h2>
       <p className="text-xs text-muted">The message prepared for {project.name}.</p>

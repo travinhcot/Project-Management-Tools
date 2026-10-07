@@ -119,7 +119,7 @@ export function ImportRosterModal({
 
       {summary ? (
         <>
-          <div className="flex flex-wrap items-center gap-3 rounded-[10px] border border-line bg-surface p-[18px]">
+          <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface shadow-card p-[18px]">
             <div className="flex min-w-0 flex-col gap-0.5">
               <p className="break-all text-[15px] font-semibold text-ink">{summary.filename}</p>
               <p className="text-xs text-muted">

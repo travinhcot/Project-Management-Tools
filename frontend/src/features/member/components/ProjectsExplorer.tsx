@@ -97,7 +97,7 @@ export function ProjectsExplorer({
       </div>
 
       {visible.length === 0 ? (
-        <p className="rounded-[10px] border border-line bg-surface p-5 text-[13px] text-muted">
+        <p className="rounded-2xl bg-surface shadow-card p-5 text-[13px] text-muted">
           {filtered
             ? "No projects match your search or filters."
             : "You have no assigned projects yet — contact EBMB."}

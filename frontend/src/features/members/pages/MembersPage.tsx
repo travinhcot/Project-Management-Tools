@@ -75,7 +75,7 @@ export function MembersPage({
       </div>
 
       {!semester ? (
-        <section className="flex flex-col items-start gap-2 rounded-[10px] border border-line bg-surface p-5">
+        <section className="flex flex-col items-start gap-2 rounded-2xl bg-surface shadow-card p-5">
           <h2 className="text-lg font-semibold text-ink">No current semester</h2>
           <p className="text-[13px] text-muted">
             Set a current semester to see and import its roster.
@@ -109,7 +109,7 @@ export function MembersPage({
               ))}
             </div>
           ) : (
-            <div className="rounded-[10px] border border-line bg-surface p-8 text-center">
+            <div className="rounded-2xl bg-surface shadow-card p-8 text-center">
               <p className="text-[15px] font-semibold text-ink">
                 {hasFilters ? "No members match your filters" : "No members yet"}
               </p>

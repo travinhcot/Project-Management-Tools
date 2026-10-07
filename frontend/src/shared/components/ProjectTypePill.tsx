@@ -3,7 +3,7 @@ import type { ProjectType } from "@/shared/models/project";
 
 export const projectTypeMeta = {
   software: { label: "Software", icon: "⌘", tone: "accent", bar: "bg-primary" },
-  hardware: { label: "Hardware", icon: "▦", tone: "amber", bar: "bg-amber" },
+  hardware: { label: "Hardware", icon: "▦", tone: "cyan", bar: "bg-cyan" },
 } as const;
 
 export function ProjectTypePill({

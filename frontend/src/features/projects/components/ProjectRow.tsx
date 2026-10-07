@@ -25,7 +25,7 @@ export function ProjectRow({
   const memberLabel = project.memberCount === 1 ? "member" : "members";
 
   return (
-    <article className="flex flex-col gap-4 rounded-[10px] border border-line bg-surface p-[17px] xl:flex-row">
+    <article className="flex flex-col gap-4 rounded-2xl bg-surface shadow-card p-[17px] xl:flex-row">
       <div
         className={`h-1 w-full shrink-0 rounded-sm xl:h-auto xl:w-1 xl:self-stretch ${projectTypeMeta[project.type].bar}`}
       />

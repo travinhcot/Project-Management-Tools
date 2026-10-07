@@ -2,10 +2,11 @@ import type { ReactNode } from "react";
 
 const tones = {
   neutral: "bg-chrome text-muted",
-  surface: "bg-surface text-ink",
+  surface: "bg-surface text-ink shadow-card",
   accent: "bg-accent-soft text-accent",
   success: "bg-success-soft text-success",
   amber: "bg-amber-soft text-amber",
+  cyan: "bg-cyan-soft text-cyan-text",
   warn: "bg-warn-soft text-warn-text",
   done: "bg-done-soft text-done",
   danger: "bg-danger-soft text-danger-text",

@@ -58,11 +58,11 @@ function Action({ item }: { item: ComingUpItem }) {
 
 export function ComingUpCard({ items }: { items: ComingUpItem[] }) {
   return (
-    <section className="flex flex-col gap-3 rounded-[10px] border border-line bg-surface p-5">
+    <section className="flex flex-col gap-3 rounded-2xl bg-surface shadow-card p-5">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-lg font-semibold text-ink">Coming up</h2>
         {items.length > 0 && (
-          <Pill tone="amber">
+          <Pill tone="cyan">
             {items.length} {items.length === 1 ? "item" : "items"}
           </Pill>
         )}

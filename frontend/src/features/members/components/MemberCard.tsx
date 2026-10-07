@@ -9,7 +9,7 @@ export function MemberCard({
   onDelete: () => void;
 }) {
   return (
-    <article className="flex flex-col gap-[10px] rounded-[10px] border border-line bg-surface p-[18px]">
+    <article className="flex flex-col gap-[10px] rounded-2xl bg-surface shadow-card p-[18px]">
       <div aria-hidden="true" className="h-[3px] rounded-[2px] bg-primary" />
       <h2 className="min-h-[26px] break-words text-[17px] font-semibold text-ink">
         {member.fullName}

@@ -14,7 +14,7 @@ export function NoAccessCard({
 }) {
   return (
     <div className="flex min-h-[60vh] items-center justify-center">
-      <section className="flex w-full max-w-[560px] flex-col items-start gap-3.5 rounded-xl border border-line bg-surface p-6 sm:p-8">
+      <section className="flex w-full max-w-[560px] flex-col items-start gap-3.5 rounded-2xl bg-surface p-6 shadow-card sm:p-8">
         <Pill tone="warn">
           {semesterName ? `Not on ${semesterName} roster` : "Not on the current roster"}
         </Pill>

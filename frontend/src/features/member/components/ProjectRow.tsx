@@ -7,7 +7,7 @@ import { ProjectTypePill, projectTypeMeta } from "@/shared/components/ProjectTyp
 /** One assigned project on My projects: identity on the left, setup resources on the right. */
 export function ProjectRow({ project }: { project: MemberProject }) {
   return (
-    <article className="flex flex-col gap-4 rounded-[10px] border border-line bg-surface p-[17px] lg:flex-row">
+    <article className="flex flex-col gap-4 rounded-2xl bg-surface shadow-card p-[17px] lg:flex-row">
       <div
         className={`h-1 w-full shrink-0 rounded-sm lg:h-auto lg:w-1 ${projectTypeMeta[project.type].bar}`}
         aria-hidden="true"

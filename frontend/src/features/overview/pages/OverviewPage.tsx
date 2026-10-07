@@ -36,7 +36,7 @@ export async function OverviewPage({
       </div>
 
       {!semester && (
-        <section className="flex flex-col items-start gap-2 rounded-[10px] border border-line bg-surface p-5">
+        <section className="flex flex-col items-start gap-2 rounded-2xl bg-surface shadow-card p-5">
           <h2 className="text-lg font-semibold text-ink">No current semester</h2>
           <p className="text-[13px] text-muted">
             Set a current semester to see roster and project stats.
@@ -52,6 +52,7 @@ export async function OverviewPage({
 
       <section className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
         <StatCard
+          featured
           label="Active semester"
           value={semester?.name ?? "None"}
           caption={semester?.isCurrent === false ? "Past semester" : "Current cycle"}

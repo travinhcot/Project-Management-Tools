@@ -41,7 +41,7 @@ function WorkspaceDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex h-dvh w-full max-w-[280px] flex-col gap-3 overflow-y-auto rounded-r-[10px] border border-line bg-chrome p-4"
+        className="relative flex h-dvh w-full max-w-[280px] flex-col gap-3 overflow-y-auto rounded-r-[10px] border border-line bg-sidebar p-4"
       >
         <div className="flex items-center justify-between">
           <h2 id={titleId} className="text-[11px] font-bold text-muted">
@@ -80,8 +80,8 @@ function WorkspaceDrawer({
                 aria-current={active ? "page" : undefined}
                 className={`flex h-[42px] items-start gap-2 rounded-lg p-3 text-sm ${
                   active
-                    ? "bg-accent-soft font-semibold text-accent"
-                    : "font-medium text-muted hover:bg-accent-soft/60"
+                    ? "bg-white/40 font-semibold text-accent"
+                    : "font-medium text-muted hover:bg-white/40"
                 }`}
               >
                 <NavIcon name={item.icon} />

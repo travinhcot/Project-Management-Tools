@@ -28,7 +28,7 @@ export async function MemberProfilePage() {
       />
 
       <div className="flex flex-col items-stretch gap-5 lg:flex-row lg:items-start">
-        <section className="flex min-w-0 flex-1 flex-col gap-4 rounded-[10px] border border-line bg-surface p-5">
+        <section className="flex min-w-0 flex-1 flex-col gap-4 rounded-2xl bg-surface shadow-card p-5">
           <div className="flex items-center gap-3.5">
             <span
               aria-hidden="true"
@@ -43,7 +43,7 @@ export async function MemberProfilePage() {
                   Member
                 </Pill>
                 {profile.department && (
-                  <Pill tone="amber" size="sm">
+                  <Pill tone="cyan" size="sm">
                     ▤ {profile.department}
                   </Pill>
                 )}
@@ -64,7 +64,7 @@ export async function MemberProfilePage() {
         </section>
 
         <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[360px]">
-          <section className="flex flex-col gap-2.5 rounded-[10px] border border-line bg-surface p-5">
+          <section className="flex flex-col gap-2.5 rounded-2xl bg-surface shadow-card p-5">
             <h2 className="text-[17px] font-semibold text-ink">Semester access</h2>
             {profile.semesters.length === 0 && (
               <p className="text-xs text-muted">You are not on any semester roster yet.</p>
@@ -96,7 +96,7 @@ export async function MemberProfilePage() {
             ))}
           </section>
 
-          <section className="flex flex-col gap-2.5 rounded-[10px] border border-line bg-surface p-5">
+          <section className="flex flex-col gap-2.5 rounded-2xl bg-surface shadow-card p-5">
             <h2 className="text-[17px] font-semibold text-ink">Preferences</h2>
             <div className="flex items-center gap-2">
               <p className="text-[13px] font-medium text-muted">Language</p>
