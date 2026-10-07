@@ -7,6 +7,7 @@ const tones = {
   success: "bg-success-soft text-success",
   amber: "bg-amber-soft text-amber",
   cyan: "bg-cyan-soft text-cyan-text",
+  violet: "bg-violet-soft text-violet-text",
   warn: "bg-warn-soft text-warn-text",
   done: "bg-done-soft text-done",
   danger: "bg-danger-soft text-danger-text",

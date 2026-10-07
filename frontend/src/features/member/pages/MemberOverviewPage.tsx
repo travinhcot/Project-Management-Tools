@@ -8,6 +8,7 @@ import {
   getMemberOverview,
   getMemberStatus,
 } from "@/features/member/service/member.service";
+import type { MemberProject } from "@/features/member/models/member";
 import { StatCard } from "@/features/overview/components/StatCard";
 
 export async function MemberOverviewPage() {
@@ -15,8 +16,8 @@ export async function MemberOverviewPage() {
   if (!status.eligible) return <NoAccessCard email={status.email} />;
 
   const { semester, firstName, projects, nextMeeting, comingUp } = await getMemberOverview();
-  const software = projects.filter((project) => project.type === "software").length;
-  const hardware = projects.length - software;
+  const countOf = (type: MemberProject["type"]) =>
+    projects.filter((project) => project.type === type).length;
 
   return (
     <div className="flex flex-col gap-[22px]">
@@ -31,7 +32,7 @@ export async function MemberOverviewPage() {
         <StatCard
           label="My projects"
           value={projects.length}
-          caption={`${software} software · ${hardware} hardware`}
+          caption={`${countOf("software")} software · ${countOf("hardware")} hardware · ${countOf("research")} research`}
         />
         <StatCard
           featured

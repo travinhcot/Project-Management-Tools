@@ -12,7 +12,7 @@ import type { EmailPreviewData } from "@/features/meeting-emails/service/meeting
 export function EmailPreview({ project }: { project: MeetingEmailProject }) {
   const campaignId =
     project.kickoff && project.kickoff.state !== "cancelled" ? project.kickoff.id : null;
-  const meetingUrl = project.meetingUrl;
+  const meetingUrl = project.effectiveMeetingUrl;
   const [loaded, setLoaded] = useState<{
     key: string;
     preview: EmailPreviewData | null;
@@ -49,7 +49,7 @@ export function EmailPreview({ project }: { project: MeetingEmailProject }) {
 
       {!campaignId ? (
         <p className="rounded-lg bg-chrome p-3 text-xs text-muted">
-          {project.meetingUrl
+          {project.effectiveMeetingUrl
             ? "The preview appears once the email is sent or scheduled. It will include the first meeting link and a link to the project page."
             : "Add a meeting link first. The email includes it along with a link to the project page."}
         </p>

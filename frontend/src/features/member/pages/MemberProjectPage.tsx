@@ -10,6 +10,7 @@ import { findResource } from "@/features/member/components/ProjectResources";
 import type {
   MemberProjectDetail,
   MemberResource,
+  ResourceSlot,
   Teammate,
 } from "@/features/member/models/member";
 import {
@@ -62,21 +63,44 @@ function resourceDetail(resource: MemberResource): string {
     : displayUrl(resource.url);
 }
 
+/** Resources shown on the page, in order. First meeting and Kickstart are handled separately. */
+const FILE_ITEMS: { slot: ResourceSlot; title: string }[] = [
+  { slot: "SRS", title: "SRS document" },
+  { slot: "BOM", title: "Bill of materials (BOM)" },
+  { slot: "RESEARCH_TEMPLATE", title: "Research template" },
+  { slot: "GITHUB_REPO", title: "GitHub repository" },
+  { slot: "DEMO_GUIDE", title: "Demo video guide" },
+];
+
 function Resources({ project }: { project: MemberProjectDetail }) {
-  const srs = findResource(project.resources, "SRS");
   const meeting = findResource(project.resources, "FIRST_MEETING");
-  const bom = findResource(project.resources, "BOM");
+
+  /** A shared resource gets its action; a required one that is still empty says so. */
+  const item = ({ slot, title }: { slot: ResourceSlot; title: string }) => {
+    const resource = findResource(project.resources, slot);
+    if (resource) {
+      return (
+        <ResourceItem
+          key={slot}
+          title={title}
+          detail={resourceDetail(resource)}
+          action={resourceAction(project.id, resource)}
+        />
+      );
+    }
+    return project.missingResources.includes(slot) ? (
+      <ResourceItem
+        key={slot}
+        title={title}
+        detail="Not shared yet — your admin will add it"
+      />
+    ) : null;
+  };
 
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-3.5 rounded-2xl bg-surface shadow-card p-5">
       <h2 className="text-xl font-semibold text-ink">Resources</h2>
-      {srs && (
-        <ResourceItem
-          title="SRS document"
-          detail={resourceDetail(srs)}
-          action={resourceAction(project.id, srs)}
-        />
-      )}
+      {item(FILE_ITEMS[0])}
       {(meeting || project.kickoffAt) && (
         <ResourceItem
           title="First meeting"
@@ -89,13 +113,7 @@ function Resources({ project }: { project: MemberProjectDetail }) {
           action={meeting && resourceAction(project.id, meeting)}
         />
       )}
-      {bom && (
-        <ResourceItem
-          title="Bill of materials (BOM)"
-          detail={resourceDetail(bom)}
-          action={resourceAction(project.id, bom)}
-        />
-      )}
+      {FILE_ITEMS.slice(1).map(item)}
       <ResourceItem
         title="Kickstart"
         detail={

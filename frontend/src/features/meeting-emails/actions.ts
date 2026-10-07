@@ -137,3 +137,105 @@ export async function removeMeetingLink(projectId: string): Promise<ActionResult
     }),
   );
 }
+
+/** Saves the semester-wide links. A null value clears that link; a link left out is untouched. */
+export async function saveSemesterLinks(
+  semesterId: string,
+  links: { kickoffMeetingUrl?: string | null; demoRegistrationUrl?: string | null },
+): Promise<ActionResult> {
+  const body: Record<string, string | null> = {};
+  if (links.kickoffMeetingUrl !== undefined) body.kickoff_meeting_url = links.kickoffMeetingUrl;
+  if (links.demoRegistrationUrl !== undefined) body.demo_registration_url = links.demoRegistrationUrl;
+  const result = await write(() =>
+    backendFetch(`/api/admin/semesters/${semesterId}`, { method: "PATCH", body }),
+  );
+  revalidatePath("/semesters");
+  return result;
+}
+
+/** `date` is yyyy-mm-dd; the backend sends it at 09:00 GMT+7. */
+export async function scheduleDemo(semesterId: string, date: string): Promise<ActionResult> {
+  return write(() =>
+    backendFetch(`/api/admin/semesters/${semesterId}/demo-campaign`, {
+      method: "POST",
+      body: { scheduled_at: date },
+    }),
+  );
+}
+
+export async function sendDemoNow(semesterId: string): Promise<ActionResult> {
+  return write(() =>
+    backendFetch(`/api/admin/semesters/${semesterId}/demo-campaign`, {
+      method: "POST",
+      body: { send_now: true },
+    }),
+  );
+}
+
+/**
+ * One date for the whole semester's kick-start emails: projects with no active email get one
+ * scheduled, projects with a scheduled email are moved to the new date. Anything already
+ * sending or sent is left alone. Reports what happened per project.
+ */
+export async function scheduleKickoffForAll(
+  targets: { projectId: string; name: string; campaignId: string | null }[],
+  date: string,
+): Promise<ActionResult<{ done: number; failed: { name: string; message: string }[] }>> {
+  let done = 0;
+  const failed: { name: string; message: string }[] = [];
+  for (const target of targets) {
+    try {
+      if (target.campaignId) {
+        await backendFetch(`/api/admin/campaigns/${target.campaignId}`, {
+          method: "PATCH",
+          body: { scheduled_at: date },
+        });
+      } else {
+        await backendFetch(`/api/admin/projects/${target.projectId}/kickoff-campaign`, {
+          method: "POST",
+          body: { scheduled_at: date },
+        });
+      }
+      done += 1;
+    } catch (error) {
+      if (!(error instanceof ApiError)) throw error;
+      failed.push({ name: target.name, message: error.message });
+    }
+  }
+  revalidatePath(PATH);
+  revalidatePath("/projects");
+  return { ok: true, done, failed };
+}
+
+/**
+ * One date for every project's follow-up "project resources" email: projects without an active
+ * email get one scheduled, scheduled ones are moved. Sending or sent ones are left alone.
+ */
+export async function scheduleProjectResourcesForAll(
+  targets: { projectId: string; name: string; campaignId: string | null }[],
+  date: string,
+): Promise<ActionResult<{ done: number; failed: { name: string; message: string }[] }>> {
+  let done = 0;
+  const failed: { name: string; message: string }[] = [];
+  for (const target of targets) {
+    try {
+      if (target.campaignId) {
+        await backendFetch(`/api/admin/campaigns/${target.campaignId}`, {
+          method: "PATCH",
+          body: { scheduled_at: date },
+        });
+      } else {
+        await backendFetch(`/api/admin/projects/${target.projectId}/resources-campaign`, {
+          method: "POST",
+          body: { scheduled_at: date },
+        });
+      }
+      done += 1;
+    } catch (error) {
+      if (!(error instanceof ApiError)) throw error;
+      failed.push({ name: target.name, message: error.message });
+    }
+  }
+  revalidatePath(PATH);
+  return { ok: true, done, failed };
+}

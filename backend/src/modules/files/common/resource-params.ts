@@ -1,7 +1,7 @@
-import type { FileSlot, ResourceSlot } from "../model/resource.model.ts";
+import type { FileSlot, LinkSlot, ResourceSlot } from "../model/resource.model.ts";
 
 import { invalid, uuidParam } from "../../../shared/query-params.ts";
-import { FILE_SLOTS, RESOURCE_SLOTS } from "../model/resource.model.ts";
+import { FILE_SLOTS, LINK_SLOTS, RESOURCE_SLOTS } from "../model/resource.model.ts";
 
 export const projectIdParam = (value: unknown) =>
   uuidParam(value, "project id");
@@ -21,4 +21,11 @@ export function fileSlotParam(value: unknown): FileSlot {
   if (!FILE_SLOTS.includes(slot as FileSlot))
     invalid(`Slot ${slot} does not accept files.`);
   return slot as FileSlot;
+}
+
+export function linkSlotParam(value: unknown): LinkSlot {
+  const slot = slotParam(value);
+  if (!LINK_SLOTS.includes(slot as LinkSlot))
+    invalid(`Slot ${slot} does not accept links.`);
+  return slot as LinkSlot;
 }

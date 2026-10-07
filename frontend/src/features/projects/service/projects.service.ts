@@ -5,11 +5,12 @@ import type { ProjectType } from "@/shared/models/project";
 import type {
   Project,
   ProjectArchiveImpact,
-  ProjectBom,
   ProjectFilters,
   ProjectListPage,
   ProjectMember,
   ProjectResources,
+  ResourceSlot,
+  ResourceSource,
   RosterCandidate,
   ProjectStatus,
   SemesterSummary,
@@ -17,21 +18,24 @@ import type {
 
 export const PAGE_SIZE = 20;
 
-type ResourceSlot = "SRS" | "FIRST_MEETING" | "BOM";
-
 /** ProjectListItem in backend/src/modules/projects/model/project.model.ts. */
 export interface ProjectDto {
   id: string;
   semester_id: string;
   name: string;
   description: string | null;
-  type: "SOFTWARE" | "HARDWARE";
+  type: "SOFTWARE" | "HARDWARE" | "RESEARCH";
   status: "PLANNING" | "ONGOING" | "COMPLETED" | "FAILED";
   updated_at: string;
   member_count: number;
   leader: { roster_member_id: string; full_name: string } | null;
   kickoff: { id: string; status: string; scheduled_at: string | null } | null;
-  resources: { present: ResourceSlot[]; missing: ResourceSlot[]; complete: boolean } | null;
+  resources: {
+    present: ResourceSlot[];
+    missing: ResourceSlot[];
+    applicable: ResourceSlot[];
+    complete: boolean;
+  } | null;
 }
 
 interface SemesterDto {
@@ -73,30 +77,32 @@ export function mapProject(dto: ProjectDto): Project {
     description: dto.description,
     leaderName: dto.leader?.full_name ?? null,
     memberCount: dto.member_count,
-    hasMeeting: dto.resources?.present.includes("FIRST_MEETING") ?? false,
-    hasBom: dto.resources?.present.includes("BOM") ?? false,
+    resources: {
+      present: dto.resources?.present ?? [],
+      missing: dto.resources?.missing ?? [],
+      applicable: dto.resources?.applicable ?? [],
+    },
     kickoffAt: dto.kickoff?.scheduled_at ?? null,
     updatedAt: dto.updated_at,
   };
 }
 
-export function mapResources(resources: ResourceDto[]): ProjectResources {
-  const meeting = resources.find((r) => r.slot === "FIRST_MEETING");
-  const bomDto = resources.find((r) => r.slot === "BOM");
-  let bom: ProjectBom | null = null;
-  if (bomDto?.source_type === "FILE" && bomDto.file) {
-    bom = {
-      kind: "file",
-      filename: bomDto.file.original_filename,
-      sizeBytes: bomDto.file.size_bytes,
-    };
-  } else if (bomDto?.url) {
-    bom = { kind: "link", url: bomDto.url, label: bomDto.label };
+function toSource(dto: ResourceDto | undefined): ResourceSource | null {
+  if (dto?.source_type === "FILE" && dto.file) {
+    return { kind: "file", filename: dto.file.original_filename, sizeBytes: dto.file.size_bytes };
   }
+  return dto?.url ? { kind: "link", url: dto.url, label: dto.label } : null;
+}
+
+export function mapResources(resources: ResourceDto[]): ProjectResources {
+  const source = (slot: ResourceSlot) => toSource(resources.find((r) => r.slot === slot));
   return {
-    meetingUrl: meeting?.url ?? null,
-    meetingLabel: meeting?.label ?? null,
-    bom,
+    srs: source("SRS"),
+    meeting: source("FIRST_MEETING"),
+    bom: source("BOM"),
+    researchTemplate: source("RESEARCH_TEMPLATE"),
+    githubRepo: source("GITHUB_REPO"),
+    demoGuide: source("DEMO_GUIDE"),
   };
 }
 

@@ -12,7 +12,9 @@ import {
   ROLE_COOKIE,
   clearSession,
   parseRole,
+  roleCookieOptions,
   writeSession,
+  type AccountRole,
   type BackendSession,
 } from "@/shared/auth/session";
 
@@ -36,6 +38,28 @@ async function refreshSession(
   }
 }
 
+type LiveRole =
+  | { status: "ok"; role: AccountRole }
+  | { status: "rejected" }
+  | { status: "unknown" };
+
+/** The role stored in the database right now, so a manual change there applies on reload. */
+async function fetchLiveRole(accessToken: string): Promise<LiveRole> {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+    });
+    if (response.status === 401 || response.status === 403) return { status: "rejected" };
+    if (!response.ok) return { status: "unknown" };
+    const body = (await response.json()) as { user?: { role?: string } };
+    const role = parseRole(body.user?.role);
+    return role ? { status: "ok", role } : { status: "unknown" };
+  } catch {
+    return { status: "unknown" };
+  }
+}
+
 /**
  * Optimistic session check on every page request. The access cookie expires with the access
  * token, so when only the refresh cookie is left we renew here: Server Components cannot set
@@ -46,8 +70,9 @@ export async function proxy(request: NextRequest) {
   // A rejected token sends the visitor to /sign-in?expired=1; don't bounce them back out.
   const staleSession = request.nextUrl.searchParams.has("expired");
   // Sessions from before roles were stored belong to admins (members could not sign in).
-  const role = () =>
+  let currentRole: AccountRole =
     parseRole(request.cookies.get(ROLE_COOKIE)?.value) ?? "ADMIN";
+  const role = () => currentRole;
   const toLanding = () =>
     NextResponse.redirect(
       new URL(
@@ -73,14 +98,27 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   };
 
-  if (request.cookies.has(ACCESS_COOKIE)) {
-    return onSignIn && !staleSession ? toLanding() : proceed();
+  const accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
+  if (accessToken) {
+    const live = await fetchLiveRole(accessToken);
+    if (live.status !== "rejected") {
+      const changed = live.status === "ok" && live.role !== currentRole;
+      if (live.status === "ok") currentRole = live.role;
+      const response = onSignIn && !staleSession ? toLanding() : proceed();
+      if (changed) response.cookies.set(ROLE_COOKIE, currentRole, roleCookieOptions);
+      return response;
+    }
+    // Token rejected (revoked or account deactivated): fall through to refresh / sign-in.
   }
 
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
   if (!refreshToken) return toSignIn();
 
   const session = await refreshSession(refreshToken);
+  if (session) {
+    const live = await fetchLiveRole(session.access_token);
+    if (live.status === "ok") currentRole = live.role;
+  }
   if (!session) {
     const response = toSignIn();
     clearSession(response.cookies);
@@ -92,7 +130,7 @@ export async function proxy(request: NextRequest) {
   request.cookies.set(REFRESH_COOKIE, session.refresh_token);
   const response =
     onSignIn && !staleSession ? toLanding() : proceed({ request });
-  writeSession(response.cookies, session);
+  writeSession(response.cookies, session, currentRole);
   return response;
 }
 

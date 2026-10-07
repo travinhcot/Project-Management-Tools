@@ -5,6 +5,7 @@ export const MAX_TREND_SEMESTERS = 12;
 
 export type WarningCode =
   | "PROJECTS_WITHOUT_MEMBERS"
+  | "PROJECTS_MISSING_SRS"
   | "PROJECTS_MISSING_RESOURCES"
   | "CAMPAIGNS_WITH_FAILURES"
   | "IMPORTS_EXPIRED_UNUSED"
@@ -27,15 +28,20 @@ export interface RawWarning {
 export interface RawSummary {
   readonly semester: { readonly id: string; readonly name: string } | null;
   readonly roster_active?: number;
-  readonly projects?: { readonly software: number; readonly hardware: number };
+  readonly projects?: {
+    readonly software: number;
+    readonly hardware: number;
+    readonly research: number;
+  };
   readonly upcoming_campaigns?: readonly (RawItem & {
-    readonly kind: "KICKOFF" | "DEMO";
+    readonly kind: "KICKOFF" | "DEMO" | "PROJECT_RESOURCES";
     readonly project_id: string | null;
     readonly scheduled_at: string;
     readonly overdue: boolean;
   })[];
   readonly deliveries?: { readonly failed: number; readonly unknown: number };
   readonly projects_without_members?: RawWarning;
+  readonly projects_missing_srs?: RawWarning;
   readonly projects_missing_resources?: RawWarning;
   readonly campaigns_with_failures?: RawWarning;
   readonly imports_expired_unused?: RawWarning;
@@ -60,6 +66,7 @@ export interface Dashboard {
     readonly projects: {
       readonly software: number;
       readonly hardware: number;
+      readonly research: number;
       readonly total: number;
       readonly link: string;
     };

@@ -8,6 +8,8 @@ import type {
   ResourceSlot,
 } from "../model/resource.model.ts";
 
+import { RESOURCE_SLOTS } from "../model/resource.model.ts";
+
 export interface PendingFile {
   readonly id: string;
   readonly bucket_id: string;
@@ -27,6 +29,10 @@ function asRows(data: unknown): Record<string, unknown>[] {
     throw new TypeError("Unexpected database response.");
   return data.map(asRecord);
 }
+
+/** Rows in a slot this code does not define are left out of every view. */
+const knownSlot = (row: Record<string, unknown>) =>
+  RESOURCE_SLOTS.includes(row.slot as ResourceSlot);
 
 function toFile(value: unknown): ResourceFile | null {
   const row = Array.isArray(value) ? value[0] : value;
@@ -73,7 +79,7 @@ export function createResourceRepository(client: SupabaseClient) {
         )
         .eq("project_id", projectId);
       if (error) throw error;
-      return asRows(data).map((row) => ({
+      return asRows(data).filter(knownSlot).map((row) => ({
         slot: row.slot as ResourceSlot,
         source_type: row.source_type as Resource["source_type"],
         url: (row.url as string | null) ?? null,
@@ -92,7 +98,7 @@ export function createResourceRepository(client: SupabaseClient) {
         .select("project_id,slot")
         .in("project_id", projectIds);
       if (error) throw error;
-      return asRows(data).map((row) => ({
+      return asRows(data).filter(knownSlot).map((row) => ({
         project_id: String(row.project_id),
         slot: row.slot as ResourceSlot,
       }));

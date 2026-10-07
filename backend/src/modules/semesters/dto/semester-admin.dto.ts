@@ -42,18 +42,18 @@ function dateValue(value: unknown, label: string): string | null {
   return value;
 }
 
-function urlValue(value: unknown): string | null {
+function urlValue(value: unknown, label = "demo_registration_url"): string | null {
   if (value === null) return null;
   if (typeof value !== "string" || value.length > 2048 || /\s/.test(value)) {
-    invalid("demo_registration_url must be an https:// URL without spaces, or null.");
+    invalid(`${label} must be an https:// URL without spaces, or null.`);
   }
   let url: URL;
   try {
     url = new URL(value);
   } catch {
-    invalid("demo_registration_url must be a valid URL.");
+    invalid(`${label} must be a valid URL.`);
   }
-  if (url.protocol !== "https:") invalid("demo_registration_url must start with https://.");
+  if (url.protocol !== "https:") invalid(`${label} must start with https://.`);
   return value;
 }
 
@@ -62,6 +62,7 @@ function checkDateOrder(startsOn: string | null | undefined, endsOn: string | nu
 }
 
 const FIELDS = ["term", "year", "starts_on", "ends_on", "demo_registration_url"] as const;
+const UPDATE_FIELDS = [...FIELDS, "kickoff_meeting_url"] as const;
 
 export function createSemesterBody(body: unknown): SemesterCreate {
   const input = objectBody(body);
@@ -82,7 +83,11 @@ export function createSemesterBody(body: unknown): SemesterCreate {
 
 export function updateSemesterBody(body: unknown): SemesterChanges {
   const input = objectBody(body);
-  rejectUnknownKeys(input, FIELDS, "Only term, year, starts_on, ends_on and demo_registration_url can be changed.");
+  rejectUnknownKeys(
+    input,
+    UPDATE_FIELDS,
+    "Only term, year, starts_on, ends_on, demo_registration_url and kickoff_meeting_url can be changed.",
+  );
   if (Object.keys(input).length === 0) invalid("Provide at least one field to change.");
   const changes: {
     -readonly [K in keyof SemesterChanges]: SemesterChanges[K];
@@ -93,6 +98,9 @@ export function updateSemesterBody(body: unknown): SemesterChanges {
   if (input.ends_on !== undefined) changes.ends_on = dateValue(input.ends_on, "ends_on");
   if (input.demo_registration_url !== undefined) {
     changes.demo_registration_url = urlValue(input.demo_registration_url);
+  }
+  if (input.kickoff_meeting_url !== undefined) {
+    changes.kickoff_meeting_url = urlValue(input.kickoff_meeting_url, "kickoff_meeting_url");
   }
   checkDateOrder(changes.starts_on, changes.ends_on);
   return changes;

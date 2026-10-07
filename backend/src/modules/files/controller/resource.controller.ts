@@ -4,7 +4,7 @@ import type { ActorLocals } from "../../../shared/request-actor.ts";
 
 import { randomUUID } from "node:crypto";
 import { requireActor } from "../../../shared/request-actor.ts";
-import { projectIdParam, slotParam } from "../common/resource-params.ts";
+import { linkSlotParam, projectIdParam, slotParam } from "../common/resource-params.ts";
 import { linkBody } from "../dto/resource.dto.ts";
 
 export function createResourceController(service: ResourceService) {
@@ -24,7 +24,7 @@ export function createResourceController(service: ResourceService) {
       const resource = await service.setLink(
         actor.userId,
         projectIdParam(req.params.projectId),
-        slotParam(req.params.slot),
+        linkSlotParam(req.params.slot),
         linkBody(req.body),
         randomUUID(),
       );

@@ -52,7 +52,7 @@ CREATE TABLE public.projects (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   semester_id uuid NOT NULL REFERENCES public.semesters(id) ON DELETE RESTRICT,
   name varchar(150) NOT NULL CHECK (length(btrim(name)) > 0),
-  type text NOT NULL CHECK (type IN ('SOFTWARE', 'HARDWARE')),
+  type text NOT NULL CHECK (type IN ('SOFTWARE', 'HARDWARE', 'RESEARCH')),
   kickoff_scheduled_at timestamptz,
   srs_external_url text CHECK (srs_external_url IS NULL OR srs_external_url ~ '^https://[^[:space:]]+$'),
   first_meeting_url text CHECK (first_meeting_url IS NULL OR first_meeting_url ~ '^https://[^[:space:]]+$'),

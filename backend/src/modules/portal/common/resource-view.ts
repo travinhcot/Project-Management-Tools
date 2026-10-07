@@ -4,11 +4,12 @@ import type {
   ResourceView,
 } from "../model/portal.model.ts";
 
+import { slotAppliesTo } from "../../../shared/resource-rules.ts";
 import { SLOT_ORDER } from "../model/portal.model.ts";
 
 /**
  * Member-facing resources: absent slots are simply not returned (never a broken link),
- * BOM only for hardware, links open in a new tab, files never expose storage paths.
+ * slots that do not apply to the project type (BOM, research template) hidden, links open in a new tab, files never expose storage paths.
  */
 export function toResourceViews(
   projectId: string,
@@ -17,7 +18,7 @@ export function toResourceViews(
 ): ResourceView[] {
   const views: ResourceView[] = [];
   for (const record of records) {
-    if (record.slot === "BOM" && type !== "HARDWARE") continue;
+    if (!slotAppliesTo(record.slot, type)) continue;
     if (record.source_type === "LINK" && record.url) {
       views.push({
         slot: record.slot,

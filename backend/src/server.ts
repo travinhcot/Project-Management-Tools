@@ -55,16 +55,21 @@ function createEmailProvider() {
   if (!from) throw new Error("EMAIL_FROM is required when RESEND_API_KEY is set.");
   return createResendEmailProvider({ apiKey, from });
 }
-const emails = createEmailsInterface(adminClient, {
-  meetingLinks: {
-    async meetingUrl(projectId) {
-      const { resources } = await files.service.listForProject(projectId);
-      return (
-        resources.find((resource) => resource.slot === "FIRST_MEETING")?.url ??
-        null
-      );
-    },
+const meetingLinks = {
+  async meetingUrl(projectId: string): Promise<string | null> {
+    const { resources } = await files.service.listForProject(projectId);
+    const own = resources.find((resource) => resource.slot === "FIRST_MEETING")?.url;
+    if (own) return own;
+    // No link of its own: use the semester's shared kick-start link.
+    const { data, error } = await adminClient.rpc("project_semester_kickoff_url", {
+      p_project_id: projectId,
+    });
+    if (error) throw error;
+    return typeof data === "string" ? data : null;
   },
+};
+const emails = createEmailsInterface(adminClient, {
+  meetingLinks,
   provider: createEmailProvider(),
   appUrl: process.env.APP_URL || "http://localhost:5173",
   internalSecret: process.env.INTERNAL_SECRET,
@@ -80,7 +85,7 @@ const projects = createProjectsInterface(adminClient, {
 });
 const portal = createPortalInterface(
   adminClient,
-  { resources: files.service },
+  { resources: files.service, meetingUrl: meetingLinks.meetingUrl },
   { allowPastSemesters: process.env.PORTAL_PAST_SEMESTERS === "true" },
 );
 const app = createApplication({

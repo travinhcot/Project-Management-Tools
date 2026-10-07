@@ -15,7 +15,7 @@ interface DashboardDto {
   empty: boolean;
   metrics: {
     roster: { active: number };
-    projects: { software: number; hardware: number; total: number };
+    projects: { software: number; hardware: number; research?: number; total: number };
   } | null;
   warnings: {
     code: string;
@@ -32,7 +32,7 @@ interface ProjectDto {
   id: string;
   name: string;
   description: string | null;
-  type: "SOFTWARE" | "HARDWARE";
+  type: "SOFTWARE" | "HARDWARE" | "RESEARCH";
   member_count: number;
   kickoff: { scheduled_at: string | null } | null;
 }
@@ -68,7 +68,7 @@ function mapProject(dto: ProjectDto): DashboardProject {
   return {
     id: dto.id,
     name: dto.name,
-    type: dto.type === "HARDWARE" ? "hardware" : "software",
+    type: dto.type.toLowerCase() as DashboardProject["type"],
     description: dto.description,
     memberCount: dto.member_count,
     kickoffAt: dto.kickoff?.scheduled_at ?? null,
@@ -99,10 +99,11 @@ export async function getDashboard(
       semester: selected,
       semesters,
       roster: { active: summary.metrics?.roster.active ?? 0 },
-      projects: summary.metrics?.projects ?? {
-        software: 0,
-        hardware: 0,
-        total: 0,
+      projects: {
+        software: summary.metrics?.projects.software ?? 0,
+        hardware: summary.metrics?.projects.hardware ?? 0,
+        research: summary.metrics?.projects.research ?? 0,
+        total: summary.metrics?.projects.total ?? 0,
       },
       warnings: summary.warnings.map(mapWarning),
       recentProjects: projects.items.map(mapProject),
@@ -113,7 +114,7 @@ export async function getDashboard(
   const { items } = await backendFetch<{ items: ProjectDto[] }>(
     `/api/admin/projects?semesterId=${selected.id}&size=100`,
   );
-  const software = items.filter((p) => p.type === "SOFTWARE").length;
+  const count = (type: ProjectDto["type"]) => items.filter((p) => p.type === type).length;
   return {
     semester: selected,
     semesters,
@@ -121,8 +122,9 @@ export async function getDashboard(
       active: all.find((s) => s.id === selected.id)?.rosterCount ?? 0,
     },
     projects: {
-      software,
-      hardware: items.length - software,
+      software: count("SOFTWARE"),
+      hardware: count("HARDWARE"),
+      research: count("RESEARCH"),
       total: items.length,
     },
     warnings: [],

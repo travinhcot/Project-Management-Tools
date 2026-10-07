@@ -9,17 +9,7 @@ import type { LinkRequest } from "../dto/resource.dto.ts";
 
 import { HttpError } from "../../../shared/http-error.ts";
 import { resourceError } from "../common/resource-errors.ts";
-import { requiredSlots } from "../model/resource.model.ts";
-
-function summaryOf(
-  type: ProjectType,
-  present: ReadonlySet<ResourceSlot>,
-): ResourceSummary {
-  const required = requiredSlots(type);
-  const have = required.filter((slot) => present.has(slot));
-  const missing = required.filter((slot) => !present.has(slot));
-  return { present: have, missing, complete: missing.length === 0 };
-}
+import { summarizeResources } from "../model/resource.model.ts";
 
 export function createResourceService(repository: ResourceRepository) {
   async function guarded<T>(work: () => Promise<T>): Promise<T> {
@@ -41,7 +31,7 @@ export function createResourceService(repository: ResourceRepository) {
         const resources = await repository.list(projectId);
         return {
           resources,
-          summary: summaryOf(
+          summary: summarizeResources(
             project.type,
             new Set(resources.map((resource) => resource.slot)),
           ),
@@ -106,7 +96,7 @@ export function createResourceService(repository: ResourceRepository) {
       return new Map(
         projects.map((project) => [
           project.id,
-          summaryOf(project.type, bySlot.get(project.id) ?? new Set()),
+          summarizeResources(project.type, bySlot.get(project.id) ?? new Set()),
         ]),
       );
     },

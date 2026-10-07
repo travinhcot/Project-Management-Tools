@@ -15,6 +15,8 @@ export interface Semester {
   startsOn: string | null;
   endsOn: string | null;
   demoRegistrationUrl: string | null;
+  /** Shared kick-start meeting link; a project's own first-meeting link overrides it. */
+  kickoffMeetingUrl: string | null;
   /** Active roster entries. */
   rosterCount: number;
   projectCount: number;

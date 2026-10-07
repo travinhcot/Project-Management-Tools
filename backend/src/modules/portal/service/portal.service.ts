@@ -17,12 +17,13 @@ import {
   PROJECT_NOT_FOUND,
   portalError,
 } from "../common/portal-errors.ts";
+import { requiredSlots } from "../../../shared/resource-rules.ts";
 import { toResourceViews } from "../common/resource-view.ts";
 import { BADGE_WINDOW_DAYS } from "../model/portal.model.ts";
 
 export function createPortalService(
   repository: PortalRepository,
-  { resources }: PortalDependencies,
+  { resources, meetingUrl }: PortalDependencies,
   { allowPastSemesters = false }: PortalOptions = {},
 ) {
   async function guarded<T>(work: () => Promise<T>): Promise<T> {
@@ -68,7 +69,11 @@ export function createPortalService(
         leader_name: head?.leader_name ?? null,
         member_count: head?.member_count ?? 0,
         resources: summary
-          ? { present: summary.present, missing: summary.missing }
+          ? {
+              present: summary.present,
+              missing: summary.missing,
+              applicable: summary.applicable,
+            }
           : null,
         resource_views: toResourceViews(
           row.id,
@@ -134,15 +139,19 @@ export function createPortalService(
           .sort((a, b) => a.kickoff_at!.localeCompare(b.kickoff_at!));
         const comingUp: ComingUpItem[] = [];
         for (const item of upcoming) {
-          const meeting = item.resource_views.find(
+          const own = item.resource_views.find(
             (view) => view.slot === "FIRST_MEETING" && view.kind === "LINK",
           );
+          const url =
+            own && own.kind === "LINK"
+              ? own.url
+              : ((await meetingUrl?.(item.id).catch(() => null)) ?? null);
           comingUp.push({
-            kind: meeting ? "FIRST_MEETING" : "KICKOFF",
+            kind: url ? "FIRST_MEETING" : "KICKOFF",
             project_id: item.id,
             project_name: item.name,
             at: item.kickoff_at,
-            url: meeting && meeting.kind === "LINK" ? meeting.url : null,
+            url,
             file: null,
             download_url_path: null,
           });
@@ -222,6 +231,8 @@ export function createPortalService(
           repository.teammates(actorId, projectId, allowPastSemesters),
           resources.listForProject(projectId),
         ]);
+        const views = toResourceViews(project.id, project.type, listed.resources);
+        const shared = new Set(views.map((view) => view.slot));
         return {
           id: project.id,
           name: project.name,
@@ -230,10 +241,9 @@ export function createPortalService(
           status: project.status,
           kickoff_at: project.kickoff_at,
           semester: { id: project.semester_id, name: project.semester_name },
-          resources: toResourceViews(
-            project.id,
-            project.type,
-            listed.resources,
+          resources: views,
+          missing_resources: requiredSlots(project.type).filter(
+            (slot) => !shared.has(slot),
           ),
           teammates,
         };
