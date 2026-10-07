@@ -31,11 +31,11 @@ export function Modal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="relative flex max-h-full w-[960px] max-w-full flex-col gap-[22px] overflow-y-auto rounded-[10px] border border-line bg-canvas p-8"
+        className="relative flex max-h-full w-[960px] max-w-full flex-col gap-[22px] overflow-y-auto rounded-[10px] border border-line bg-canvas p-4 sm:p-8"
       >
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1">
-            <h2 id={titleId} className="text-[30px] font-bold text-ink">
+            <h2 id={titleId} className="text-2xl font-bold sm:text-[30px] text-ink">
               {title}
             </h2>
             {subtitle && <p className="text-sm text-muted">{subtitle}</p>}

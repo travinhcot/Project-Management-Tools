@@ -77,13 +77,13 @@ export function MeetingEmailsPage({
 
   return (
     <div className="flex flex-col gap-[22px]">
-      <p className="whitespace-pre text-[13px] font-medium text-muted">
+      <p className="whitespace-pre-wrap break-words text-[13px] font-medium text-muted">
         {"Workspace  /  Project Management  /  Meeting emails"}
       </p>
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
         <div className="flex flex-col gap-1">
-          <h1 className="text-[30px] font-bold text-ink">Meeting emails</h1>
+          <h1 className="text-2xl font-bold sm:text-[30px] text-ink">Meeting emails</h1>
           <p className="text-sm text-muted">
             Send each project’s first-meeting link to its assigned members.
           </p>
@@ -110,7 +110,7 @@ export function MeetingEmailsPage({
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_414px]">
         <section aria-label="Project meeting links" className="flex flex-col gap-3">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 sm:gap-4">
             <h2 className="text-[19px] font-semibold text-ink">
               Project meeting links
             </h2>

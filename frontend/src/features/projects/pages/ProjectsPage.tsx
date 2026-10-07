@@ -117,7 +117,7 @@ export function ProjectsPage({
 
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <div className="flex min-w-0 flex-col gap-1">
-          <h1 className="text-[30px] font-bold text-ink">Projects</h1>
+          <h1 className="text-2xl font-bold sm:text-[30px] text-ink">Projects</h1>
           <p className="text-sm text-muted">
             Track every project, its team, status, and setup resources.
           </p>

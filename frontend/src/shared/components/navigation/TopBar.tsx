@@ -1,9 +1,11 @@
 import { Pill } from "@/shared/components/Pill";
+import { MobileNav } from "@/shared/components/navigation/MobileNav";
 import { signOut } from "@/features/auth/actions";
 
 export function TopBar() {
   return (
     <header className="flex min-h-[68px] shrink-0 flex-wrap items-center gap-x-5 gap-y-1 border border-line bg-chrome px-4 py-2 sm:px-[30px]">
+      <MobileNav />
       <span className="text-base font-bold uppercase text-ink sm:text-lg">
         Project Management
       </span>

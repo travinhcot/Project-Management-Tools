@@ -88,12 +88,12 @@ export function UsersAccessPage({
 
   return (
     <div className="flex flex-col gap-[22px]">
-      <p className="whitespace-pre text-[13px] font-medium text-muted">
+      <p className="whitespace-pre-wrap break-words text-[13px] font-medium text-muted">
         {"Workspace  /  Project Management  /  Users & access"}
       </p>
 
       <div className="flex flex-col gap-1">
-        <h1 className="text-[30px] font-bold text-ink">Users & access</h1>
+        <h1 className="text-2xl font-bold sm:text-[30px] text-ink">Users & access</h1>
         <p className="text-sm text-muted">
           Choose who is an admin and who can sign in. Deactivated users lose access immediately.
         </p>
@@ -133,14 +133,14 @@ export function UsersAccessPage({
           value={filters.role}
           onChange={(value) => navigate({ role: value as UserFilters["role"] })}
           options={ROLE_OPTIONS}
-          className="h-11 w-[150px]"
+          className="h-11 w-full sm:w-[150px]"
         />
         <SelectBox
           label="Filter by status"
           value={filters.status}
           onChange={(value) => navigate({ status: value as UserFilters["status"] })}
           options={STATUS_OPTIONS}
-          className="h-11 w-[160px]"
+          className="h-11 w-full sm:w-[160px]"
         />
       </div>
 

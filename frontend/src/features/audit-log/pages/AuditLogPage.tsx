@@ -55,13 +55,13 @@ export function AuditLogPage({
 
   return (
     <div className="flex flex-col gap-[22px]">
-      <p className="whitespace-pre text-[13px] font-medium text-muted">
+      <p className="whitespace-pre-wrap break-words text-[13px] font-medium text-muted">
         {"Workspace  /  Project Management  /  Audit log"}
       </p>
 
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col gap-1">
-          <h1 className="text-[30px] font-bold text-ink">Audit log</h1>
+          <h1 className="text-2xl font-bold sm:text-[30px] text-ink">Audit log</h1>
           <p className="text-sm text-muted">
             A read-only record of who did what. Times are shown in Ho Chi Minh City time.
           </p>
@@ -81,14 +81,14 @@ export function AuditLogPage({
           value={filters.action}
           onChange={(value) => navigate({ action: value })}
           options={withAll("All actions", options.actions)}
-          className="h-11 w-[230px]"
+          className="h-11 w-full sm:w-[230px]"
         />
         <SelectBox
           label="Filter by entity"
           value={filters.entityType}
           onChange={(value) => navigate({ entityType: value })}
           options={withAll("All entities", options.entityTypes)}
-          className="h-11 w-[190px]"
+          className="h-11 w-full sm:w-[190px]"
         />
         <label className="flex flex-col gap-1 text-xs font-semibold text-muted">
           From

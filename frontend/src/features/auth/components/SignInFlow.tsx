@@ -11,7 +11,7 @@ type Step = "email" | "code" | "no-access";
 const RESEND_SECONDS = 45;
 
 const cardClass =
-  "flex w-full max-w-[380px] flex-col gap-4 rounded-[14px] border border-line bg-surface p-7";
+  "flex w-full max-w-[380px] flex-col gap-4 rounded-[14px] border border-line bg-surface p-5 sm:p-7";
 
 const clock = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
