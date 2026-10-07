@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { API_BASE_URL } from "@/shared/api/config";
+import { safeNextPath } from "@/shared/auth/redirect";
 import {
   ACCESS_COOKIE,
   REFRESH_COOKIE,
@@ -35,12 +36,24 @@ async function refreshSession(
  */
 export async function proxy(request: NextRequest) {
   const onSignIn = request.nextUrl.pathname === SIGN_IN_PATH;
-  const toSignIn = () =>
-    onSignIn
-      ? NextResponse.next()
-      : NextResponse.redirect(new URL(SIGN_IN_PATH, request.url));
+  // A rejected token sends the visitor to /sign-in?expired=1; don't bounce them back out.
+  const staleSession = request.nextUrl.searchParams.has("expired");
+  const toLanding = () =>
+    NextResponse.redirect(
+      new URL(safeNextPath(request.nextUrl.searchParams.get("next")), request.url),
+    );
+  const toSignIn = () => {
+    if (onSignIn) return NextResponse.next();
+    // Remember where they were headed so sign-in can continue there.
+    const url = new URL(SIGN_IN_PATH, request.url);
+    const wanted = request.nextUrl.pathname + request.nextUrl.search;
+    if (wanted !== "/" && safeNextPath(wanted) === wanted) url.searchParams.set("next", wanted);
+    return NextResponse.redirect(url);
+  };
 
-  if (request.cookies.has(ACCESS_COOKIE)) return NextResponse.next();
+  if (request.cookies.has(ACCESS_COOKIE)) {
+    return onSignIn && !staleSession ? toLanding() : NextResponse.next();
+  }
 
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
   if (!refreshToken) return toSignIn();
@@ -55,7 +68,8 @@ export async function proxy(request: NextRequest) {
   // Make the new tokens visible to this same request, then persist them on the response.
   request.cookies.set(ACCESS_COOKIE, session.access_token);
   request.cookies.set(REFRESH_COOKIE, session.refresh_token);
-  const response = NextResponse.next({ request });
+  const response =
+    onSignIn && !staleSession ? toLanding() : NextResponse.next({ request });
   writeSession(response.cookies, session);
   return response;
 }

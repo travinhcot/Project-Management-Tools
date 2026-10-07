@@ -1,9 +1,15 @@
 import type { Metadata } from "next";
 import { SignInFlow } from "@/features/auth/components/SignInFlow";
+import { safeNextPath } from "@/shared/auth/redirect";
 
 export const metadata: Metadata = { title: "Sign in" };
 
-export default function Page() {
+export default async function Page({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string | string[] }>;
+}) {
+  const next = safeNextPath((await searchParams).next);
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
       <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line bg-chrome px-4 py-4 sm:px-[31px] sm:py-[22px]">
@@ -17,7 +23,7 @@ export default function Page() {
           <h1 className="text-2xl font-bold sm:text-[28px] text-ink">Sign in with your school email</h1>
           <p className="text-sm text-muted">We email you a one-time code. No password needed.</p>
         </div>
-        <SignInFlow />
+        <SignInFlow next={next} />
       </main>
     </div>
   );

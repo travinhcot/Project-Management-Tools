@@ -16,7 +16,7 @@ const cardClass =
 const clock = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
-export function SignInFlow() {
+export function SignInFlow({ next }: { next?: string }) {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -48,7 +48,7 @@ export function SignInFlow() {
     setError(undefined);
     startTransition(async () => {
       // On success the action redirects, so this only resumes on failure.
-      const result = await verifyOtp(email, code);
+      const result = await verifyOtp(email, code, next);
       if (result.ok) return;
       if (result.code === "NO_ACCESS") return setStep("no-access");
       setError(result.message);

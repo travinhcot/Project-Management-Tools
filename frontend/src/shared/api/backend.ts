@@ -43,7 +43,7 @@ export async function backendFetch<T>(
     throw new ApiError(503, "BACKEND_UNREACHABLE", "The server could not be reached. Try again in a moment.");
   }
 
-  if (response.status === 401) redirect("/sign-in");
+  if (response.status === 401) redirect("/sign-in?expired=1");
   if (!response.ok) throw await toApiError(response);
   return (response.status === 204 ? undefined : await response.json()) as T;
 }

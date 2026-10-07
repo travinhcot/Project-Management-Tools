@@ -3,6 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { API_BASE_URL } from "@/shared/api/config";
+import { safeNextPath } from "@/shared/auth/redirect";
 import {
   ACCESS_COOKIE,
   clearSession,
@@ -48,7 +49,11 @@ export async function requestOtp(email: string): Promise<AuthResult> {
 }
 
 /** On success for an admin this sets the session cookies and redirects; it only returns on failure. */
-export async function verifyOtp(email: string, code: string): Promise<AuthResult> {
+export async function verifyOtp(
+  email: string,
+  code: string,
+  next?: string,
+): Promise<AuthResult> {
   const response = await post("/api/auth/verify", { email: email.trim(), token: code });
   if (!response) return UNAVAILABLE;
   if (response.status === 400 || response.status === 401) {
@@ -75,7 +80,7 @@ export async function verifyOtp(email: string, code: string): Promise<AuthResult
   }
 
   writeSession(await cookies(), body.session);
-  redirect("/overview");
+  redirect(safeNextPath(next));
 }
 
 export async function signOut(): Promise<void> {
