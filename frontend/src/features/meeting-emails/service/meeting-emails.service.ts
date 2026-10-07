@@ -116,14 +116,16 @@ async function fetchMeetingLink(
   }
 }
 
-export async function getMeetingEmails(): Promise<{
+export async function getMeetingEmails(semesterId?: string): Promise<{
   semester: SemesterSummary | null;
   projects: MeetingEmailProject[];
 }> {
   const data = await backendFetch<{
     semester: { id: string; name: string; is_current: boolean } | null;
     items: ProjectDto[];
-  }>(`/api/admin/projects?size=${PROJECT_LIMIT}`);
+  }>(
+    `/api/admin/projects?size=${PROJECT_LIMIT}${semesterId ? `&semesterId=${encodeURIComponent(semesterId)}` : ""}`,
+  );
   if (!data.semester) return { semester: null, projects: [] };
 
   const params = new URLSearchParams({

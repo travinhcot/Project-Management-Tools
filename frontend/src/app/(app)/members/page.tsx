@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { MembersPage } from "@/features/members/pages/MembersPage";
+import { getSemesterOptions } from "@/features/semesters/service/semesters.service";
 import { getMembers } from "@/features/members/service/members.service";
 import type { MemberFilters } from "@/features/members/models/member";
 
@@ -16,12 +17,13 @@ function parseFilters(params: SearchParams): MemberFilters {
   return {
     search: first(params.q)?.trim().slice(0, 100) ?? "",
     status: status === "inactive" || status === "all" ? status : "active",
+    semester: first(params.semester)?.trim().slice(0, 64) ?? "",
     page: Number.isInteger(page) && page >= 1 ? page : 1,
   };
 }
 
 export default async function Page({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const filters = parseFilters(await searchParams);
-  const list = await getMembers(filters);
-  return <MembersPage list={list} filters={filters} />;
+  const [list, semesters] = await Promise.all([getMembers(filters), getSemesterOptions()]);
+  return <MembersPage list={list} filters={filters} semesters={semesters} />;
 }

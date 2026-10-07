@@ -9,13 +9,18 @@ export interface SemesterOption {
   isCurrent: boolean;
 }
 
-/** Pill-styled native select that reloads the overview for the chosen semester. */
+/**
+ * Pill-styled native select that reloads `basePath` for the chosen semester (`?semester=id`;
+ * the current semester uses the bare path). Filters reset because they belong to one semester.
+ */
 export function SemesterSwitcher({
   options,
   selectedId,
+  basePath,
 }: {
   options: SemesterOption[];
   selectedId: string;
+  basePath: string;
 }) {
   const router = useRouter();
   const selected = options.find((option) => option.id === selectedId);
@@ -31,8 +36,8 @@ export function SemesterSwitcher({
             const option = options.find((o) => o.id === event.target.value);
             router.push(
               option && !option.isCurrent
-                ? `/overview?semester=${option.id}`
-                : "/overview",
+                ? `${basePath}?semester=${option.id}`
+                : basePath,
             );
           }}
           className="absolute inset-0 w-full cursor-pointer opacity-0"

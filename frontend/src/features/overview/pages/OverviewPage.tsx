@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AttentionCard } from "@/features/overview/components/AttentionCard";
 import { ProjectCard } from "@/features/overview/components/ProjectCard";
 import { StatCard } from "@/features/overview/components/StatCard";
-import { SemesterSwitcher } from "@/features/overview/components/SemesterSwitcher";
+import { SemesterSwitcher } from "@/shared/components/SemesterSwitcher";
 import { getDashboard } from "@/features/overview/service/dashboard.service";
 
 export async function OverviewPage({
@@ -31,7 +31,7 @@ export async function OverviewPage({
           </p>
         </div>
         {semester && (
-          <SemesterSwitcher options={semesters} selectedId={semester.id} />
+          <SemesterSwitcher options={semesters} selectedId={semester.id} basePath="/overview" />
         )}
       </div>
 

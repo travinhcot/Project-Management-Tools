@@ -2,7 +2,6 @@
 
 import { useState, useTransition } from "react";
 import { Button } from "@/shared/components/Button";
-import { SemesterBadge } from "@/shared/components/SemesterBadge";
 import {
   createSemester,
   getSwitchImpact,
@@ -19,7 +18,6 @@ import type {
   SwitchImpact,
 } from "@/features/semesters/models/semester";
 import {
-  shortName,
   sortSemesters,
   type SemesterFormErrors,
 } from "@/features/semesters/utils/semesters";
@@ -115,9 +113,7 @@ export function SemestersPage({
             Create terms, set dates and choose which semester is current.
           </p>
         </div>
-        {current ? (
-          <SemesterBadge name={shortName(current)} active />
-        ) : (
+        {!current && (
           <span className="text-xs font-medium text-muted">No current semester</span>
         )}
       </div>

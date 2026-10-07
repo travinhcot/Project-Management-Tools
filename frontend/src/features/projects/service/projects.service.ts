@@ -103,6 +103,7 @@ export function mapResources(resources: ResourceDto[]): ProjectResources {
 export async function getProjects(filters: ProjectFilters): Promise<ProjectListPage> {
   const params = new URLSearchParams({ page: String(filters.page), size: String(PAGE_SIZE) });
   if (filters.search) params.set("search", filters.search);
+  if (filters.semester) params.set("semesterId", filters.semester);
   if (filters.type !== "all") params.set("type", toBackendType(filters.type));
   if (filters.status !== "all") params.set("status", toBackendStatus(filters.status));
   const data = await backendFetch<{

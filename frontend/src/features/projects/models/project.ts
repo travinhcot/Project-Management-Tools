@@ -68,6 +68,8 @@ export interface ProjectFilters {
   search: string;
   type: "all" | ProjectType;
   status: "all" | ProjectStatus;
+  /** Semester id from `?semester=`; empty means the current semester. */
+  semester: string;
   page: number;
 }
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { SemesterBadge } from "@/shared/components/SemesterBadge";
+import { SemesterSwitcher, type SemesterOption } from "@/shared/components/SemesterSwitcher";
 import {
   cancelCampaign,
   removeMeetingLink,
@@ -37,9 +37,11 @@ const REFRESH_MS = 5000;
 export function MeetingEmailsPage({
   semester,
   projects,
+  semesters,
 }: {
   semester: SemesterSummary | null;
   projects: MeetingEmailProject[];
+  semesters: SemesterOption[];
 }) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState(projects[0]?.id ?? "");
@@ -88,7 +90,9 @@ export function MeetingEmailsPage({
             Send each project’s first-meeting link to its assigned members.
           </p>
         </div>
-        {semester && <SemesterBadge name={semester.name} active={semester.active} />}
+        {semester && (
+          <SemesterSwitcher options={semesters} selectedId={semester.id} basePath="/meeting-emails" />
+        )}
       </div>
 
       <div className="flex flex-col gap-[7px] rounded-[10px] bg-accent-soft p-[18px]">

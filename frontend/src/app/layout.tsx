@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
-import { Noto_Sans } from "next/font/google";
+import { Roboto } from "next/font/google";
 import "./globals.css";
 
-const notoSans = Noto_Sans({
-  variable: "--font-noto-sans",
+const roboto = Roboto({
+  variable: "--font-roboto",
   subsets: ["latin", "vietnamese"],
   weight: ["400", "500", "600", "700"],
 });
@@ -18,7 +18,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${notoSans.variable} h-full antialiased`}>
+    <html lang="en" className={`${roboto.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );

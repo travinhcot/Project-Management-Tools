@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ProjectsPage } from "@/features/projects/pages/ProjectsPage";
+import { getSemesterOptions } from "@/features/semesters/service/semesters.service";
 import { getProjects } from "@/features/projects/service/projects.service";
 import {
   PROJECT_STATUSES,
@@ -23,12 +24,13 @@ function parseFilters(params: SearchParams): ProjectFilters {
     search: first(params.q)?.trim().slice(0, 100) ?? "",
     type: type === "software" || type === "hardware" ? (type as ProjectType) : "all",
     status: PROJECT_STATUSES.includes(status as ProjectStatus) ? (status as ProjectStatus) : "all",
+    semester: first(params.semester)?.trim().slice(0, 64) ?? "",
     page: Number.isInteger(page) && page >= 1 ? page : 1,
   };
 }
 
 export default async function Page({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const filters = parseFilters(await searchParams);
-  const list = await getProjects(filters);
-  return <ProjectsPage list={list} filters={filters} />;
+  const [list, semesters] = await Promise.all([getProjects(filters), getSemesterOptions()]);
+  return <ProjectsPage list={list} filters={filters} semesters={semesters} />;
 }

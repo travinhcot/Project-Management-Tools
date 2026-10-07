@@ -18,6 +18,8 @@ export interface MemberFilters {
   search: string;
   /** Defaults to active; inactive members are otherwise unreachable. */
   status: "all" | MemberStatus;
+  /** Semester id from `?semester=`; empty means the current semester. */
+  semester: string;
   page: number;
 }
 

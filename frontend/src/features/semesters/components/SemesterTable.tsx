@@ -1,6 +1,9 @@
 import { Button } from "@/shared/components/Button";
 import { Pill, type PillTone } from "@/shared/components/Pill";
-import type { Semester, SemesterPhase } from "@/features/semesters/models/semester";
+import type {
+  Semester,
+  SemesterPhase,
+} from "@/features/semesters/models/semester";
 import { formatRange, getPhase } from "@/features/semesters/utils/semesters";
 
 const PHASE_PILL: Record<SemesterPhase, { tone: PillTone; label: string }> = {
@@ -28,10 +31,18 @@ export function SemesterTable({
       <table className="w-full min-w-[560px] border-collapse text-left">
         <thead>
           <tr className="text-[11px] font-bold text-muted">
-            <th scope="col" className="px-4 py-2.5 font-bold">SEMESTER</th>
-            <th scope="col" className="w-[180px] py-2.5 pr-3 font-bold">DATES</th>
-            <th scope="col" className="w-[70px] py-2.5 pr-3 font-bold">ROSTER</th>
-            <th scope="col" className="w-[70px] py-2.5 pr-3 font-bold">PROJECTS</th>
+            <th scope="col" className="px-4 py-2.5 font-bold">
+              SEMESTER
+            </th>
+            <th scope="col" className="w-[180px] py-2.5 pr-3 font-bold">
+              DATES
+            </th>
+            <th scope="col" className="w-[70px] py-2.5 pr-3 font-bold">
+              ROSTER
+            </th>
+            <th scope="col" className="w-[70px] py-2.5 pr-3 font-bold">
+              PROJECTS
+            </th>
             <th scope="col" className="w-[150px] py-2.5 pr-4 font-bold">
               <span className="sr-only">Actions</span>
             </th>
@@ -50,7 +61,9 @@ export function SemesterTable({
               >
                 <th scope="row" className="px-4 py-3.5 text-left">
                   <span className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-ink">{semester.name}</span>
+                    <span className="text-sm font-semibold text-ink">
+                      {semester.name}
+                    </span>
                     <Pill tone={pill.tone} size="sm">
                       {pill.label}
                     </Pill>
@@ -59,8 +72,12 @@ export function SemesterTable({
                 <td className="py-3.5 pr-3 text-[13px] text-ink">
                   {formatRange(semester.startsOn, semester.endsOn)}
                 </td>
-                <td className="py-3.5 pr-3 text-[13px] text-ink">{semester.rosterCount}</td>
-                <td className="py-3.5 pr-3 text-[13px] text-ink">{semester.projectCount}</td>
+                <td className="py-3.5 pr-3 text-[13px] text-ink">
+                  {semester.rosterCount}
+                </td>
+                <td className="py-3.5 pr-3 text-[13px] text-ink">
+                  {semester.projectCount}
+                </td>
                 <td className="py-3.5 pr-4">
                   <div className="flex items-center gap-3.5">
                     <Button

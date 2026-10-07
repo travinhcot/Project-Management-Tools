@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { SemesterBadge } from "@/shared/components/SemesterBadge";
+import { SemesterSwitcher, type SemesterOption } from "@/shared/components/SemesterSwitcher";
 import { Button } from "@/shared/components/Button";
 import { ArchiveProjectDrawer } from "@/features/projects/components/drawers/ArchiveProjectDrawer";
 import { BomFileDrawer } from "@/features/projects/components/drawers/BomFileDrawer";
@@ -43,9 +43,11 @@ type DrawerState =
 export function ProjectsPage({
   list,
   filters,
+  semesters,
 }: {
   list: ProjectListPage;
   filters: ProjectFilters;
+  semesters: SemesterOption[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -58,6 +60,7 @@ export function ProjectsPage({
   function navigate(next: Partial<ProjectFilters>) {
     const merged = { ...filters, page: 1, ...next };
     const params = new URLSearchParams();
+    if (merged.semester) params.set("semester", merged.semester);
     if (merged.search) params.set("q", merged.search);
     if (merged.type !== "all") params.set("type", merged.type);
     if (merged.status !== "all") params.set("status", merged.status);
@@ -122,7 +125,9 @@ export function ProjectsPage({
             Track every project, its team, status, and setup resources.
           </p>
         </div>
-        {semester && <SemesterBadge name={semester.name} active={semester.active} />}
+        {semester && (
+          <SemesterSwitcher options={semesters} selectedId={semester.id} basePath="/projects" />
+        )}
       </div>
 
       {!semester ? (

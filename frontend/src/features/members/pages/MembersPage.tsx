@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/shared/components/Button";
-import { SemesterBadge } from "@/shared/components/SemesterBadge";
+import { SemesterSwitcher, type SemesterOption } from "@/shared/components/SemesterSwitcher";
 import { AddMemberDrawer } from "@/features/members/components/drawers/AddMemberDrawer";
 import { DeleteMemberDrawer } from "@/features/members/components/drawers/DeleteMemberDrawer";
 import { ImportRosterModal } from "@/features/members/components/import/ImportRosterModal";
@@ -17,9 +17,11 @@ import type { Member, MemberFilters, MemberListPage } from "@/features/members/m
 export function MembersPage({
   list,
   filters,
+  semesters,
 }: {
   list: MemberListPage;
   filters: MemberFilters;
+  semesters: SemesterOption[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -32,6 +34,7 @@ export function MembersPage({
   function navigate(next: Partial<MemberFilters>) {
     const merged = { ...filters, page: 1, ...next };
     const params = new URLSearchParams();
+    if (merged.semester) params.set("semester", merged.semester);
     if (merged.search) params.set("q", merged.search);
     if (merged.status !== "active") params.set("status", merged.status);
     if (merged.page > 1) params.set("page", String(merged.page));
@@ -66,7 +69,9 @@ export function MembersPage({
               : "Browse the roster and member contact details."}
           </p>
         </div>
-        {semester && <SemesterBadge name={semester.name} active={semester.active} />}
+        {semester && (
+          <SemesterSwitcher options={semesters} selectedId={semester.id} basePath="/members" />
+        )}
       </div>
 
       {!semester ? (

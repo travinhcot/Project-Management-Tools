@@ -106,7 +106,9 @@ export async function getMembers(filters: MemberFilters): Promise<MemberListPage
   const { items: semesters } = await backendFetch<{
     items: { id: string; name: string; is_current: boolean }[];
   }>("/api/admin/semesters");
-  const current = semesters.find((semester) => semester.is_current);
+  const current =
+    semesters.find((semester) => semester.id === filters.semester) ??
+    semesters.find((semester) => semester.is_current);
   if (!current) {
     return { semester: null, items: [], page: 1, size: PAGE_SIZE, total: 0 };
   }
