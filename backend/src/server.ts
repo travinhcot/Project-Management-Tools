@@ -1,6 +1,7 @@
 import type { ProjectStatsGateway } from "./modules/semesters/interface/semester.interface.ts";
 
 import { createApplication } from "./app.ts";
+import { startKeepAlive } from "./keep-alive.ts";
 import { createAuthClient, getAdminClient } from "./config/database.ts";
 import { createUsersInterface } from "./modules/users/interface/user.interface.ts";
 import { createAuthInterface } from "./modules/auth/interface/auth.interface.ts";
@@ -119,4 +120,5 @@ app.listen(port, (error?: Error) => {
     process.exit(1);
   }
   console.log(`Backend listening on http://localhost:${port}`);
+  startKeepAlive();
 });
