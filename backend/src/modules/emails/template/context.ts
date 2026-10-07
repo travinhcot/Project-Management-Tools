@@ -10,7 +10,7 @@ export interface ContextSource {
   readonly meetingUrl?: string | null;
 }
 
-/** Builds the template input; the project link is `{appUrl}/projects/{projectId}`. */
+/** Builds the template input; the project link is `{appUrl}/projects` (no project id). */
 export function buildContext(
   source: ContextSource,
   appUrl: string,
@@ -20,7 +20,7 @@ export function buildContext(
     recipientName: source.recipientName,
     projectName: source.projectName,
     projectUrl: source.projectId
-      ? `${appUrl.replace(/\/+$/, "")}/projects/${source.projectId}`
+      ? `${appUrl.replace(/\/+$/, "")}/projects`
       : null,
     semesterName: source.semesterName,
     demoUrl: source.demoUrl,
