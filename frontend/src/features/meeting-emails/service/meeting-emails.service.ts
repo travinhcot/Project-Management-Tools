@@ -1,92 +1,173 @@
-// getMeetingEmails() returns mock data until auth is wired; swap in
-// GET /api/admin/projects (meeting link, members) + GET /api/admin/campaigns
-// (kick-off delivery counts) and map snake_case to MeetingEmailProject.
+// Reads kick-off campaigns from the backend (GET /api/admin/projects, /campaigns, /deliveries,
+// /preview). Server-only: it goes through backendFetch, which attaches the admin session token.
+import { backendFetch } from "@/shared/api/backend";
+import { ApiError } from "@/shared/api/errors";
+import type { ProjectType } from "@/shared/models/project";
 import type {
+  CampaignState,
   Delivery,
+  DeliveryState,
+  Kickoff,
   MeetingEmailProject,
-  Recipient,
 } from "@/features/meeting-emails/models/meeting-email";
 import type { SemesterSummary } from "@/features/projects/models/project";
+import {
+  mapSemester,
+  type ProjectDto,
+} from "@/features/projects/service/projects.service";
 
-const person = (id: string, fullName: string, email: string): Recipient => ({
-  id,
-  fullName,
-  email: `${email}@student.example.edu`,
+const PROJECT_LIMIT = 100;
+
+/** Campaign in backend/src/modules/emails/model/email.model.ts. */
+interface CampaignDto {
+  id: string;
+  project_id: string | null;
+  status: string;
+  scheduled_at: string;
+  delivery_counts: Record<string, number>;
+  estimated_recipients: number;
+}
+
+/** Delivery in backend/src/modules/emails/model/email.model.ts. */
+interface DeliveryDto {
+  id: string;
+  roster_member_id: string;
+  full_name: string;
+  recipient_email: string;
+  status: string;
+  attempt_count: number;
+  last_attempt_at: string | null;
+  last_error_summary: string | null;
+}
+
+const CAMPAIGN_STATES: Record<string, CampaignState> = {
+  DRAFT: "scheduled",
+  SCHEDULED: "scheduled",
+  PROCESSING: "processing",
+  COMPLETED: "completed",
+  COMPLETED_WITH_FAILURES: "completed_with_failures",
+  CANCELLED: "cancelled",
+};
+
+const DELIVERY_STATES: Record<string, DeliveryState> = {
+  PENDING: "pending",
+  SENDING: "sending",
+  SENT: "sent",
+  FAILED_RETRYABLE: "retrying",
+  FAILED_PERMANENT: "failed",
+  UNKNOWN: "unknown",
+  SKIPPED: "skipped",
+};
+
+const emptyCounts = (): Record<DeliveryState, number> => ({
+  pending: 0,
+  sending: 0,
+  sent: 0,
+  retrying: 0,
+  failed: 0,
+  unknown: 0,
+  skipped: 0,
 });
 
-const HUY = person("m2", "Trần Gia Huy", "gia.huy");
-const BAO = person("m4", "Phạm Quốc Bảo", "quoc.bao");
-const NAM = person("m6", "Bùi Hoàng Nam", "hoang.nam");
-const DUY = person("m8", "Hoàng Đức Duy", "duc.duy");
-const ANH = person("m1", "Nguyễn Minh Anh", "minh.anh");
-const VY = person("m3", "Lê Thảo Vy", "thao.vy");
-const LINH = person("m5", "Đặng Phương Linh", "phuong.linh");
-const NGAN = person("m7", "Võ Kim Ngân", "kim.ngan");
-const HA = person("m9", "Ngô Thanh Hà", "thanh.ha");
-const DANG = person("m10", "Vũ Hải Đăng", "hai.dang");
+function mapKickoff(
+  summary: NonNullable<ProjectDto["kickoff"]>,
+  campaign: CampaignDto | undefined,
+): Kickoff {
+  const counts = emptyCounts();
+  for (const [status, count] of Object.entries(campaign?.delivery_counts ?? {})) {
+    const state = DELIVERY_STATES[status];
+    if (state) counts[state] += count;
+  }
+  return {
+    id: summary.id,
+    state: CAMPAIGN_STATES[summary.status] ?? "scheduled",
+    scheduledAt: summary.scheduled_at,
+    counts,
+    estimatedRecipients: campaign?.estimated_recipients ?? 0,
+  };
+}
 
-const SENT_AT = "2026-09-29T03:15:00Z"; // 10:15 GMT+7
+export function mapDelivery(dto: DeliveryDto): Delivery {
+  return {
+    id: dto.id,
+    recipientId: dto.roster_member_id,
+    fullName: dto.full_name,
+    email: dto.recipient_email,
+    state: DELIVERY_STATES[dto.status] ?? "pending",
+    attempts: dto.attempt_count,
+    lastAttemptAt: dto.last_attempt_at,
+    error: dto.last_error_summary,
+  };
+}
 
-const delivered = (recipient: Recipient): Delivery => ({
-  recipientId: recipient.id,
-  state: "sent",
-  attempts: 1,
-  lastAttemptAt: SENT_AT,
-  error: null,
-});
-
-const bounced = (recipient: Recipient, error: string): Delivery => ({
-  recipientId: recipient.id,
-  state: "failed",
-  attempts: 3,
-  lastAttemptAt: SENT_AT,
-  error,
-});
+/** The project's first-meeting link; a missing resource list simply means "no link". */
+async function fetchMeetingLink(
+  projectId: string,
+): Promise<{ url: string | null; label: string | null }> {
+  try {
+    const { resources } = await backendFetch<{
+      resources: { slot: string; url: string | null; label: string | null }[];
+    }>(`/api/admin/projects/${projectId}/resources`);
+    const meeting = resources.find((resource) => resource.slot === "FIRST_MEETING");
+    return { url: meeting?.url ?? null, label: meeting?.label ?? null };
+  } catch (error) {
+    if (error instanceof ApiError) return { url: null, label: null };
+    throw error;
+  }
+}
 
 export async function getMeetingEmails(): Promise<{
-  semester: SemesterSummary;
+  semester: SemesterSummary | null;
   projects: MeetingEmailProject[];
 }> {
+  const data = await backendFetch<{
+    semester: { id: string; name: string; is_current: boolean } | null;
+    items: ProjectDto[];
+  }>(`/api/admin/projects?size=${PROJECT_LIMIT}`);
+  if (!data.semester) return { semester: null, projects: [] };
+
+  const params = new URLSearchParams({
+    kind: "KICKOFF",
+    semesterId: data.semester.id,
+    size: String(PROJECT_LIMIT),
+  });
+  const [campaigns, links] = await Promise.all([
+    backendFetch<{ items: CampaignDto[] }>(`/api/admin/campaigns?${params}`),
+    Promise.all(data.items.map((project) => fetchMeetingLink(project.id))),
+  ]);
+  const campaignById = new Map(campaigns.items.map((campaign) => [campaign.id, campaign]));
+
   return {
-    semester: { id: "sem-a", name: "Sem A", label: "Sem A 2026", active: true },
-    projects: [
-      {
-        id: "p2",
-        name: "Open Bench",
-        type: "hardware",
-        meetingUrl: "https://meet.example.edu/open-bench",
-        meetingLabel: null,
-        recipients: [HUY, BAO, NAM, DUY],
-        deliveries: [],
-        lastSentAt: null,
-      },
-      {
-        id: "p1",
-        name: "Smart Campus API",
-        type: "software",
-        meetingUrl: "https://meet.example.edu/smart-campus",
-        meetingLabel: null,
-        recipients: [ANH, VY, LINH, NGAN, HA, DANG],
-        deliveries: [
-          delivered(ANH),
-          delivered(VY),
-          delivered(LINH),
-          delivered(HA),
-          bounced(NGAN, "Mailbox full (temporary)"),
-          bounced(DANG, "Recipient address rejected"),
-        ],
-        lastSentAt: SENT_AT,
-      },
-      {
-        id: "p3",
-        name: "Club Tools",
-        type: "software",
-        meetingUrl: null,
-        meetingLabel: null,
-        recipients: [ANH, VY, LINH, NGAN, HA],
-        deliveries: [],
-        lastSentAt: null,
-      },
-    ],
+    semester: mapSemester(data.semester),
+    projects: data.items.map((project, index) => ({
+      id: project.id,
+      name: project.name,
+      type: project.type.toLowerCase() as ProjectType,
+      meetingUrl: links[index].url,
+      meetingLabel: links[index].label,
+      memberCount: project.member_count,
+      kickoff: project.kickoff
+        ? mapKickoff(project.kickoff, campaignById.get(project.kickoff.id))
+        : null,
+    })),
   };
+}
+
+export async function fetchDeliveries(campaignId: string): Promise<Delivery[]> {
+  const { items } = await backendFetch<{ items: DeliveryDto[] }>(
+    `/api/admin/campaigns/${campaignId}/deliveries?size=100`,
+  );
+  return items.map(mapDelivery);
+}
+
+export interface EmailPreviewData {
+  subject: string;
+  text: string;
+}
+
+export async function fetchPreview(campaignId: string): Promise<EmailPreviewData> {
+  const { preview } = await backendFetch<{ preview: EmailPreviewData }>(
+    `/api/admin/campaigns/${campaignId}/preview`,
+  );
+  return { subject: preview.subject, text: preview.text };
 }

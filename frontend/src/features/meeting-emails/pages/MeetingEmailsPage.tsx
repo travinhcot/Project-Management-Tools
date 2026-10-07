@@ -1,98 +1,78 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { SemesterBadge } from "@/shared/components/SemesterBadge";
+import {
+  cancelCampaign,
+  removeMeetingLink,
+  rescheduleCampaign,
+  resendCampaign,
+  resolveDelivery,
+  retryFailedDeliveries,
+  saveMeetingLink,
+  scheduleKickoff,
+  sendCampaignNow,
+  sendKickoffNow,
+  type ActionResult,
+} from "@/features/meeting-emails/actions";
 import { DeliveryDrawer } from "@/features/meeting-emails/components/drawers/DeliveryDrawer";
+import { ScheduleDrawer } from "@/features/meeting-emails/components/drawers/ScheduleDrawer";
 import { EmailPreview } from "@/features/meeting-emails/components/EmailPreview";
 import { MeetingEmailRow } from "@/features/meeting-emails/components/MeetingEmailRow";
-import type {
-  Delivery,
-  MeetingEmailProject,
-} from "@/features/meeting-emails/models/meeting-email";
+import type { MeetingEmailProject } from "@/features/meeting-emails/models/meeting-email";
+import { getSendStatus } from "@/features/meeting-emails/utils/send-status";
 import { MeetingLinkDrawer } from "@/features/projects/components/drawers/MeetingLinkDrawer";
 import type { SemesterSummary } from "@/features/projects/models/project";
 
 type DrawerState =
   | { kind: "link"; id: string }
   | { kind: "delivery"; id: string }
+  | { kind: "schedule"; id: string }
   | null;
 
-const SEND_DELAY_MS = 1200;
+/** While a campaign is queued or sending, the page re-reads the backend this often. */
+const REFRESH_MS = 5000;
 
-// Sending is simulated locally (everything succeeds) until the campaign API is wired.
 export function MeetingEmailsPage({
   semester,
-  initialProjects,
+  projects,
 }: {
-  semester: SemesterSummary;
-  initialProjects: MeetingEmailProject[];
+  semester: SemesterSummary | null;
+  projects: MeetingEmailProject[];
 }) {
-  const [projects, setProjects] = useState(initialProjects);
-  const [selectedId, setSelectedId] = useState(initialProjects[0]?.id ?? "");
+  const router = useRouter();
+  const [selectedId, setSelectedId] = useState(projects[0]?.id ?? "");
   const [drawer, setDrawer] = useState<DrawerState>(null);
-  const timers = useRef<number[]>([]);
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [error, setError] = useState<{ id: string; message: string } | null>(null);
 
+  const inFlight = projects.some((project) => {
+    const key = getSendStatus(project).key;
+    return key === "sending" || key === "scheduled";
+  });
   useEffect(() => {
-    const pending = timers.current;
-    return () => pending.forEach((timer) => window.clearTimeout(timer));
-  }, []);
+    if (!inFlight) return;
+    const timer = window.setInterval(() => router.refresh(), REFRESH_MS);
+    return () => window.clearInterval(timer);
+  }, [inFlight, router]);
 
-  const selected = projects.find((project) => project.id === selectedId);
-  const drawerProject =
-    drawer && projects.find((project) => project.id === drawer.id);
+  const selected = projects.find((project) => project.id === selectedId) ?? projects[0];
+  const drawerProject = drawer && projects.find((project) => project.id === drawer.id);
+  const errorMessage = (id: string) => (error?.id === id ? error.message : undefined);
 
-  function patch(id: string, change: (project: MeetingEmailProject) => MeetingEmailProject) {
-    setProjects((current) =>
-      current.map((project) => (project.id === id ? change(project) : project)),
-    );
-  }
-
-  /** Marks the matching deliveries "sending", then settles them as sent after a short delay. */
-  function dispatch(id: string, shouldSend: (delivery: Delivery) => boolean) {
-    patch(id, (project) => ({
-      ...project,
-      deliveries: project.recipients.map((recipient) => {
-        const existing = project.deliveries.find((d) => d.recipientId === recipient.id);
-        if (existing && !shouldSend(existing)) return existing;
-        return {
-          recipientId: recipient.id,
-          state: "sending",
-          attempts: existing?.attempts ?? 0,
-          lastAttemptAt: existing?.lastAttemptAt ?? null,
-          error: null,
-        };
-      }),
-    }));
-
-    timers.current.push(
-      window.setTimeout(() => {
-        const now = new Date().toISOString();
-        patch(id, (project) => ({
-          ...project,
-          lastSentAt: now,
-          deliveries: project.deliveries.map((delivery) =>
-            delivery.state === "sending"
-              ? {
-                  ...delivery,
-                  state: "sent",
-                  attempts: delivery.attempts + 1,
-                  lastAttemptAt: now,
-                }
-              : delivery,
-          ),
-        }));
-      }, SEND_DELAY_MS),
-    );
-  }
-
-  function saveLink(id: string, link: { url: string; label: string | null } | null) {
-    patch(id, (project) => ({
-      ...project,
-      meetingUrl: link?.url ?? null,
-      meetingLabel: link?.label ?? null,
-    }));
-    setSelectedId(id);
-    setDrawer(null);
+  /** Runs a write for a project; closes the drawer on success, shows the backend message otherwise. */
+  async function perform(id: string, work: () => Promise<ActionResult>) {
+    setBusyId(id);
+    setError(null);
+    const result = await work();
+    setBusyId(null);
+    if (result.ok) {
+      setDrawer(null);
+      router.refresh();
+    } else {
+      setError({ id, message: result.message });
+    }
   }
 
   return (
@@ -108,7 +88,7 @@ export function MeetingEmailsPage({
             Send each project’s first-meeting link to its assigned members.
           </p>
         </div>
-        <SemesterBadge name={semester.name} active={semester.active} />
+        {semester && <SemesterBadge name={semester.name} active={semester.active} />}
       </div>
 
       <div className="flex flex-col gap-[7px] rounded-[10px] bg-accent-soft p-[18px]">
@@ -116,10 +96,17 @@ export function MeetingEmailsPage({
           Send meeting links in one step
         </p>
         <p className="text-[13px] text-muted">
-          Save a meeting URL for the project, then press Send email to notify its
-          active assigned members. Delivery results appear here.
+          Save a meeting URL for the project, then press Send email, or schedule it
+          for a later date, to notify its active assigned members. Delivery results
+          appear here.
         </p>
       </div>
+
+      {selected && errorMessage(selected.id) && !drawer && (
+        <p role="alert" className="rounded-[10px] bg-danger-soft p-3 text-[13px] font-medium text-danger-text">
+          {errorMessage(selected.id)}
+        </p>
+      )}
 
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_414px]">
         <section aria-label="Project meeting links" className="flex flex-col gap-3">
@@ -137,21 +124,43 @@ export function MeetingEmailsPage({
               <MeetingEmailRow
                 key={project.id}
                 project={project}
-                selected={project.id === selectedId}
+                selected={project.id === selected?.id}
+                busy={busyId === project.id}
                 onSelect={() => setSelectedId(project.id)}
                 onSend={() => {
                   setSelectedId(project.id);
-                  dispatch(project.id, () => true);
+                  void perform(project.id, () => sendKickoffNow(project.id));
                 }}
-                onViewDelivery={() => setDrawer({ kind: "delivery", id: project.id })}
-                onAddLink={() => setDrawer({ kind: "link", id: project.id })}
+                onSchedule={() => {
+                  setSelectedId(project.id);
+                  setError(null);
+                  setDrawer({ kind: "schedule", id: project.id });
+                }}
+                onSendScheduledNow={() =>
+                  project.kickoff &&
+                  void perform(project.id, () => sendCampaignNow(project.kickoff!.id))
+                }
+                onCancel={() =>
+                  project.kickoff &&
+                  void perform(project.id, () => cancelCampaign(project.kickoff!.id))
+                }
+                onViewDelivery={() => {
+                  setError(null);
+                  setDrawer({ kind: "delivery", id: project.id });
+                }}
+                onAddLink={() => {
+                  setError(null);
+                  setDrawer({ kind: "link", id: project.id });
+                }}
               />
             ))
           ) : (
             <div className="rounded-[10px] border border-line bg-surface p-8 text-center">
               <p className="text-[15px] font-semibold text-ink">No projects yet</p>
               <p className="mt-1 text-xs text-muted">
-                Projects in {semester.name} appear here once they exist.
+                {semester
+                  ? `Projects in ${semester.name} appear here once they exist.`
+                  : "Set a current semester to see its projects here."}
               </p>
             </div>
           )}
@@ -165,24 +174,61 @@ export function MeetingEmailsPage({
         resend is a separate action.
       </p>
 
-      {drawer?.kind === "link" && drawerProject && (
+      {semester && drawer?.kind === "link" && drawerProject && (
         <MeetingLinkDrawer
           key={drawerProject.id}
           project={drawerProject}
           semester={semester}
+          busy={busyId === drawerProject.id}
+          error={errorMessage(drawerProject.id)}
           onClose={() => setDrawer(null)}
-          onSave={(link) => saveLink(drawerProject.id, link)}
-          onRemove={() => saveLink(drawerProject.id, null)}
+          onSave={(link) =>
+            void perform(drawerProject.id, () => saveMeetingLink(drawerProject.id, link))
+          }
+          onRemove={() =>
+            void perform(drawerProject.id, () => removeMeetingLink(drawerProject.id))
+          }
         />
       )}
-      {drawer?.kind === "delivery" && drawerProject && (
+      {semester && drawer?.kind === "schedule" && drawerProject && (
+        <ScheduleDrawer
+          key={drawerProject.id}
+          projectName={drawerProject.name}
+          semester={semester}
+          rescheduling={drawerProject.kickoff?.state === "scheduled"}
+          busy={busyId === drawerProject.id}
+          error={errorMessage(drawerProject.id)}
+          onClose={() => setDrawer(null)}
+          onSchedule={(date) =>
+            void perform(drawerProject.id, () =>
+              drawerProject.kickoff?.state === "scheduled"
+                ? rescheduleCampaign(drawerProject.kickoff.id, date)
+                : scheduleKickoff(drawerProject.id, date),
+            )
+          }
+        />
+      )}
+      {semester && drawer?.kind === "delivery" && drawerProject?.kickoff && (
         <DeliveryDrawer
           key={drawerProject.id}
           project={drawerProject}
           semester={semester}
+          busy={busyId === drawerProject.id}
+          error={errorMessage(drawerProject.id)}
+          refreshKey={JSON.stringify(drawerProject.kickoff.counts)}
           onClose={() => setDrawer(null)}
           onRetryFailed={() =>
-            dispatch(drawerProject.id, (delivery) => delivery.state === "failed")
+            void perform(drawerProject.id, () =>
+              retryFailedDeliveries(drawerProject.kickoff!.id),
+            )
+          }
+          onResend={() =>
+            void perform(drawerProject.id, () => resendCampaign(drawerProject.kickoff!.id))
+          }
+          onResolve={(deliveryId, action) =>
+            void perform(drawerProject.id, () =>
+              resolveDelivery(drawerProject.kickoff!.id, deliveryId, action),
+            )
           }
         />
       )}

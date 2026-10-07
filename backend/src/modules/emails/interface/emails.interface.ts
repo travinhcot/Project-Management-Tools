@@ -21,6 +21,7 @@ export function createEmailsInterface(
   const repository = createEmailRepository(databaseClient);
   const service = createCampaignService(repository, {
     appUrl: options.appUrl,
+    meetingLinks: options.meetingLinks,
   });
   const processor = createProcessorService(
     repository,
@@ -28,6 +29,7 @@ export function createEmailsInterface(
     {
       appUrl: options.appUrl,
       batchSize: options.batchSize ?? DEFAULT_BATCH_SIZE,
+      meetingLinks: options.meetingLinks,
     },
   );
   return {
@@ -37,6 +39,7 @@ export function createEmailsInterface(
       options.internalSecret,
     ),
     kickoffs: service.kickoffs,
+    processor,
   };
 }
 

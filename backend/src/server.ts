@@ -55,6 +55,15 @@ function createEmailProvider() {
   return createResendEmailProvider({ apiKey, from });
 }
 const emails = createEmailsInterface(adminClient, {
+  meetingLinks: {
+    async meetingUrl(projectId) {
+      const { resources } = await files.service.listForProject(projectId);
+      return (
+        resources.find((resource) => resource.slot === "FIRST_MEETING")?.url ??
+        null
+      );
+    },
+  },
   provider: createEmailProvider(),
   appUrl: process.env.APP_URL || "http://localhost:5173",
   internalSecret: process.env.INTERNAL_SECRET,
@@ -86,6 +95,21 @@ const app = createApplication({
   audit,
   dashboard,
 });
+// In-process scheduler: sends due campaigns every minute.
+// Set EMAIL_SCHEDULER=off when an external cron calls /api/internal/campaigns/process.
+if (process.env.EMAIL_SCHEDULER !== "off") {
+  let running = false;
+  setInterval(() => {
+    if (running) return;
+    running = true;
+    emails.processor
+      .processDue()
+      .catch((error: unknown) => console.error("Email processor failed:", error))
+      .finally(() => {
+        running = false;
+      });
+  }, 60_000).unref();
+}
 const port = Number(process.env.PORT || 3001);
 if (!Number.isInteger(port) || port < 1 || port > 65535)
   throw new Error("Invalid PORT.");

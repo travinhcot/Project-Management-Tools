@@ -7,6 +7,7 @@ export interface ContextSource {
   readonly projectName: string | null;
   readonly semesterName: string;
   readonly demoUrl: string | null;
+  readonly meetingUrl?: string | null;
 }
 
 /** Builds the template input; the project link is `{appUrl}/projects/{projectId}`. */
@@ -23,5 +24,6 @@ export function buildContext(
       : null,
     semesterName: source.semesterName,
     demoUrl: source.demoUrl,
+    meetingUrl: source.meetingUrl ?? null,
   };
 }

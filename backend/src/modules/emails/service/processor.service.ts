@@ -3,6 +3,7 @@ import type {
   DeliveryOutcome,
   EmailProvider,
   ProcessSummary,
+  MeetingLinkGateway,
   SendJob,
   SendResult,
 } from "../model/email.model.ts";
@@ -20,6 +21,7 @@ interface ProcessorOptions {
   readonly appUrl: string;
   readonly batchSize: number;
   readonly sendTimeoutMs?: number;
+  readonly meetingLinks?: MeetingLinkGateway;
 }
 
 function sanitize(text: string): string {
@@ -42,6 +44,10 @@ export function createProcessorService(
 
   /** A timeout or a thrown error means the mail may or may not have left: UNKNOWN, never auto-resent. */
   async function send(job: SendJob): Promise<SendResult> {
+    const meetingUrl =
+      job.kind === "KICKOFF" && job.project_id
+        ? await options.meetingLinks?.meetingUrl(job.project_id).catch(() => null)
+        : null;
     const rendered = renderEmail(
       job.kind,
       buildContext(
@@ -52,6 +58,7 @@ export function createProcessorService(
           projectName: job.project_name,
           semesterName: job.semester_name,
           demoUrl: job.demo_registration_url,
+          meetingUrl,
         },
         options.appUrl,
       ),

@@ -170,7 +170,13 @@ export interface KickoffGateway {
   }): Promise<void>;
 }
 
+/** Resolves a project's kick-off meeting link (the FIRST_MEETING resource), if set. */
+export interface MeetingLinkGateway {
+  meetingUrl(projectId: string): Promise<string | null>;
+}
+
 export interface EmailsOptions {
+  readonly meetingLinks?: MeetingLinkGateway;
   readonly provider?: EmailProvider;
   readonly appUrl: string;
   readonly internalSecret?: string;

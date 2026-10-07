@@ -14,6 +14,8 @@ function describe(status: SendStatus): { tone: PillTone; label: string } {
   switch (status.key) {
     case "ready":
       return { tone: "success", label: "Ready" };
+    case "scheduled":
+      return { tone: "accent", label: "Scheduled" };
     case "sending":
       return { tone: "accent", label: "Sending…" };
     case "sent":
@@ -33,32 +35,49 @@ function describe(status: SendStatus): { tone: PillTone; label: string } {
 export function MeetingEmailRow({
   project,
   selected,
+  busy,
   onSelect,
   onSend,
+  onSchedule,
+  onSendScheduledNow,
+  onCancel,
   onViewDelivery,
   onAddLink,
 }: {
   project: MeetingEmailProject;
   selected: boolean;
+  /** A write for this project is in flight. */
+  busy: boolean;
   onSelect: () => void;
   onSend: () => void;
+  onSchedule: () => void;
+  onSendScheduledNow: () => void;
+  onCancel: () => void;
   onViewDelivery: () => void;
   onAddLink: () => void;
 }) {
   const status = getSendStatus(project);
   const pill = describe(status);
-  const count = project.recipients.length;
+  const count = status.total;
+  const recipients = `${count} ${count === 1 ? "recipient" : "recipients"}`;
+  const kickoff = project.kickoff;
 
   const note =
     status.key === "link-missing"
       ? "Add a URL before sending"
       : status.key === "ready"
-        ? `Sends immediately to ${count} ${count === 1 ? "recipient" : "recipients"}`
-        : status.key === "sending"
-          ? `Sending to ${count} ${count === 1 ? "recipient" : "recipients"}…`
-          : project.lastSentAt
-            ? `Last sent ${formatGmt7(project.lastSentAt)}`
-            : "";
+        ? kickoff?.state === "cancelled"
+          ? "Previous send was cancelled"
+          : "Sends to active assigned members"
+        : status.key === "scheduled"
+          ? kickoff?.scheduledAt
+            ? `Scheduled for ${formatGmt7(kickoff.scheduledAt)}`
+            : "Scheduled"
+          : status.key === "sending"
+            ? `Sending to ${recipients}…`
+            : kickoff?.scheduledAt
+              ? `Sent ${formatGmt7(kickoff.scheduledAt)}`
+              : "";
 
   return (
     <article
@@ -85,7 +104,7 @@ export function MeetingEmailRow({
           </Pill>
         </div>
         <p className="whitespace-pre text-xs font-medium text-muted">
-          {`${TYPE_LABEL[project.type]}  ·  ${count} assigned ${count === 1 ? "member" : "members"}`}
+          {`${TYPE_LABEL[project.type]}  ·  ${project.memberCount} assigned ${project.memberCount === 1 ? "member" : "members"}`}
         </p>
         <p className="text-[10px] font-bold text-muted">FIRST MEETING URL</p>
         {project.meetingUrl ? (
@@ -106,11 +125,37 @@ export function MeetingEmailRow({
         <p className="text-[11px] text-muted">{note}</p>
       </div>
 
-      <div className="w-full sm:w-[170px]" onClick={(event) => event.stopPropagation()}>
+      <div
+        className="flex w-full flex-col gap-2 sm:w-[170px]"
+        onClick={(event) => event.stopPropagation()}
+      >
         {status.key === "ready" && (
-          <Button onClick={onSend} className="h-10 w-full">
-            Send email
-          </Button>
+          <>
+            <Button onClick={onSend} disabled={busy} className="h-10 w-full">
+              {busy ? "Sending…" : "Send email"}
+            </Button>
+            <Button
+              variant="link"
+              onClick={onSchedule}
+              disabled={busy}
+              className="h-10 w-full"
+            >
+              Schedule
+            </Button>
+          </>
+        )}
+        {status.key === "scheduled" && (
+          <>
+            <Button onClick={onSendScheduledNow} disabled={busy} className="h-10 w-full">
+              Send now
+            </Button>
+            <Button variant="link" onClick={onSchedule} disabled={busy} className="h-10 w-full">
+              Reschedule
+            </Button>
+            <Button variant="link" onClick={onCancel} disabled={busy} className="h-10 w-full">
+              Cancel send
+            </Button>
+          </>
         )}
         {status.key === "sending" && (
           <Button disabled className="h-10 w-full">

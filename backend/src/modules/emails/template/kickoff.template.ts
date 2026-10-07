@@ -14,5 +14,14 @@ export function renderKickoff(context: TemplateContext): RenderedEmail {
       vi: "Mở trang dự án để xem tài liệu của bạn:",
     },
     link: context.projectUrl ?? "",
+    extra: context.meetingUrl
+      ? {
+          label: {
+            en: "Join the kick-off meeting:",
+            vi: "Tham gia buổi họp khởi động:",
+          },
+          link: context.meetingUrl,
+        }
+      : undefined,
   });
 }

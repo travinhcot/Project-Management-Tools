@@ -8,6 +8,7 @@
     "seed": "node src/scripts/seed.ts",
     "test": "node --test test/*.test.ts",
     "provision:user": "node src/scripts/provision-user.ts",
+    "provision:roster": "node src/scripts/provision-roster.ts",
     "typecheck": "tsc --noEmit",
     "check:boundaries": "node src/scripts/check-module-boundaries.ts"
   },

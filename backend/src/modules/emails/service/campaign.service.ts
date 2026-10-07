@@ -6,6 +6,7 @@ import type {
   Delivery,
   DeliveryListQuery,
   KickoffGateway,
+  MeetingLinkGateway,
   ResolveAction,
 } from "../model/email.model.ts";
 import type { Page } from "../../../shared/pagination.ts";
@@ -28,7 +29,7 @@ async function guarded<T>(work: () => Promise<T>): Promise<T> {
 
 export function createCampaignService(
   repository: EmailRepository,
-  options: { appUrl: string },
+  options: { appUrl: string; meetingLinks?: MeetingLinkGateway },
 ) {
   async function requireCampaign(campaignId: string): Promise<Campaign> {
     const campaign = await guarded(() => repository.findCampaign(campaignId));
@@ -60,6 +61,12 @@ export function createCampaignService(
     /** Renders the campaign's template with a sample recipient (admin preview). */
     async preview(campaignId: string): Promise<RenderedEmail> {
       const campaign = await requireCampaign(campaignId);
+      const meetingUrl =
+        campaign.kind === "KICKOFF" && campaign.project_id
+          ? await options.meetingLinks
+              ?.meetingUrl(campaign.project_id)
+              .catch(() => null)
+          : null;
       return renderEmail(
         campaign.kind,
         buildContext(
@@ -70,6 +77,7 @@ export function createCampaignService(
             projectName: campaign.project_name,
             semesterName: campaign.semester_name,
             demoUrl: campaign.demo_registration_url,
+            meetingUrl,
           },
           options.appUrl,
         ),
