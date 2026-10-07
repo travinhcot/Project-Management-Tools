@@ -4,10 +4,7 @@ import { useState, type FormEvent } from "react";
 import { Button } from "@/shared/components/Button";
 import { Drawer } from "@/shared/components/Drawer";
 import { ResourceLinkFields } from "@/features/projects/components/drawers/ResourceLinkFields";
-import type {
-  Project,
-  SemesterSummary,
-} from "@/features/projects/models/project";
+import type { SemesterSummary } from "@/features/projects/models/project";
 import {
   validateHttpsUrl,
   validateLabel,
@@ -19,12 +16,18 @@ export function MeetingLinkDrawer({
   onClose,
   onSave,
   onRemove,
+  busy = false,
+  error,
 }: {
-  project: Pick<Project, "name" | "meetingUrl" | "meetingLabel">;
+  project: { name: string; meetingUrl: string | null; meetingLabel: string | null };
   semester: SemesterSummary;
   onClose: () => void;
   onSave: (link: { url: string; label: string | null }) => void;
   onRemove: () => void;
+  /** A save or remove is in flight. */
+  busy?: boolean;
+  /** Backend message from the last failed save or remove. */
+  error?: string;
 }) {
   const hasLink = project.meetingUrl !== null;
   const [url, setUrl] = useState(project.meetingUrl ?? "");
@@ -59,11 +62,18 @@ export function MeetingLinkDrawer({
           This is the link members see for the first meeting. It is also used in
           the kick-off email.
         </p>
+        {error && (
+          <p role="alert" className="text-xs font-medium text-danger">
+            {error}
+          </p>
+        )}
         <div className="flex gap-2.5">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
             Cancel
           </Button>
-          <Button type="submit">{hasLink ? "Save link" : "Add link"}</Button>
+          <Button type="submit" disabled={busy}>
+            {hasLink ? "Save link" : "Add link"}
+          </Button>
         </div>
       </form>
 
@@ -73,7 +83,7 @@ export function MeetingLinkDrawer({
           <p className="text-xs text-muted">
             Members will no longer see a first meeting link for this project.
           </p>
-          <Button variant="danger-outline" onClick={onRemove}>
+          <Button variant="danger-outline" onClick={onRemove} disabled={busy}>
             Remove link
           </Button>
         </section>

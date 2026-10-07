@@ -21,10 +21,15 @@ export function ProjectCard({ project }: { project: DashboardProject }) {
       />
       <ProjectTypePill type={project.type} />
       <h3 className="text-[17px] font-semibold text-ink">{project.name}</h3>
-      <p className="text-xs text-muted">{project.description}</p>
+      {project.description && (
+        <p className="text-xs text-muted">{project.description}</p>
+      )}
       <p className="whitespace-pre text-xs font-medium text-muted">
         {project.memberCount} {memberLabel}
-        {"   ·   "}Kick-off {kickoffFormat.format(new Date(project.kickoffAt))}
+        {"   ·   "}
+        {project.kickoffAt
+          ? `Kick-off ${kickoffFormat.format(new Date(project.kickoffAt))}`
+          : "Kick-off not scheduled"}
       </p>
     </article>
   );

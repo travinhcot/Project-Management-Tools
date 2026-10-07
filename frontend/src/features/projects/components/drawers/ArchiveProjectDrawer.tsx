@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/shared/components/Button";
 import { Drawer } from "@/shared/components/Drawer";
 import { projectTypeMeta } from "@/shared/components/ProjectTypePill";
+import { getArchiveImpact, type ActionResult } from "@/features/projects/actions";
 import type {
   Project,
+  ProjectArchiveImpact,
   SemesterSummary,
 } from "@/features/projects/models/project";
 import { formatKickoff } from "@/features/projects/utils/format";
@@ -19,13 +21,37 @@ export function ArchiveProjectDrawer({
   project: Project;
   semester: SemesterSummary;
   onClose: () => void;
-  onConfirm: (options: { cancelKickoff: boolean }) => void;
+  onConfirm: (options: { cancelKickoff: boolean }) => Promise<ActionResult>;
 }) {
-  const [kickoffPending] = useState(
-    () => project.kickoffAt !== null && Date.parse(project.kickoffAt) > Date.now(),
-  );
+  const [impact, setImpact] = useState<ProjectArchiveImpact>();
+  const [error, setError] = useState<string>();
   const [cancelKickoff, setCancelKickoff] = useState(true);
-  const memberLabel = project.memberCount === 1 ? "member" : "members";
+  const [pending, startArchive] = useTransition();
+
+  useEffect(() => {
+    let cancelled = false;
+    getArchiveImpact(project.id).then((result) => {
+      if (cancelled) return;
+      if (result.ok) setImpact(result.impact);
+      else setError(result.message);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [project.id]);
+
+  const kickoffPending = impact?.pendingKickoffAt != null;
+  const members = impact?.activeMembers ?? 0;
+  const memberLabel = members === 1 ? "member" : "members";
+
+  function handleConfirm() {
+    setError(undefined);
+    startArchive(async () => {
+      const result = await onConfirm({ cancelKickoff: kickoffPending && cancelKickoff });
+      if (result.ok) onClose();
+      else setError(result.message);
+    });
+  }
 
   return (
     <Drawer
@@ -36,17 +62,15 @@ export function ArchiveProjectDrawer({
       <div className="flex gap-2.5">
         <div className="flex flex-1 flex-col gap-0.5 rounded-[10px] bg-chrome p-3">
           <span className="text-[22px] font-bold text-danger">
-            {project.memberCount}
+            {impact ? members : "–"}
           </span>
           <span className="text-xs font-medium text-muted">
-            {project.memberCount === 1
-              ? "member loses access"
-              : "members lose access"}
+            {members === 1 ? "member loses access" : "members lose access"}
           </span>
         </div>
         <div className="flex flex-1 flex-col gap-0.5 rounded-[10px] bg-chrome p-3">
           <span className="text-[22px] font-bold text-warn-text">
-            {kickoffPending ? 1 : 0}
+            {impact ? (kickoffPending ? 1 : 0) : "–"}
           </span>
           <span className="text-xs font-medium text-muted">
             kick-off email scheduled
@@ -54,7 +78,7 @@ export function ArchiveProjectDrawer({
         </div>
       </div>
 
-      {kickoffPending && project.kickoffAt && (
+      {kickoffPending && impact?.pendingKickoffAt && (
         <label className="flex cursor-pointer items-start gap-2.5 rounded-[10px] border border-warn-line bg-warn-soft p-3">
           <input
             type="checkbox"
@@ -73,11 +97,17 @@ export function ArchiveProjectDrawer({
               Also cancel the kick-off email
             </span>
             <span className="text-xs text-muted">
-              Scheduled for {formatKickoff(project.kickoffAt)} to{" "}
-              {project.memberCount} {memberLabel}
+              Scheduled for {formatKickoff(impact.pendingKickoffAt)} to {members}{" "}
+              {memberLabel}
             </span>
           </span>
         </label>
+      )}
+
+      {error && (
+        <p role="alert" className="text-xs font-medium text-danger">
+          {error}
+        </p>
       )}
 
       <p className="text-xs text-muted">
@@ -86,16 +116,15 @@ export function ArchiveProjectDrawer({
       </p>
 
       <div className="flex gap-2.5">
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={onClose} disabled={pending}>
           Cancel
         </Button>
         <Button
           variant="danger"
-          onClick={() =>
-            onConfirm({ cancelKickoff: kickoffPending && cancelKickoff })
-          }
+          onClick={handleConfirm}
+          disabled={pending || !impact}
         >
-          Archive project
+          {pending ? "Archiving…" : "Archive project"}
         </Button>
       </div>
     </Drawer>

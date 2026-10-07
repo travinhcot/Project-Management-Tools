@@ -1,51 +1,131 @@
-// getDashboard() returns mock data until auth is wired; swap in
-// GET /api/admin/dashboard (+ /api/admin/projects for the project cards).
-import type { Dashboard } from "@/features/overview/models/dashboard";
+// Reads the overview from the backend: GET /api/admin/dashboard for the stats and warnings,
+// GET /api/admin/projects for the project cards. Server-only (goes through backendFetch).
+import { backendFetch } from "@/shared/api/backend";
+import { getSemesters } from "@/features/semesters/service/semesters.service";
+import type {
+  Dashboard,
+  DashboardProject,
+  DashboardSemester,
+  DashboardWarning,
+} from "@/features/overview/models/dashboard";
 
-export async function getDashboard(): Promise<Dashboard> {
+/** DashboardSummary in backend/src/modules/dashboard/model/dashboard.model.ts. */
+interface DashboardDto {
+  semester: { id: string; name: string } | null;
+  empty: boolean;
+  metrics: {
+    roster: { active: number };
+    projects: { software: number; hardware: number; total: number };
+  } | null;
+  warnings: {
+    code: string;
+    severity: "info" | "warning" | "error";
+    message: string;
+    count: number;
+    link: string;
+    items: { name?: string }[];
+  }[];
+}
+
+/** ProjectListItem in backend/src/modules/projects/model/project.model.ts (fields used here). */
+interface ProjectDto {
+  id: string;
+  name: string;
+  description: string | null;
+  type: "SOFTWARE" | "HARDWARE";
+  member_count: number;
+  kickoff: { scheduled_at: string | null } | null;
+}
+
+const RECENT_PROJECT_COUNT = 3;
+
+// Backend links use the /admin/* prefix; the frontend routes differ and have no detail pages.
+function mapLink(link: string): string {
+  const path = link.split("?")[0];
+  if (path.startsWith("/admin/roster")) return "/members";
+  if (path.startsWith("/admin/campaigns")) return "/meeting-emails";
+  if (path.startsWith("/admin/projects")) return "/projects";
+  return "/overview";
+}
+
+function mapWarning(dto: DashboardDto["warnings"][number]): DashboardWarning {
+  const names = dto.items.map((item) => item.name).filter(Boolean) as string[];
+  const hint =
+    names.length > 0
+      ? names.slice(0, 3).join(", ") +
+        (dto.count > 3 ? ` +${dto.count - 3} more` : "")
+      : `${dto.count} affected`;
   return {
-    semester: { id: "sem-a", name: "Sem A", active: true },
-    roster: { active: 52 },
-    projects: { software: 5, hardware: 3, total: 8 },
-    warnings: [
-      {
-        id: "w1",
-        message: "Circuit Lab has no assigned members",
-        hint: "Assign members from the Sem A roster",
-        link: "/projects",
+    id: dto.code,
+    severity: dto.severity,
+    message: dto.message,
+    hint,
+    link: mapLink(dto.link),
+  };
+}
+
+function mapProject(dto: ProjectDto): DashboardProject {
+  return {
+    id: dto.id,
+    name: dto.name,
+    type: dto.type === "HARDWARE" ? "hardware" : "software",
+    description: dto.description,
+    memberCount: dto.member_count,
+    kickoffAt: dto.kickoff?.scheduled_at ?? null,
+  };
+}
+
+export async function getDashboard(
+  requestedSemesterId?: string,
+): Promise<Dashboard> {
+  const { semesters: all } = await getSemesters();
+  const semesters: DashboardSemester[] = [...all]
+    .sort((a, b) => b.year - a.year || b.term.localeCompare(a.term))
+    .map((s) => ({ id: s.id, name: s.name, isCurrent: s.isCurrent }));
+  const selected =
+    semesters.find((s) => s.id === requestedSemesterId) ??
+    semesters.find((s) => s.isCurrent) ??
+    null;
+
+  // The dashboard summary (stats + warnings) only covers the current semester.
+  if (selected?.isCurrent || !selected) {
+    const [summary, projects] = await Promise.all([
+      backendFetch<DashboardDto>("/api/admin/dashboard"),
+      backendFetch<{ items: ProjectDto[] }>(
+        `/api/admin/projects?size=${RECENT_PROJECT_COUNT}`,
+      ),
+    ]);
+    return {
+      semester: selected,
+      semesters,
+      roster: { active: summary.metrics?.roster.active ?? 0 },
+      projects: summary.metrics?.projects ?? {
+        software: 0,
+        hardware: 0,
+        total: 0,
       },
-      {
-        id: "w2",
-        message: "Open Bench is missing a BOM",
-        hint: "Add a file or secure external URL",
-        link: "/projects",
-      },
-    ],
-    recentProjects: [
-      {
-        id: "p1",
-        name: "Smart Campus API",
-        type: "software",
-        description: "Shared project resources and first meeting details.",
-        memberCount: 6,
-        kickoffAt: "2026-10-12",
-      },
-      {
-        id: "p2",
-        name: "Open Bench",
-        type: "hardware",
-        description: "Prototype workspace and bill of materials.",
-        memberCount: 4,
-        kickoffAt: "2026-10-15",
-      },
-      {
-        id: "p3",
-        name: "Club Tools",
-        type: "software",
-        description: "Development brief and first meeting details.",
-        memberCount: 5,
-        kickoffAt: "2026-10-20",
-      },
-    ],
+      warnings: summary.warnings.map(mapWarning),
+      recentProjects: projects.items.map(mapProject),
+    };
+  }
+
+  // Past/upcoming semester: derive stats from the semester and its project list.
+  const { items } = await backendFetch<{ items: ProjectDto[] }>(
+    `/api/admin/projects?semesterId=${selected.id}&size=100`,
+  );
+  const software = items.filter((p) => p.type === "SOFTWARE").length;
+  return {
+    semester: selected,
+    semesters,
+    roster: {
+      active: all.find((s) => s.id === selected.id)?.rosterCount ?? 0,
+    },
+    projects: {
+      software,
+      hardware: items.length - software,
+      total: items.length,
+    },
+    warnings: [],
+    recentProjects: items.slice(0, RECENT_PROJECT_COUNT).map(mapProject),
   };
 }

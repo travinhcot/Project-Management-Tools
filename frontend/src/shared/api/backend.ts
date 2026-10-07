@@ -7,8 +7,10 @@ import { API_BASE_URL } from "@/shared/api/config";
 import { ApiError, toApiError } from "@/shared/api/errors";
 
 interface BackendRequest {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
+  /** Raw bytes (e.g. a file upload); sent as-is with `contentType` instead of JSON. */
+  rawBody?: { data: ArrayBuffer; contentType: string };
 }
 
 /**
@@ -17,7 +19,7 @@ interface BackendRequest {
  */
 export async function backendFetch<T>(
   path: string,
-  { method = "GET", body }: BackendRequest = {},
+  { method = "GET", body, rawBody }: BackendRequest = {},
 ): Promise<T> {
   const token = (await cookies()).get(ACCESS_COOKIE)?.value;
   if (!token) redirect("/sign-in");
@@ -29,9 +31,13 @@ export async function backendFetch<T>(
       cache: "no-store",
       headers: {
         Authorization: `Bearer ${token}`,
-        ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+        ...(rawBody
+          ? { "Content-Type": rawBody.contentType }
+          : body === undefined
+            ? {}
+            : { "Content-Type": "application/json" }),
       },
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: rawBody ? rawBody.data : body === undefined ? undefined : JSON.stringify(body),
     });
   } catch {
     throw new ApiError(503, "BACKEND_UNREACHABLE", "The server could not be reached. Try again in a moment.");

@@ -32,18 +32,27 @@ function describe(bom: ProjectBom) {
 
 export function BomFileDrawer({
   project,
+  current,
   semester,
   onClose,
-  onSave,
+  onSaveFile,
+  onSaveLink,
   onRemove,
+  busy = false,
+  error,
 }: {
-  project: Project;
+  project: Pick<Project, "name">;
+  /** The BOM as it is on the backend right now. */
+  current: ProjectBom | null;
   semester: SemesterSummary;
   onClose: () => void;
-  onSave: (bom: ProjectBom) => void;
+  onSaveFile: (file: File) => void;
+  onSaveLink: (link: { url: string; label: string | null }) => void;
   onRemove: () => void;
+  busy?: boolean;
+  /** Backend message from the last failed save or remove. */
+  error?: string;
 }) {
-  const current = project.bom;
   const [source, setSource] = useState<Source>(current?.kind ?? "file");
   const [file, setFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string>();
@@ -77,13 +86,13 @@ export function BomFileDrawer({
         setFileError("Choose an .xlsx or .pdf file to upload.");
         return;
       }
-      onSave({ kind: "file", filename: file.name, sizeBytes: file.size });
+      onSaveFile(file);
       return;
     }
     const next = { url: validateHttpsUrl(url), label: validateLabel(label) };
     setErrors(next);
     if (next.url || next.label) return;
-    onSave({ kind: "link", url: url.trim(), label: label.trim() || null });
+    onSaveLink({ url: url.trim(), label: label.trim() || null });
   }
 
   return (
@@ -194,11 +203,18 @@ export function BomFileDrawer({
           project page.
         </p>
 
+        {error && (
+          <p role="alert" className="text-xs font-medium text-danger">
+            {error}
+          </p>
+        )}
         <div className="flex gap-2.5">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={busy}>
             Cancel
           </Button>
-          <Button type="submit">{current ? "Replace BOM" : "Save BOM"}</Button>
+          <Button type="submit" disabled={busy}>
+            {busy ? "Saving…" : current ? "Replace BOM" : "Save BOM"}
+          </Button>
         </div>
       </form>
 
@@ -208,7 +224,7 @@ export function BomFileDrawer({
           <p className="text-xs text-muted">
             The project will show as missing its BOM until a new one is added.
           </p>
-          <Button variant="danger-outline" onClick={onRemove}>
+          <Button variant="danger-outline" onClick={onRemove} disabled={busy}>
             Remove BOM
           </Button>
         </section>

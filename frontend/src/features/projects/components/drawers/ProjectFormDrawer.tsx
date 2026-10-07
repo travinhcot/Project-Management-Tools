@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/shared/components/Button";
 import { Drawer } from "@/shared/components/Drawer";
 import {
@@ -9,10 +9,15 @@ import {
   TextArea,
   TextInput,
 } from "@/shared/components/Field";
+import type { ActionResult } from "@/features/projects/actions";
 import {
+  DESCRIPTION_MAX_LENGTH,
   NAME_MAX_LENGTH,
+  PROJECT_STATUSES,
+  STATUS_LABELS,
   type Project,
   type ProjectInput,
+  type ProjectStatus,
   type SemesterSummary,
 } from "@/features/projects/models/project";
 import type { ProjectType } from "@/shared/models/project";
@@ -22,10 +27,20 @@ const TYPES: { value: ProjectType; label: string }[] = [
   { value: "hardware", label: "Hardware" },
 ];
 
+const STATUS_OPTIONS = PROJECT_STATUSES.map((value) => ({
+  value,
+  label: STATUS_LABELS[value],
+}));
+
 type Props = {
   semester: SemesterSummary;
   onClose: () => void;
-  onSubmit: (input: ProjectInput) => void;
+  /** `changes` holds only the edited fields; `loadedAt` is the updated_at the form was loaded from. */
+  onSubmit: (
+    input: ProjectInput,
+    changes: Partial<ProjectInput>,
+    loadedAt: string,
+  ) => Promise<ActionResult>;
 } & (
   | { mode: "create" }
   | { mode: "edit"; project: Project; onArchive: () => void }
@@ -37,34 +52,67 @@ export function ProjectFormDrawer(props: Props) {
 
   const [name, setName] = useState(editing?.name ?? "");
   const [type, setType] = useState<ProjectType>(editing?.type ?? "software");
+  const [status, setStatus] = useState<ProjectStatus>(editing?.status ?? "planning");
   const [description, setDescription] = useState(editing?.description ?? "");
-  const [errors, setErrors] = useState<{ name?: string; type?: string }>({});
+  const [loadedAt, setLoadedAt] = useState(editing?.updatedAt ?? "");
+  const [errors, setErrors] = useState<{ name?: string; type?: string; description?: string }>({});
+  const [formError, setFormError] = useState<{ code: string; message: string }>();
+  const [pending, startSubmit] = useTransition();
 
   function validate() {
-    const next: { name?: string; type?: string } = {};
+    const next: { name?: string; type?: string; description?: string } = {};
     const trimmed = name.trim();
     if (!trimmed) next.name = "Enter a project name.";
     else if ([...trimmed].length > NAME_MAX_LENGTH)
       next.name = `Use ${NAME_MAX_LENGTH} characters or fewer.`;
-    if (editing?.bom && editing.type === "hardware" && type === "software")
-      next.type =
-        "Remove the BOM before switching a hardware project to software.";
+    if ([...description.trim()].length > DESCRIPTION_MAX_LENGTH)
+      next.description = `Use ${DESCRIPTION_MAX_LENGTH} characters or fewer.`;
     setErrors(next);
     return Object.keys(next).length === 0;
   }
 
   function handleSubmit(event: FormEvent) {
     event.preventDefault();
+    setFormError(undefined);
     if (!validate()) return;
-    onSubmit({ name: name.trim(), type, description: description.trim() });
+    const input: ProjectInput = {
+      name: name.trim(),
+      type,
+      status,
+      description: description.trim(),
+    };
+    const changes: Partial<ProjectInput> = {};
+    if (editing) {
+      if (input.name !== editing.name) changes.name = input.name;
+      if (input.type !== editing.type) changes.type = input.type;
+      if (input.status !== editing.status) changes.status = input.status;
+      if (input.description !== (editing.description ?? ""))
+        changes.description = input.description;
+      if (Object.keys(changes).length === 0) return onClose();
+    }
+    startSubmit(async () => {
+      const result = await onSubmit(input, changes, loadedAt);
+      if (result.ok) return onClose();
+      if (result.code === "PROJECT_NAME_EXISTS") {
+        setErrors({ name: "A project with this name already exists in this semester." });
+      } else if (result.code === "PROJECT_HAS_BOM") {
+        setErrors({ type: "Remove the BOM before switching a hardware project to software." });
+      } else {
+        setFormError({ code: result.code, message: result.message });
+      }
+    });
   }
 
+  // The route is revalidated after every write, so `editing` already holds the latest data.
   function handleReload() {
     if (!editing) return;
     setName(editing.name);
     setType(editing.type);
-    setDescription(editing.description);
+    setStatus(editing.status);
+    setDescription(editing.description ?? "");
+    setLoadedAt(editing.updatedAt);
     setErrors({});
+    setFormError(undefined);
   }
 
   return (
@@ -76,6 +124,16 @@ export function ProjectFormDrawer(props: Props) {
       onClose={onClose}
     >
       <form noValidate onSubmit={handleSubmit} className="flex flex-col gap-4">
+        {formError && (
+          <p
+            role="alert"
+            className="rounded-[10px] border border-danger-line bg-danger-soft p-3 text-[13px] text-ink"
+          >
+            {formError.code === "PROJECT_STALE"
+              ? "This project was changed elsewhere. Reload to see the latest version, then re-apply your edits."
+              : formError.message}
+          </p>
+        )}
         <Field label="Project name" htmlFor="project-name" error={errors.name}>
           <TextInput
             id="project-name"
@@ -119,6 +177,18 @@ export function ProjectFormDrawer(props: Props) {
           </div>
         </Field>
 
+        {editing && (
+          <Field label="Status" htmlFor="project-status">
+            <SelectBox
+              id="project-status"
+              label="Status"
+              value={status}
+              onChange={(value) => setStatus(value as ProjectStatus)}
+              options={STATUS_OPTIONS}
+            />
+          </Field>
+        )}
+
         {!editing && (
           <Field label="Semester" htmlFor="project-semester">
             <SelectBox
@@ -134,6 +204,7 @@ export function ProjectFormDrawer(props: Props) {
         <Field
           label={editing ? "Description" : "Description (optional)"}
           htmlFor="project-description"
+          error={errors.description}
         >
           <TextArea
             id="project-description"
@@ -154,17 +225,21 @@ export function ProjectFormDrawer(props: Props) {
         <div className="flex gap-2.5">
           {editing ? (
             <>
-              <Button variant="outline" onClick={handleReload}>
+              <Button variant="outline" onClick={handleReload} disabled={pending}>
                 Reload
               </Button>
-              <Button type="submit">Save changes</Button>
+              <Button type="submit" disabled={pending}>
+                {pending ? "Saving…" : "Save changes"}
+              </Button>
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={onClose}>
+              <Button variant="outline" onClick={onClose} disabled={pending}>
                 Cancel
               </Button>
-              <Button type="submit">Create project</Button>
+              <Button type="submit" disabled={pending}>
+                {pending ? "Creating…" : "Create project"}
+              </Button>
             </>
           )}
         </div>

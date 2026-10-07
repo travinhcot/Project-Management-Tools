@@ -2,12 +2,20 @@ import Link from "next/link";
 import { AttentionCard } from "@/features/overview/components/AttentionCard";
 import { ProjectCard } from "@/features/overview/components/ProjectCard";
 import { StatCard } from "@/features/overview/components/StatCard";
-import { SemesterBadge } from "@/shared/components/SemesterBadge";
+import { SemesterSwitcher } from "@/features/overview/components/SemesterSwitcher";
 import { getDashboard } from "@/features/overview/service/dashboard.service";
 
-export async function OverviewPage() {
-  const dashboard = await getDashboard();
-  const { semester, roster, projects, warnings, recentProjects } = dashboard;
+export async function OverviewPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ semester?: string | string[] }>;
+}) {
+  const { semester: semesterParam } = await searchParams;
+  const dashboard = await getDashboard(
+    typeof semesterParam === "string" ? semesterParam : undefined,
+  );
+  const { semester, semesters, roster, projects, warnings, recentProjects } =
+    dashboard;
 
   return (
     <div className="flex flex-col gap-[22px]">
@@ -22,14 +30,31 @@ export async function OverviewPage() {
             A clear view of this semester’s people and projects.
           </p>
         </div>
-        <SemesterBadge name={semester.name} active={semester.active} />
+        {semester && (
+          <SemesterSwitcher options={semesters} selectedId={semester.id} />
+        )}
       </div>
+
+      {!semester && (
+        <section className="flex flex-col items-start gap-2 rounded-[10px] border border-line bg-surface p-5">
+          <h2 className="text-lg font-semibold text-ink">No current semester</h2>
+          <p className="text-[13px] text-muted">
+            Set a current semester to see roster and project stats.
+          </p>
+          <Link
+            href="/semesters"
+            className="text-[13px] font-semibold text-accent"
+          >
+            Go to semesters →
+          </Link>
+        </section>
+      )}
 
       <section className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
         <StatCard
           label="Active semester"
-          value={semester.name}
-          caption="Current cycle"
+          value={semester?.name ?? "None"}
+          caption={semester?.isCurrent === false ? "Past semester" : "Current cycle"}
         />
         <StatCard
           label="Roster members"
@@ -57,11 +82,15 @@ export async function OverviewPage() {
         </Link>
       </div>
 
-      <section className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
-        {recentProjects.map((project) => (
-          <ProjectCard key={project.id} project={project} />
-        ))}
-      </section>
+      {recentProjects.length === 0 ? (
+        <p className="text-[13px] text-muted">No projects this semester yet.</p>
+      ) : (
+        <section className="grid grid-cols-1 gap-3.5 md:grid-cols-3">
+          {recentProjects.map((project) => (
+            <ProjectCard key={project.id} project={project} />
+          ))}
+        </section>
+      )}
     </div>
   );
 }

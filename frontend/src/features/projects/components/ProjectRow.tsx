@@ -13,11 +13,13 @@ export function ProjectRow({
   onEdit,
   onEditMeeting,
   onEditBom,
+  onEditMembers,
 }: {
   project: Project;
   onEdit: () => void;
   onEditMeeting: () => void;
   onEditBom: () => void;
+  onEditMembers: () => void;
 }) {
   const isHardware = project.type === "hardware";
   const memberLabel = project.memberCount === 1 ? "member" : "members";
@@ -29,7 +31,7 @@ export function ProjectRow({
       />
 
       <div className="flex w-full shrink-0 flex-col items-start gap-1 lg:w-[358px]">
-        <div className="flex h-[29px] items-center gap-[9px]">
+        <div className="mb-1.5 flex min-h-[29px] items-center gap-[9px]">
           <h2 className="text-lg font-semibold text-ink">
             <button
               type="button"
@@ -50,8 +52,12 @@ export function ProjectRow({
           <span aria-hidden="true">◯  </span>
           {project.memberCount} {memberLabel}
         </p>
-        {/* Member management panel is a separate screen; not wired yet. */}
-        <Button variant="link" size="sm" className="mt-auto w-[190px]">
+        <Button
+          variant="link"
+          size="sm"
+          className="mt-auto w-[190px]"
+          onClick={onEditMembers}
+        >
           Add / remove members
         </Button>
       </div>
@@ -59,7 +65,7 @@ export function ProjectRow({
       <div className="h-px w-full shrink-0 bg-line lg:h-auto lg:w-px" />
 
       <div className="grid min-w-0 flex-1 grid-cols-1 gap-[11px] sm:grid-cols-3">
-        {project.meetingUrl ? (
+        {project.hasMeeting ? (
           <ResourceTile
             label="First meeting"
             state="set"
@@ -82,13 +88,11 @@ export function ProjectRow({
             value="Not applicable"
             note="Hardware only"
           />
-        ) : project.bom ? (
+        ) : project.hasBom ? (
           <ResourceTile
             label="BOM file"
             state="set"
-            value={
-              project.bom.kind === "file" ? project.bom.filename : "Open BOM link"
-            }
+            value="View BOM"
             onOpen={onEditBom}
           />
         ) : (

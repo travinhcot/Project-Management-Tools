@@ -1,22 +1,33 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useEffect, useState, useTransition } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { SemesterBadge } from "@/shared/components/SemesterBadge";
+import { Button } from "@/shared/components/Button";
 import { ArchiveProjectDrawer } from "@/features/projects/components/drawers/ArchiveProjectDrawer";
 import { BomFileDrawer } from "@/features/projects/components/drawers/BomFileDrawer";
+import { ProjectMembersDrawer } from "@/features/projects/components/drawers/ProjectMembersDrawer";
 import { MeetingLinkDrawer } from "@/features/projects/components/drawers/MeetingLinkDrawer";
 import { ProjectFormDrawer } from "@/features/projects/components/drawers/ProjectFormDrawer";
 import { ProjectRow } from "@/features/projects/components/ProjectRow";
 import { ProjectsToolbar } from "@/features/projects/components/ProjectsToolbar";
+import { ResourceLoader } from "@/features/projects/components/ResourceLoader";
+import {
+  archiveProject,
+  createProject,
+  removeResource,
+  saveResourceLink,
+  updateProject,
+  uploadBomFile,
+  type ActionResult,
+  type ResourceSlotName,
+} from "@/features/projects/actions";
 import {
   STATUS_LABELS,
-  type Project,
-  type ProjectBom,
-  type ProjectInput,
-  type ProjectStatus,
-  type SemesterSummary,
+  type ProjectFilters,
+  type ProjectListPage,
 } from "@/features/projects/models/project";
-import { normalizeText } from "@/features/projects/utils/format";
 
 type DrawerState =
   | { kind: "create" }
@@ -24,96 +35,79 @@ type DrawerState =
   | { kind: "archive"; id: string }
   | { kind: "meeting"; id: string }
   | { kind: "bom"; id: string }
+  | { kind: "members"; id: string }
   | null;
 
-// Create / edit / archive only change local state until the admin projects API is wired.
+// Filters live in the URL and the list is fetched by the server component; every action
+// revalidates the route, so this page keeps no copy of the projects.
 export function ProjectsPage({
-  semester,
-  initialProjects,
+  list,
+  filters,
 }: {
-  semester: SemesterSummary;
-  initialProjects: Project[];
+  list: ProjectListPage;
+  filters: ProjectFilters;
 }) {
-  const [projects, setProjects] = useState(initialProjects);
-  const [query, setQuery] = useState("");
-  const [type, setType] = useState("all");
-  const [status, setStatus] = useState("all");
+  const router = useRouter();
+  const pathname = usePathname();
+  const { semester, items: projects } = list;
+  const [search, setSearch] = useState(filters.search);
   const [drawer, setDrawer] = useState<DrawerState>(null);
+  const [resourceError, setResourceError] = useState<string>();
+  const [busy, startWork] = useTransition();
 
-  const visible = useMemo(() => {
-    const needle = normalizeText(query.trim());
-    return projects.filter((project) => {
-      if (type !== "all" && project.type !== type) return false;
-      if (status !== "all" && project.status !== status) return false;
-      if (!needle) return true;
-      return normalizeText(`${project.name} ${project.leaderName ?? ""}`).includes(
-        needle,
-      );
-    });
-  }, [projects, query, type, status]);
+  function navigate(next: Partial<ProjectFilters>) {
+    const merged = { ...filters, page: 1, ...next };
+    const params = new URLSearchParams();
+    if (merged.search) params.set("q", merged.search);
+    if (merged.type !== "all") params.set("type", merged.type);
+    if (merged.status !== "all") params.set("status", merged.status);
+    if (merged.page > 1) params.set("page", String(merged.page));
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  }
+
+  // Debounce typing into the URL; skip when the box already matches it.
+  useEffect(() => {
+    const trimmed = search.trim();
+    if (trimmed === filters.search) return;
+    const timer = setTimeout(() => navigate({ search: trimmed }), 300);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   const selected =
     drawer && drawer.kind !== "create"
       ? projects.find((project) => project.id === drawer.id)
       : undefined;
 
-  function createProject(input: ProjectInput) {
-    const project: Project = {
-      id: crypto.randomUUID(),
-      ...input,
-      status: "planning",
-      leaderName: null,
-      memberCount: 0,
-      meetingUrl: null,
-      meetingLabel: null,
-      bom: null,
-      kickoffAt: null,
-    };
-    setProjects((current) => [project, ...current]);
-    setDrawer(null);
+  function open(next: DrawerState) {
+    setResourceError(undefined);
+    setDrawer(next);
   }
 
-  function updateProject(id: string, input: ProjectInput) {
-    setProjects((current) =>
-      current.map((project) =>
-        project.id === id ? { ...project, ...input } : project,
-      ),
-    );
-    setDrawer(null);
-  }
-
-  function patchProject(id: string, patch: Partial<Project>) {
-    setProjects((current) =>
-      current.map((project) =>
-        project.id === id ? { ...project, ...patch } : project,
-      ),
-    );
-    setDrawer(null);
-  }
-
-  function saveMeeting(
-    id: string,
-    link: { url: string; label: string | null } | null,
-  ) {
-    patchProject(id, {
-      meetingUrl: link?.url ?? null,
-      meetingLabel: link?.label ?? null,
+  /** Runs a resource write; closes the drawer on success, otherwise shows the backend message. */
+  function saveResource(work: () => Promise<ActionResult>) {
+    setResourceError(undefined);
+    startWork(async () => {
+      const result = await work();
+      if (result.ok) setDrawer(null);
+      else setResourceError(result.message);
     });
   }
 
-  function saveBom(id: string, bom: ProjectBom | null) {
-    patchProject(id, { bom });
-  }
+  const link = (id: string, slot: ResourceSlotName) => ({
+    save: (value: { url: string; label: string | null }) =>
+      saveResource(() => saveResourceLink(id, slot, value)),
+    remove: () => saveResource(() => removeResource(id, slot)),
+  });
 
-  function archiveProject(id: string) {
-    setProjects((current) => current.filter((project) => project.id !== id));
-    setDrawer(null);
-  }
-
+  const pageCount = Math.max(1, Math.ceil(list.total / list.size));
+  const hasFilters =
+    filters.search !== "" || filters.type !== "all" || filters.status !== "all";
   const statusSummary =
-    status === "all"
+    filters.status === "all"
       ? "Showing all statuses"
-      : `Showing ${STATUS_LABELS[status as ProjectStatus]}`;
+      : `Showing ${STATUS_LABELS[filters.status]}`;
 
   return (
     <div className="flex flex-col gap-[22px]">
@@ -128,98 +122,179 @@ export function ProjectsPage({
             Track every project, its team, status, and setup resources.
           </p>
         </div>
-        <SemesterBadge name={semester.name} active={semester.active} />
+        {semester && <SemesterBadge name={semester.name} active={semester.active} />}
       </div>
 
-      <ProjectsToolbar
-        query={query}
-        onQueryChange={setQuery}
-        type={type}
-        onTypeChange={setType}
-        status={status}
-        onStatusChange={setStatus}
-        onCreate={() => setDrawer({ kind: "create" })}
-      />
-
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-sm font-semibold text-ink" aria-live="polite">
-          {visible.length} {visible.length === 1 ? "project" : "projects"}
-        </p>
-        <p className="text-xs font-medium text-muted">
-          {semester.name} · {statusSummary}
-        </p>
-      </div>
-
-      {visible.length > 0 ? (
-        <div className="flex flex-col gap-[13px]">
-          {visible.map((project) => (
-            <ProjectRow
-              key={project.id}
-              project={project}
-              onEdit={() => setDrawer({ kind: "edit", id: project.id })}
-              onEditMeeting={() => setDrawer({ kind: "meeting", id: project.id })}
-              onEditBom={() => setDrawer({ kind: "bom", id: project.id })}
-            />
-          ))}
-        </div>
+      {!semester ? (
+        <section className="flex flex-col items-start gap-2 rounded-[10px] border border-line bg-surface p-5">
+          <h2 className="text-lg font-semibold text-ink">No current semester</h2>
+          <p className="text-[13px] text-muted">
+            Set a current semester before creating projects.
+          </p>
+          <Link href="/semesters" className="text-[13px] font-semibold text-accent">
+            Go to semesters →
+          </Link>
+        </section>
       ) : (
-        <div className="rounded-[10px] border border-line bg-surface p-8 text-center">
-          <p className="text-[15px] font-semibold text-ink">
-            No projects match your filters
-          </p>
-          <p className="mt-1 text-xs text-muted">
-            Try a different search, type or status.
-          </p>
-        </div>
+        <>
+          <ProjectsToolbar
+            query={search}
+            onQueryChange={setSearch}
+            type={filters.type}
+            onTypeChange={(value) => navigate({ type: value as ProjectFilters["type"] })}
+            status={filters.status}
+            onStatusChange={(value) =>
+              navigate({ status: value as ProjectFilters["status"] })
+            }
+            onCreate={() => open({ kind: "create" })}
+          />
+
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm font-semibold text-ink" aria-live="polite">
+              {list.total} {list.total === 1 ? "project" : "projects"}
+            </p>
+            <p className="text-xs font-medium text-muted">
+              {semester.name} · {statusSummary}
+            </p>
+          </div>
+
+          {projects.length > 0 ? (
+            <div className="flex flex-col gap-[13px]">
+              {projects.map((project) => (
+                <ProjectRow
+                  key={project.id}
+                  project={project}
+                  onEdit={() => open({ kind: "edit", id: project.id })}
+                  onEditMeeting={() => open({ kind: "meeting", id: project.id })}
+                  onEditBom={() => open({ kind: "bom", id: project.id })}
+                  onEditMembers={() => open({ kind: "members", id: project.id })}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-[10px] border border-line bg-surface p-8 text-center">
+              <p className="text-[15px] font-semibold text-ink">
+                {hasFilters ? "No projects match your filters" : "No projects yet"}
+              </p>
+              <p className="mt-1 text-xs text-muted">
+                {hasFilters
+                  ? "Try a different search, type or status."
+                  : "Create the first project for this semester."}
+              </p>
+            </div>
+          )}
+
+          {pageCount > 1 && (
+            <nav aria-label="Pagination" className="flex items-center justify-end gap-3">
+              <span className="text-xs text-muted">
+                Page {list.page} of {pageCount}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={list.page <= 1}
+                onClick={() => navigate({ page: list.page - 1 })}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={list.page >= pageCount}
+                onClick={() => navigate({ page: list.page + 1 })}
+              >
+                Next
+              </Button>
+            </nav>
+          )}
+        </>
       )}
 
-      {drawer?.kind === "create" && (
+      {semester && drawer?.kind === "create" && (
         <ProjectFormDrawer
           mode="create"
           semester={semester}
           onClose={() => setDrawer(null)}
-          onSubmit={createProject}
+          onSubmit={(input) => createProject(semester.id, input)}
         />
       )}
-      {drawer?.kind === "edit" && selected && (
+      {semester && drawer?.kind === "edit" && selected && (
         <ProjectFormDrawer
           key={selected.id}
           mode="edit"
           project={selected}
           semester={semester}
           onClose={() => setDrawer(null)}
-          onSubmit={(input) => updateProject(selected.id, input)}
-          onArchive={() => setDrawer({ kind: "archive", id: selected.id })}
+          onSubmit={(input, changes, loadedAt) => updateProject(selected.id, loadedAt, changes)}
+          onArchive={() => open({ kind: "archive", id: selected.id })}
         />
       )}
-      {drawer?.kind === "archive" && selected && (
+      {semester && drawer?.kind === "archive" && selected && (
         <ArchiveProjectDrawer
           key={selected.id}
           project={selected}
           semester={semester}
           onClose={() => setDrawer(null)}
-          onConfirm={() => archiveProject(selected.id)}
+          onConfirm={({ cancelKickoff }) => archiveProject(selected.id, cancelKickoff)}
         />
       )}
-      {drawer?.kind === "meeting" && selected && (
-        <MeetingLinkDrawer
+      {semester && drawer?.kind === "members" && selected && (
+        <ProjectMembersDrawer
           key={selected.id}
           project={selected}
           semester={semester}
           onClose={() => setDrawer(null)}
-          onSave={(link) => saveMeeting(selected.id, link)}
-          onRemove={() => saveMeeting(selected.id, null)}
         />
       )}
-      {drawer?.kind === "bom" && selected && (
-        <BomFileDrawer
+      {semester && drawer?.kind === "meeting" && selected && (
+        <ResourceLoader
           key={selected.id}
           project={selected}
-          semester={semester}
+          title="First meeting link"
           onClose={() => setDrawer(null)}
-          onSave={(bom) => saveBom(selected.id, bom)}
-          onRemove={() => saveBom(selected.id, null)}
-        />
+        >
+          {(resources) => (
+            <MeetingLinkDrawer
+              project={{
+                name: selected.name,
+                meetingUrl: resources.meetingUrl,
+                meetingLabel: resources.meetingLabel,
+              }}
+              semester={semester}
+              busy={busy}
+              error={resourceError}
+              onClose={() => setDrawer(null)}
+              onSave={link(selected.id, "FIRST_MEETING").save}
+              onRemove={link(selected.id, "FIRST_MEETING").remove}
+            />
+          )}
+        </ResourceLoader>
+      )}
+      {semester && drawer?.kind === "bom" && selected && (
+        <ResourceLoader
+          key={selected.id}
+          project={selected}
+          title="BOM file"
+          onClose={() => setDrawer(null)}
+        >
+          {(resources) => (
+            <BomFileDrawer
+              project={selected}
+              current={resources.bom}
+              semester={semester}
+              busy={busy}
+              error={resourceError}
+              onClose={() => setDrawer(null)}
+              onSaveLink={link(selected.id, "BOM").save}
+              onSaveFile={(file) => {
+                const data = new FormData();
+                data.set("file", file);
+                saveResource(() => uploadBomFile(selected.id, data));
+              }}
+              onRemove={link(selected.id, "BOM").remove}
+            />
+          )}
+        </ResourceLoader>
       )}
     </div>
   );
