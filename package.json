@@ -5,7 +5,7 @@
     "dev:backend": "bun run --filter @pmt/backend dev",
     "dev:frontend": "bun run --filter frontend dev",
     "build": "bun run --filter frontend build",
-    "start": "bun run --filter @pmt/backend --filter frontend start"
+    "start": "node scripts/start.mjs"
   },
   "workspaces": [
     "backend",
