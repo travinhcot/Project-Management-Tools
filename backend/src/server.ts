@@ -12,6 +12,7 @@ import { createFilesInterface } from "./modules/files/interface/files.interface.
 import { createProjectsInterface } from "./modules/projects/interface/projects.interface.ts";
 import { createPortalInterface } from "./modules/portal/interface/portal.interface.ts";
 import { createAuditInterface } from "./modules/audit/interface/audit.interface.ts";
+import { createGithubInterface } from "./modules/github/interface/github.interface.ts";
 import { createDashboardInterface } from "./modules/dashboard/interface/dashboard.interface.ts";
 import {
   createEmailsInterface,
@@ -88,6 +89,28 @@ const portal = createPortalInterface(
   { resources: files.service, meetingUrl: meetingLinks.meetingUrl },
   { allowPastSemesters: process.env.PORTAL_PAST_SEMESTERS === "true" },
 );
+const github = createGithubInterface(
+  adminClient,
+  {
+    // Same access rule as the member portal: an active assignment to the project.
+    async memberCanView(actorId, projectId) {
+      const { data, error } = await adminClient.rpc("member_get_project", {
+        p_actor_id: actorId,
+        p_project_id: projectId,
+        p_include_past: true,
+      });
+      if (error) throw error;
+      return Array.isArray(data) && data.length > 0;
+    },
+  },
+  {
+    token: process.env.GITHUB_TOKEN || undefined,
+    internalSecret: process.env.INTERNAL_SECRET,
+    staleMinutes: process.env.GITHUB_STALE_MINUTES
+      ? Number(process.env.GITHUB_STALE_MINUTES)
+      : undefined,
+  },
+);
 const app = createApplication({
   auth,
   users,
@@ -100,6 +123,7 @@ const app = createApplication({
   emails,
   audit,
   dashboard,
+  github,
 });
 // In-process scheduler: sends due campaigns every minute.
 // Set EMAIL_SCHEDULER=off when an external cron calls /api/internal/campaigns/process.

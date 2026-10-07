@@ -7,6 +7,7 @@ import { SemesterSwitcher, type SemesterOption } from "@/shared/components/Semes
 import { Button } from "@/shared/components/Button";
 import { ArchiveProjectDrawer } from "@/features/projects/components/drawers/ArchiveProjectDrawer";
 import { ResourceFileDrawer } from "@/features/projects/components/drawers/ResourceFileDrawer";
+import { GithubActivityDrawer } from "@/features/projects/components/drawers/GithubActivityDrawer";
 import { ProjectMembersDrawer } from "@/features/projects/components/drawers/ProjectMembersDrawer";
 import { ResourceLinkDrawer } from "@/features/projects/components/drawers/ResourceLinkDrawer";
 import { ProjectFormDrawer } from "@/features/projects/components/drawers/ProjectFormDrawer";
@@ -39,6 +40,7 @@ type DrawerState =
   | { kind: "archive"; id: string }
   | { kind: "resource"; id: string; slot: ResourceSlot }
   | { kind: "members"; id: string }
+  | { kind: "github"; id: string }
   | null;
 
 const FILE_SLOT_NAMES: readonly ResourceSlot[] = ["SRS", "BOM", "RESEARCH_TEMPLATE"];
@@ -200,6 +202,7 @@ export function ProjectsPage({
                   onEdit={() => open({ kind: "edit", id: project.id })}
                   onEditResource={(slot) => open({ kind: "resource", id: project.id, slot })}
                   onEditMembers={() => open({ kind: "members", id: project.id })}
+                  onOpenGithub={() => open({ kind: "github", id: project.id })}
                   onArchive={() => open({ kind: "archive", id: project.id })}
                 />
               ))}
@@ -275,6 +278,13 @@ export function ProjectsPage({
           key={selected.id}
           project={selected}
           semester={semester}
+          onClose={() => setDrawer(null)}
+        />
+      )}
+      {drawer?.kind === "github" && selected && (
+        <GithubActivityDrawer
+          key={selected.id}
+          project={selected}
           onClose={() => setDrawer(null)}
         />
       )}
