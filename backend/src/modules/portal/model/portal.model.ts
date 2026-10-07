@@ -45,6 +45,25 @@ export interface ResourceSummary {
   readonly complete: boolean;
 }
 
+export interface PortalProjectSummary {
+  readonly leader_name: string | null;
+  readonly member_count: number;
+}
+
+export interface PortalProfileRow {
+  readonly full_name: string;
+  readonly email: string;
+  readonly department: string | null;
+}
+
+export interface PortalSemesterRow {
+  readonly semester_id: string;
+  readonly name: string;
+  readonly is_current: boolean;
+  readonly ends_on: string | null;
+  readonly project_count: number;
+}
+
 export interface PortalListItem {
   readonly id: string;
   readonly name: string;
@@ -52,10 +71,61 @@ export interface PortalListItem {
   readonly status: ProjectStatus;
   readonly kickoff_at: string | null;
   readonly semester: { readonly id: string; readonly name: string };
+  readonly leader_name: string | null;
+  readonly member_count: number;
   readonly resources: {
     readonly present: readonly ResourceSlot[];
     readonly missing: readonly ResourceSlot[];
   } | null;
+  /** What the member may open or download for this project (absent slots omitted). */
+  readonly resource_views: readonly ResourceView[];
+}
+
+export type ComingUpKind = "FIRST_MEETING" | "KICKOFF" | "BOM";
+
+export interface ComingUpItem {
+  readonly kind: ComingUpKind;
+  readonly project_id: string;
+  readonly project_name: string;
+  /** Meeting/kick-off time; null for a shared file. */
+  readonly at: string | null;
+  readonly url: string | null;
+  readonly file: {
+    readonly id: string;
+    readonly filename: string;
+    readonly size_bytes: number;
+  } | null;
+  readonly download_url_path: string | null;
+}
+
+export interface PortalOverview {
+  readonly semester: {
+    readonly id: string;
+    readonly name: string;
+    readonly ends_on: string | null;
+  } | null;
+  readonly first_name: string;
+  readonly projects: readonly PortalListItem[];
+  readonly next_meeting: {
+    readonly project_id: string;
+    readonly project_name: string;
+    readonly at: string;
+  } | null;
+  readonly coming_up: readonly ComingUpItem[];
+}
+
+export interface PortalProfile {
+  readonly full_name: string;
+  readonly email: string;
+  readonly department: string | null;
+  readonly role: "MEMBER";
+  readonly semesters: readonly {
+    readonly id: string;
+    readonly name: string;
+    readonly is_current: boolean;
+    readonly ends_on: string | null;
+    readonly project_count: number;
+  }[];
 }
 
 export interface PortalProjectList {

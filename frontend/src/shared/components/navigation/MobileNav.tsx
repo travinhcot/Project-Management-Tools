@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useId, useRef, useState } from "react";
-import { workspaceNav } from "@/config/navigation";
+import { workspaceNav, type NavItem } from "@/config/navigation";
 import { useDialogFocus } from "@/shared/hooks/useDialogFocus";
 import { NavIcon } from "@/shared/components/navigation/Sidebar";
 
@@ -16,7 +16,18 @@ function MenuIcon() {
   );
 }
 
-function WorkspaceDrawer({ onClose }: { onClose: () => void }) {
+interface MobileNavProps {
+  heading?: string;
+  items?: readonly NavItem[];
+  disabledHrefs?: readonly string[];
+}
+
+function WorkspaceDrawer({
+  onClose,
+  heading,
+  items,
+  disabledHrefs,
+}: { onClose: () => void } & Required<MobileNavProps>) {
   const pathname = usePathname();
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
@@ -34,7 +45,7 @@ function WorkspaceDrawer({ onClose }: { onClose: () => void }) {
       >
         <div className="flex items-center justify-between">
           <h2 id={titleId} className="text-[11px] font-bold text-muted">
-            WORKSPACE
+            {heading}
           </h2>
           <button
             type="button"
@@ -46,9 +57,21 @@ function WorkspaceDrawer({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <nav className="flex flex-col gap-2">
-          {workspaceNav.map((item) => {
+          {items.map((item) => {
             const active =
               pathname === item.href || pathname.startsWith(`${item.href}/`);
+            if (disabledHrefs.includes(item.href)) {
+              return (
+                <span
+                  key={item.href}
+                  aria-disabled="true"
+                  className="flex h-[42px] items-start gap-2 rounded-lg p-3 text-sm font-medium text-muted opacity-40"
+                >
+                  <NavIcon name={item.icon} />
+                  {item.label}
+                </span>
+              );
+            }
             return (
               <Link
                 key={item.href}
@@ -73,7 +96,11 @@ function WorkspaceDrawer({ onClose }: { onClose: () => void }) {
 }
 
 /** Hamburger button (phones only) that opens the workspace menu as a left drawer. */
-export function MobileNav() {
+export function MobileNav({
+  heading = "WORKSPACE",
+  items = workspaceNav,
+  disabledHrefs = [],
+}: MobileNavProps) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -87,7 +114,14 @@ export function MobileNav() {
       >
         <MenuIcon />
       </button>
-      {open && <WorkspaceDrawer onClose={() => setOpen(false)} />}
+      {open && (
+        <WorkspaceDrawer
+          onClose={() => setOpen(false)}
+          heading={heading}
+          items={items}
+          disabledHrefs={disabledHrefs}
+        />
+      )}
     </>
   );
 }

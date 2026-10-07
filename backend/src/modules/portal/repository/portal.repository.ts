@@ -2,6 +2,9 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   Eligibility,
   MemberRole,
+  PortalProfileRow,
+  PortalProjectSummary,
+  PortalSemesterRow,
   PortalTeammate,
   ProjectStatus,
   PortalProjectRow,
@@ -88,6 +91,54 @@ export function createPortalRepository(client: SupabaseClient) {
       return asRows(data).map((row) => ({
         full_name: String(row.full_name),
         role: row.role as MemberRole,
+      }));
+    },
+
+    async summaries(
+      actorId: string,
+      includePast: boolean,
+    ): Promise<Map<string, PortalProjectSummary>> {
+      const { data, error } = await client.rpc("member_project_summaries", {
+        p_actor_id: actorId,
+        p_include_past: includePast,
+      });
+      if (error) throw error;
+      return new Map(
+        asRows(data).map((row) => [
+          String(row.project_id),
+          {
+            leader_name: (row.leader_name as string | null) ?? null,
+            member_count: Number(row.member_count),
+          },
+        ]),
+      );
+    },
+
+    async profile(actorId: string): Promise<PortalProfileRow | null> {
+      const { data, error } = await client.rpc("member_profile", {
+        p_actor_id: actorId,
+      });
+      if (error) throw error;
+      const row = asRows(data)[0];
+      if (!row) return null;
+      return {
+        full_name: String(row.full_name),
+        email: String(row.email),
+        department: (row.department as string | null) ?? null,
+      };
+    },
+
+    async semesters(actorId: string): Promise<PortalSemesterRow[]> {
+      const { data, error } = await client.rpc("member_semesters", {
+        p_actor_id: actorId,
+      });
+      if (error) throw error;
+      return asRows(data).map((row) => ({
+        semester_id: String(row.semester_id),
+        name: String(row.name),
+        is_current: row.is_current === true,
+        ends_on: (row.ends_on as string | null) ?? null,
+        project_count: Number(row.project_count),
       }));
     },
 

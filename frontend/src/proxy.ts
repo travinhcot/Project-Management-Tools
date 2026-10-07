@@ -1,10 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { API_BASE_URL } from "@/shared/api/config";
-import { safeNextPath } from "@/shared/auth/redirect";
+import { isMemberPath, landingFor, resolveLanding, safeNextPath } from "@/shared/auth/redirect";
 import {
   ACCESS_COOKIE,
   REFRESH_COOKIE,
+  ROLE_COOKIE,
   clearSession,
+  parseRole,
   writeSession,
   type BackendSession,
 } from "@/shared/auth/session";
@@ -38,10 +40,18 @@ export async function proxy(request: NextRequest) {
   const onSignIn = request.nextUrl.pathname === SIGN_IN_PATH;
   // A rejected token sends the visitor to /sign-in?expired=1; don't bounce them back out.
   const staleSession = request.nextUrl.searchParams.has("expired");
+  // Sessions from before roles were stored belong to admins (members could not sign in).
+  const role = () => parseRole(request.cookies.get(ROLE_COOKIE)?.value) ?? "ADMIN";
   const toLanding = () =>
     NextResponse.redirect(
-      new URL(safeNextPath(request.nextUrl.searchParams.get("next")), request.url),
+      new URL(resolveLanding(role(), request.nextUrl.searchParams.get("next")), request.url),
     );
+  // Members live under /member, admins everywhere else; send each back to their own area.
+  const wrongArea = () =>
+    !onSignIn && isMemberPath(request.nextUrl.pathname) !== (role() === "MEMBER");
+  const toOwnArea = () => NextResponse.redirect(new URL(landingFor(role()), request.url));
+  const proceed = (init?: Parameters<typeof NextResponse.next>[0]) =>
+    wrongArea() ? toOwnArea() : NextResponse.next(init);
   const toSignIn = () => {
     if (onSignIn) return NextResponse.next();
     // Remember where they were headed so sign-in can continue there.
@@ -52,7 +62,7 @@ export async function proxy(request: NextRequest) {
   };
 
   if (request.cookies.has(ACCESS_COOKIE)) {
-    return onSignIn && !staleSession ? toLanding() : NextResponse.next();
+    return onSignIn && !staleSession ? toLanding() : proceed();
   }
 
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
@@ -69,7 +79,7 @@ export async function proxy(request: NextRequest) {
   request.cookies.set(ACCESS_COOKIE, session.access_token);
   request.cookies.set(REFRESH_COOKIE, session.refresh_token);
   const response =
-    onSignIn && !staleSession ? toLanding() : NextResponse.next({ request });
+    onSignIn && !staleSession ? toLanding() : proceed({ request });
   writeSession(response.cookies, session);
   return response;
 }

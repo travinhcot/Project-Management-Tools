@@ -12,6 +12,8 @@ export function createPortalMemberRouter(service: PortalService) {
     next();
   });
   router.get("/", controller.status);
+  router.get("/overview", controller.overview);
+  router.get("/profile", controller.profile);
   router.get("/projects", controller.listProjects);
   router.get("/projects/:projectId", controller.getProject);
   router.get("/notifications/badge", controller.badge);

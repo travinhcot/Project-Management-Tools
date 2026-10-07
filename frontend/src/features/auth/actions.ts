@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { API_BASE_URL } from "@/shared/api/config";
-import { safeNextPath } from "@/shared/auth/redirect";
+import { resolveLanding } from "@/shared/auth/redirect";
 import {
   ACCESS_COOKIE,
   clearSession,
@@ -48,7 +48,7 @@ export async function requestOtp(email: string): Promise<AuthResult> {
   return { ok: true };
 }
 
-/** On success for an admin this sets the session cookies and redirects; it only returns on failure. */
+/** On success this sets the session cookies and redirects to the role's area; it only returns on failure. */
 export async function verifyOtp(
   email: string,
   code: string,
@@ -64,7 +64,7 @@ export async function verifyOtp(
     };
   }
   if (response.status === 403) {
-    return { ok: false, code: "NO_ACCESS", message: "This account cannot use the admin area." };
+    return { ok: false, code: "NO_ACCESS", message: "This account cannot sign in." };
   }
   if (!response.ok) return UNAVAILABLE;
 
@@ -73,14 +73,8 @@ export async function verifyOtp(
     session: BackendSession;
   };
 
-  if (body.user.role !== "ADMIN") {
-    // Members have their own portal; do not keep an admin-area session for them.
-    await post("/api/auth/logout", undefined, body.session.access_token);
-    return { ok: false, code: "NO_ACCESS", message: "This account cannot use the admin area." };
-  }
-
-  writeSession(await cookies(), body.session);
-  redirect(safeNextPath(next));
+  writeSession(await cookies(), body.session, body.user.role);
+  redirect(resolveLanding(body.user.role, next));
 }
 
 export async function signOut(): Promise<void> {

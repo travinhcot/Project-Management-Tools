@@ -59,10 +59,10 @@ export function SignInFlow({ next }: { next?: string }) {
     return (
       <section className={cardClass} aria-label="No access">
         <p className="text-[11px] font-bold uppercase text-warn-text">Signed in · no access</p>
-        <h2 className="text-xl font-bold text-ink">This account cannot use the admin area</h2>
+        <h2 className="text-xl font-bold text-ink">This account cannot sign in</h2>
         <p className="text-[13px] text-muted">
-          Your account works, but only EBMB admins can open this workspace. Members see their
-          projects in the member portal. If you should be an admin, ask an EBMB contact.
+          Your email was verified, but this account is not allowed to open the workspace. If you
+          should have access, ask an EBMB contact.
         </p>
         <div>
           <Button

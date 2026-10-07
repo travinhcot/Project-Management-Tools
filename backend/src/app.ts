@@ -87,7 +87,7 @@ export function createApplication({
     "/api/me",
     auth.requireAuth,
     auth.requireRole("MEMBER"),
-    portal.memberRouter, // GET /, /projects, /projects/:id, /notifications/badge
+    portal.memberRouter, // GET /, /projects, /projects/:id, /overview, /profile, /notifications/badge
     files.memberRouter, // POST /projects/:id/files/:fileId/download-url
   );
   app.use(
