@@ -1,6 +1,13 @@
+import { Button } from "@/shared/components/Button";
 import type { Member } from "@/features/members/models/member";
 
-export function MemberCard({ member }: { member: Member }) {
+export function MemberCard({
+  member,
+  onDelete,
+}: {
+  member: Member;
+  onDelete: () => void;
+}) {
   return (
     <article className="flex flex-col gap-[10px] rounded-[10px] border border-line bg-surface p-[18px]">
       <div aria-hidden="true" className="h-[3px] rounded-[2px] bg-primary" />
@@ -23,6 +30,15 @@ export function MemberCard({ member }: { member: Member }) {
       >
         {member.email}
       </a>
+      <Button
+        variant="danger-outline"
+        size="sm"
+        onClick={onDelete}
+        aria-label={`Delete ${member.fullName} permanently`}
+        className="mt-1 self-start"
+      >
+        Delete
+      </Button>
     </article>
   );
 }

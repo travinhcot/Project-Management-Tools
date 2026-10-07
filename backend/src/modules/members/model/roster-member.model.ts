@@ -42,3 +42,15 @@ export interface RosterMemberChanges {
   readonly status?: RosterStatus;
   readonly deactivation_reason?: string | null;
 }
+
+/** What deleting a member permanently would remove (shown before the delete). */
+export interface RosterDeleteImpact {
+  readonly full_name: string;
+  readonly email: string;
+  readonly has_account: boolean;
+  readonly account_role: "ADMIN" | "MEMBER" | null;
+  /** Roster entries removed: this one plus the account's entries in other semesters. */
+  readonly roster_entries: number;
+  readonly projects: number;
+  readonly deliveries: number;
+}

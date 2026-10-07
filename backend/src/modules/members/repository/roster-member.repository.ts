@@ -4,6 +4,7 @@ import type {
   RosterMember,
   RosterMemberChanges,
   RosterMemberCreate,
+  RosterDeleteImpact,
 } from "../model/roster-member.model.ts";
 
 /** Keeps only the roster fields the API exposes (the table still has older columns). */
@@ -104,6 +105,43 @@ export function createRosterMemberRepository(client: SupabaseClient) {
       });
       if (error) throw error;
       return toRosterMember(data as RosterMember);
+    },
+
+    async deleteImpact(input: {
+      actorId: string;
+      rosterMemberId: string;
+    }): Promise<RosterDeleteImpact> {
+      const { data, error } = await client.rpc("admin_roster_delete_impact", {
+        p_actor_id: input.actorId,
+        p_roster_member_id: input.rosterMemberId,
+      });
+      if (error) throw error;
+      return data as RosterDeleteImpact;
+    },
+
+    /**
+     * Deletes the member, their history and their account. The database goes first because
+     * app_users.id references auth.users; the auth user is removed once that succeeds.
+     */
+    async deleteMember(input: {
+      actorId: string;
+      rosterMemberId: string;
+      requestId: string;
+    }): Promise<{ authUserRemoved: boolean }> {
+      const { data, error } = await client.rpc("admin_delete_roster_member", {
+        p_actor_id: input.actorId,
+        p_roster_member_id: input.rosterMemberId,
+        p_request_id: input.requestId,
+      });
+      if (error) throw error;
+      const authUserId = data as string | null;
+      if (!authUserId) return { authUserRemoved: true };
+      const { error: authError } = await client.auth.admin.deleteUser(authUserId);
+      if (authError) {
+        console.error("Roster member deleted, but its auth user could not be removed:", authUserId);
+        return { authUserRemoved: false };
+      }
+      return { authUserRemoved: true };
     },
 
     async countActive(semesterId: string): Promise<number> {

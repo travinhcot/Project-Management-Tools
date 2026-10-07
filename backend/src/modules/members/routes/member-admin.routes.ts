@@ -18,5 +18,7 @@ export function createMemberAdminRouter(members: RosterMemberService) {
   router.get("/semesters/:semesterId/roster", controller.list);
   router.post("/semesters/:semesterId/roster", controller.add);
   router.patch("/roster/:rosterMemberId", controller.update);
+  router.get("/roster/:rosterMemberId/delete-impact", controller.deleteImpact);
+  router.delete("/roster/:rosterMemberId", controller.remove);
   return router;
 }

@@ -7,9 +7,12 @@ import type {
   ImportRowsPage,
   ImportRowStatus,
   ImportSummary,
+  MemberDeleteImpact,
+  MemberInput,
   MissingMember,
 } from "@/features/members/models/member";
 import {
+  fetchDeleteImpact,
   fetchImportMissing,
   fetchImportRows,
   mapImportSummary,
@@ -82,5 +85,42 @@ export async function commitImport(
   });
   // Refresh on any outcome: an already-processed import means the list on screen was stale.
   revalidatePath(MEMBERS_PATH);
+  return result;
+}
+
+export async function addMember(
+  semesterId: string,
+  input: MemberInput,
+): Promise<ActionResult> {
+  const result = await run(async () => {
+    await backendFetch(`/api/admin/semesters/${semesterId}/roster`, {
+      method: "POST",
+      body: {
+        email: input.email,
+        full_name: input.fullName,
+        major: input.major || undefined,
+      },
+    });
+    return {};
+  });
+  revalidatePath(MEMBERS_PATH);
+  return result;
+}
+
+export async function getDeleteImpact(
+  id: string,
+): Promise<ActionResult<{ impact: MemberDeleteImpact }>> {
+  return run(async () => ({ impact: await fetchDeleteImpact(id) }));
+}
+
+/** Permanent: removes the member, their project/email history and their login account. */
+export async function deleteMember(id: string): Promise<ActionResult> {
+  const result = await run(async () => {
+    await backendFetch(`/api/admin/roster/${id}`, { method: "DELETE" });
+    return {};
+  });
+  revalidatePath(MEMBERS_PATH);
+  revalidatePath("/projects");
+  revalidatePath("/meeting-emails");
   return result;
 }

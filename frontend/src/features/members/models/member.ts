@@ -73,3 +73,20 @@ export interface MissingMember {
   fullName: string;
   email: string;
 }
+
+/** What deleting a member permanently removes (GET /roster/:id/delete-impact). */
+export interface MemberDeleteImpact {
+  hasAccount: boolean;
+  /** An admin account cannot be deleted here. */
+  isAdmin: boolean;
+  /** Roster entries erased: this one plus the account's entries in other semesters. */
+  rosterEntries: number;
+  projects: number;
+  deliveries: number;
+}
+
+export interface MemberInput {
+  fullName: string;
+  email: string;
+  major: string;
+}

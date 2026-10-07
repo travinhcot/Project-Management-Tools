@@ -41,5 +41,22 @@ export function createRosterMemberController(service: RosterMemberService) {
       );
       res.json({ member });
     },
+    async deleteImpact(req: Request<{ rosterMemberId: string }>, res: Response<unknown, ActorLocals>) {
+      const actor = requireActor(res.locals);
+      const impact = await service.deleteImpact(
+        actor.userId,
+        rosterMemberIdParam(req.params.rosterMemberId),
+      );
+      res.json({ impact });
+    },
+    async remove(req: Request<{ rosterMemberId: string }>, res: Response<unknown, ActorLocals>) {
+      const actor = requireActor(res.locals);
+      const result = await service.delete(
+        actor.userId,
+        rosterMemberIdParam(req.params.rosterMemberId),
+        randomUUID(),
+      );
+      res.json({ deleted: true, auth_user_removed: result.authUserRemoved });
+    },
   };
 }

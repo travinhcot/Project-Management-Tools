@@ -35,6 +35,20 @@ export function memberError(error: unknown): HttpError {
         "Roster member not found.",
       );
   }
+  if (code === "P0001" && message === "MEMBER_IS_ADMIN") {
+    return new HttpError(
+      409,
+      "MEMBER_IS_ADMIN",
+      "This person has an admin account and cannot be deleted here. Change their role in Users & access first.",
+    );
+  }
+  if (code === "23503") {
+    return new HttpError(
+      409,
+      "MEMBER_ACCOUNT_IN_USE",
+      "This member's account has recorded activity (such as audit history) and cannot be deleted. Deactivate the member instead.",
+    );
+  }
   if (code === "23505") {
     return new HttpError(
       409,

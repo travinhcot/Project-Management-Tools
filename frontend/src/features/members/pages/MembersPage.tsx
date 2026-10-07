@@ -5,10 +5,12 @@ import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/shared/components/Button";
 import { SemesterBadge } from "@/shared/components/SemesterBadge";
+import { AddMemberDrawer } from "@/features/members/components/drawers/AddMemberDrawer";
+import { DeleteMemberDrawer } from "@/features/members/components/drawers/DeleteMemberDrawer";
 import { ImportRosterModal } from "@/features/members/components/import/ImportRosterModal";
 import { MemberCard } from "@/features/members/components/MemberCard";
 import { MembersToolbar } from "@/features/members/components/MembersToolbar";
-import type { MemberFilters, MemberListPage } from "@/features/members/models/member";
+import type { Member, MemberFilters, MemberListPage } from "@/features/members/models/member";
 
 // Filters live in the URL and the list is fetched by the server component; committing an
 // import revalidates the route, so this page keeps no copy of the members.
@@ -24,6 +26,8 @@ export function MembersPage({
   const { semester, items: members } = list;
   const [search, setSearch] = useState(filters.search);
   const [importing, setImporting] = useState(false);
+  const [adding, setAdding] = useState(false);
+  const [deleting, setDeleting] = useState<Member | null>(null);
 
   function navigate(next: Partial<MemberFilters>) {
     const merged = { ...filters, page: 1, ...next };
@@ -83,6 +87,7 @@ export function MembersPage({
             status={filters.status}
             onStatusChange={(value) => navigate({ status: value as MemberFilters["status"] })}
             onImport={() => setImporting(true)}
+            onAdd={() => setAdding(true)}
           />
 
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
@@ -95,7 +100,7 @@ export function MembersPage({
           {members.length > 0 ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {members.map((member) => (
-                <MemberCard key={member.id} member={member} />
+                <MemberCard key={member.id} member={member} onDelete={() => setDeleting(member)} />
               ))}
             </div>
           ) : (
@@ -142,6 +147,28 @@ export function MembersPage({
 
       {semester && importing && (
         <ImportRosterModal semester={semester} onClose={() => setImporting(false)} />
+      )}
+      {semester && adding && (
+        <AddMemberDrawer
+          semester={semester}
+          onClose={() => setAdding(false)}
+          onAdded={() => {
+            setAdding(false);
+            router.refresh();
+          }}
+        />
+      )}
+      {semester && deleting && (
+        <DeleteMemberDrawer
+          key={deleting.id}
+          member={deleting}
+          semester={semester}
+          onClose={() => setDeleting(null)}
+          onDeleted={() => {
+            setDeleting(null);
+            router.refresh();
+          }}
+        />
       )}
     </div>
   );

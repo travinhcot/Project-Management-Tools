@@ -4,6 +4,7 @@ import type {
   RosterMemberChanges,
   RosterMemberCreate,
   RosterMemberView,
+  RosterDeleteImpact,
 } from "../model/roster-member.model.ts";
 import type { RosterMemberRepository } from "../repository/roster-member.repository.ts";
 import type { Page } from "../../../shared/pagination.ts";
@@ -60,6 +61,33 @@ export function createRosterMemberService(repository: RosterMemberRepository) {
             requestId,
           }),
         );
+      } catch (error) {
+        throw memberError(error);
+      }
+    },
+
+    async deleteImpact(
+      actorId: string,
+      rosterMemberId: string,
+    ): Promise<RosterDeleteImpact> {
+      try {
+        return await repository.deleteImpact({ actorId, rosterMemberId });
+      } catch (error) {
+        throw memberError(error);
+      }
+    },
+
+    async delete(
+      actorId: string,
+      rosterMemberId: string,
+      requestId: string,
+    ): Promise<{ authUserRemoved: boolean }> {
+      try {
+        return await repository.deleteMember({
+          actorId,
+          rosterMemberId,
+          requestId,
+        });
       } catch (error) {
         throw memberError(error);
       }

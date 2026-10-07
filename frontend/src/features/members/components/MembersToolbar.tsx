@@ -13,12 +13,14 @@ export function MembersToolbar({
   status,
   onStatusChange,
   onImport,
+  onAdd,
 }: {
   query: string;
   onQueryChange: (value: string) => void;
   status: string;
   onStatusChange: (value: string) => void;
   onImport: () => void;
+  onAdd: () => void;
 }) {
   return (
     <div className="grid grid-cols-1 gap-[14px] sm:flex sm:flex-wrap sm:items-center">
@@ -42,7 +44,14 @@ export function MembersToolbar({
         options={STATUS_OPTIONS}
         className="h-11 w-full sm:w-[160px]"
       />
-      <Button onClick={onImport} className="h-11 w-full sm:ml-auto sm:w-[160px]">
+      <Button
+        variant="outline"
+        onClick={onAdd}
+        className="h-11 w-full sm:ml-auto sm:w-[160px]"
+      >
+        Add member
+      </Button>
+      <Button onClick={onImport} className="h-11 w-full sm:w-[160px]">
         Import roster
       </Button>
     </div>

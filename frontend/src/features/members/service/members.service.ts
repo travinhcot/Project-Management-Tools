@@ -10,6 +10,7 @@ import type {
   ImportSummary,
   Member,
   MemberFilters,
+  MemberDeleteImpact,
   MemberListPage,
   MissingMember,
 } from "@/features/members/models/member";
@@ -150,4 +151,23 @@ export async function fetchImportMissing(importId: string): Promise<MissingMembe
     items: { id: string; email: string; full_name: string }[];
   }>(`/api/admin/roster/imports/${importId}/missing?size=100`);
   return items.map((item) => ({ id: item.id, fullName: item.full_name, email: item.email }));
+}
+
+export async function fetchDeleteImpact(id: string): Promise<MemberDeleteImpact> {
+  const { impact } = await backendFetch<{
+    impact: {
+      has_account: boolean;
+      account_role: "ADMIN" | "MEMBER" | null;
+      roster_entries: number;
+      projects: number;
+      deliveries: number;
+    };
+  }>(`/api/admin/roster/${id}/delete-impact`);
+  return {
+    hasAccount: impact.has_account,
+    isAdmin: impact.account_role === "ADMIN",
+    rosterEntries: impact.roster_entries,
+    projects: impact.projects,
+    deliveries: impact.deliveries,
+  };
 }
