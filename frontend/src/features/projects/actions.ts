@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { backendFetch } from "@/shared/api/backend";
 import { ApiError } from "@/shared/api/errors";
 import type {
+  FileSlotName,
+  LinkSlotName,
   ProjectArchiveImpact,
   MemberRole,
   ProjectInput,
@@ -11,6 +13,8 @@ import type {
   ProjectResources,
   RosterCandidate,
 } from "@/features/projects/models/project";
+import { FILE_EXTENSIONS } from "@/features/projects/models/project";
+import { describeExtensions } from "@/features/projects/utils/validation";
 import {
   fetchArchiveImpact,
   fetchProjectMembers,
@@ -101,11 +105,12 @@ export async function getProjectResources(
   return run(async () => ({ resources: await fetchProjectResources(id) }));
 }
 
-export type ResourceSlotName = "FIRST_MEETING" | "BOM";
+/** Slots the admin can clear: every link slot, plus the file slots. */
+export type ResourceSlotName = LinkSlotName | FileSlotName;
 
 export async function saveResourceLink(
   id: string,
-  slot: ResourceSlotName,
+  slot: LinkSlotName,
   link: { url: string; label: string | null },
 ): Promise<ActionResult> {
   return run(async () => {
@@ -127,24 +132,33 @@ export async function removeResource(id: string, slot: ResourceSlotName): Promis
 }
 
 // The backend requires the exact Content-Type for each extension and checks the file's magic number.
-const BOM_CONTENT_TYPES: Record<string, string> = {
+const CONTENT_TYPES: Record<string, string> = {
   pdf: "application/pdf",
   xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 };
 
-export async function uploadBomFile(id: string, formData: FormData): Promise<ActionResult> {
+export async function uploadResourceFile(
+  id: string,
+  slot: FileSlotName,
+  formData: FormData,
+): Promise<ActionResult> {
   const file = formData.get("file");
   if (!(file instanceof File)) {
     return { ok: false, code: "INVALID_INPUT", message: "Choose a file to upload." };
   }
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-  const contentType = BOM_CONTENT_TYPES[extension];
-  if (!contentType) {
-    return { ok: false, code: "UNSUPPORTED_FILE_TYPE", message: "Upload an .xlsx or .pdf file." };
+  const contentType = CONTENT_TYPES[extension];
+  if (!contentType || !FILE_EXTENSIONS[slot].includes(extension)) {
+    return {
+      ok: false,
+      code: "UNSUPPORTED_FILE_TYPE",
+      message: `Upload ${describeExtensions(slot)}.`,
+    };
   }
   return run(async () => {
     await backendFetch(
-      `/api/admin/projects/${id}/resources/BOM/file?filename=${encodeURIComponent(file.name)}`,
+      `/api/admin/projects/${id}/resources/${slot}/file?filename=${encodeURIComponent(file.name)}`,
       { method: "POST", rawBody: { data: await file.arrayBuffer(), contentType } },
     );
     revalidatePath(PROJECTS_PATH);

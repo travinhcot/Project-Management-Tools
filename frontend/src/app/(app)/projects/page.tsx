@@ -7,7 +7,7 @@ import {
   type ProjectFilters,
   type ProjectStatus,
 } from "@/features/projects/models/project";
-import type { ProjectType } from "@/shared/models/project";
+import { isProjectType } from "@/shared/models/project";
 
 export const metadata: Metadata = { title: "Projects" };
 
@@ -22,7 +22,7 @@ function parseFilters(params: SearchParams): ProjectFilters {
   const page = Number(first(params.page));
   return {
     search: first(params.q)?.trim().slice(0, 100) ?? "",
-    type: type === "software" || type === "hardware" ? (type as ProjectType) : "all",
+    type: isProjectType(type) ? type : "all",
     status: PROJECT_STATUSES.includes(status as ProjectStatus) ? (status as ProjectStatus) : "all",
     semester: first(params.semester)?.trim().slice(0, 64) ?? "",
     page: Number.isInteger(page) && page >= 1 ? page : 1,

@@ -38,6 +38,21 @@ export function createCampaignController(service: CampaignService) {
       );
       res.status(201).json({ campaign });
     },
+    async scheduleProjectResources(
+      req: Request<{ projectId: string }>,
+      res: Response<unknown, ActorLocals>,
+    ) {
+      const actor = requireActor(res.locals);
+      const { scheduledAt, sendNow } = scheduleOrSendNowBody(req.body);
+      const campaign = await service.scheduleProjectResources(
+        actor.userId,
+        projectIdParam(req.params.projectId),
+        scheduledAt,
+        sendNow,
+        randomUUID(),
+      );
+      res.status(201).json({ campaign });
+    },
     async scheduleDemo(
       req: Request<{ semesterId: string }>,
       res: Response<unknown, ActorLocals>,

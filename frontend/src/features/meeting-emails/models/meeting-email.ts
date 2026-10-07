@@ -45,13 +45,46 @@ export interface MeetingEmailProject {
   id: string;
   name: string;
   type: ProjectType;
-  /** First-meeting link; null until an admin adds one. */
+  /** The project's own first-meeting link (an override); null when it uses the semester link. */
   meetingUrl: string | null;
   meetingLabel: string | null;
+  /** The link the email will use: the project's own, else the semester's shared kick-start link. */
+  effectiveMeetingUrl: string | null;
+  /** True when the email falls back to the semester's shared link. */
+  usesSharedLink: boolean;
   /** Members assigned to the project. */
   memberCount: number;
   /** Latest kick-off campaign, null if none was ever created. */
   kickoff: Kickoff | null;
+}
+
+/** The semester-wide demo-registration email (one per semester, not per project). */
+export interface DemoCampaign {
+  id: string;
+  state: CampaignState;
+  scheduledAt: string | null;
+  counts: Record<DeliveryState, number>;
+  estimatedRecipients: number;
+}
+
+/** The follow-up "project resources" email of one project, sent after the kick-start. */
+export interface ProjectResourcesCampaign {
+  id: string;
+  projectId: string;
+  state: CampaignState;
+  scheduledAt: string | null;
+}
+
+/** Links and emails that belong to the whole semester rather than to one project. */
+export interface SemesterEmails {
+  semesterId: string;
+  /** Shared kick-start meeting link. */
+  kickoffMeetingUrl: string | null;
+  demoRegistrationUrl: string | null;
+  /** Latest demo campaign that was not cancelled; null when none exists. */
+  demo: DemoCampaign | null;
+  /** Latest non-cancelled resources follow-up per project. */
+  projectResources: ProjectResourcesCampaign[];
 }
 
 export type SendStatusKey =

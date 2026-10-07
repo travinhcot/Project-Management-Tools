@@ -5,16 +5,20 @@ import { ApiError } from "@/shared/api/errors";
 import type { ProjectType } from "@/shared/models/project";
 import type {
   CampaignState,
+  DemoCampaign,
   Delivery,
   DeliveryState,
   Kickoff,
   MeetingEmailProject,
+  ProjectResourcesCampaign,
+  SemesterEmails,
 } from "@/features/meeting-emails/models/meeting-email";
 import type { SemesterSummary } from "@/features/projects/models/project";
 import {
   mapSemester,
   type ProjectDto,
 } from "@/features/projects/service/projects.service";
+import { getSemesters } from "@/features/semesters/service/semesters.service";
 
 const PROJECT_LIMIT = 100;
 
@@ -87,6 +91,21 @@ function mapKickoff(
   };
 }
 
+function mapDemo(campaign: CampaignDto): DemoCampaign {
+  const counts = emptyCounts();
+  for (const [status, count] of Object.entries(campaign.delivery_counts ?? {})) {
+    const state = DELIVERY_STATES[status];
+    if (state) counts[state] += count;
+  }
+  return {
+    id: campaign.id,
+    state: CAMPAIGN_STATES[campaign.status] ?? "scheduled",
+    scheduledAt: campaign.scheduled_at,
+    counts,
+    estimatedRecipients: campaign.estimated_recipients,
+  };
+}
+
 export function mapDelivery(dto: DeliveryDto): Delivery {
   return {
     id: dto.id,
@@ -119,6 +138,7 @@ async function fetchMeetingLink(
 export async function getMeetingEmails(semesterId?: string): Promise<{
   semester: SemesterSummary | null;
   projects: MeetingEmailProject[];
+  links: SemesterEmails | null;
 }> {
   const data = await backendFetch<{
     semester: { id: string; name: string; is_current: boolean } | null;
@@ -126,17 +146,46 @@ export async function getMeetingEmails(semesterId?: string): Promise<{
   }>(
     `/api/admin/projects?size=${PROJECT_LIMIT}${semesterId ? `&semesterId=${encodeURIComponent(semesterId)}` : ""}`,
   );
-  if (!data.semester) return { semester: null, projects: [] };
+  if (!data.semester) return { semester: null, projects: [], links: null };
 
   const params = new URLSearchParams({
     kind: "KICKOFF",
     semesterId: data.semester.id,
     size: String(PROJECT_LIMIT),
   });
-  const [campaigns, links] = await Promise.all([
+  const demoParams = new URLSearchParams({
+    kind: "DEMO",
+    semesterId: data.semester.id,
+    size: "20",
+  });
+  const resourcesParams = new URLSearchParams({
+    kind: "PROJECT_RESOURCES",
+    semesterId: data.semester.id,
+    size: String(PROJECT_LIMIT),
+  });
+  const [campaigns, links, demoCampaigns, resourceCampaigns, { semesters }] = await Promise.all([
     backendFetch<{ items: CampaignDto[] }>(`/api/admin/campaigns?${params}`),
     Promise.all(data.items.map((project) => fetchMeetingLink(project.id))),
+    backendFetch<{ items: CampaignDto[] }>(`/api/admin/campaigns?${demoParams}`),
+    backendFetch<{ items: CampaignDto[] }>(`/api/admin/campaigns?${resourcesParams}`),
+    getSemesters(),
   ]);
+  const semesterLinks = semesters.find((row) => row.id === data.semester!.id);
+  const sharedUrl = semesterLinks?.kickoffMeetingUrl ?? null;
+  // Newest first; a cancelled demo email is as good as none.
+  const demo = demoCampaigns.items.find((campaign) => campaign.status !== "CANCELLED");
+  // Newest first: keep one non-cancelled follow-up per project.
+  const projectResources: ProjectResourcesCampaign[] = [];
+  for (const campaign of resourceCampaigns.items) {
+    if (campaign.status === "CANCELLED" || !campaign.project_id) continue;
+    if (projectResources.some((item) => item.projectId === campaign.project_id)) continue;
+    projectResources.push({
+      id: campaign.id,
+      projectId: campaign.project_id,
+      state: CAMPAIGN_STATES[campaign.status] ?? "scheduled",
+      scheduledAt: campaign.scheduled_at,
+    });
+  }
   const campaignById = new Map(campaigns.items.map((campaign) => [campaign.id, campaign]));
 
   return {
@@ -147,11 +196,20 @@ export async function getMeetingEmails(semesterId?: string): Promise<{
       type: project.type.toLowerCase() as ProjectType,
       meetingUrl: links[index].url,
       meetingLabel: links[index].label,
+      effectiveMeetingUrl: links[index].url ?? sharedUrl,
+      usesSharedLink: !links[index].url && Boolean(sharedUrl),
       memberCount: project.member_count,
       kickoff: project.kickoff
         ? mapKickoff(project.kickoff, campaignById.get(project.kickoff.id))
         : null,
     })),
+    links: {
+      semesterId: data.semester.id,
+      kickoffMeetingUrl: sharedUrl,
+      demoRegistrationUrl: semesterLinks?.demoRegistrationUrl ?? null,
+      demo: demo ? mapDemo(demo) : null,
+      projectResources,
+    },
   };
 }
 

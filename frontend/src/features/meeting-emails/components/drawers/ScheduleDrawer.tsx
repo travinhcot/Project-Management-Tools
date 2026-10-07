@@ -14,6 +14,8 @@ export function ScheduleDrawer({
   projectName,
   semester,
   rescheduling,
+  title,
+  note,
   busy,
   error,
   onClose,
@@ -22,6 +24,10 @@ export function ScheduleDrawer({
   projectName: string;
   semester: SemesterSummary;
   rescheduling: boolean;
+  /** Overrides the default drawer title (e.g. for the semester-wide emails). */
+  title?: string;
+  /** Overrides the explanation under the date field. */
+  note?: string;
   busy: boolean;
   error?: string;
   onClose: () => void;
@@ -40,7 +46,7 @@ export function ScheduleDrawer({
 
   return (
     <Drawer
-      title={rescheduling ? "Reschedule email" : "Schedule email"}
+      title={title ?? (rescheduling ? "Reschedule email" : "Schedule email")}
       subtitle={`${projectName}  ·  ${semester.label}`}
       onClose={onClose}
     >
@@ -56,8 +62,8 @@ export function ScheduleDrawer({
           />
         </label>
         <p className="rounded-[10px] bg-accent-soft p-3 text-xs text-info-text">
-          The email is sent at 09:00 GMT+7 on this date to the members assigned
-          at that time.
+          {note ??
+            "The email is sent at 09:00 GMT+7 on this date to the members assigned at that time."}
         </p>
         {(invalid ?? error) && (
           <p role="alert" className="text-xs font-medium text-danger">

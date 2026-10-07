@@ -30,6 +30,12 @@ export const WARNING_META: Readonly<
     link: LINKS.projects,
     itemLink: projectLink,
   },
+  PROJECTS_MISSING_SRS: {
+    severity: "warning",
+    message: "SRS missing",
+    link: LINKS.projects,
+    itemLink: projectLink,
+  },
   PROJECTS_MISSING_RESOURCES: {
     severity: "warning",
     message: "Projects missing required resources.",

@@ -40,6 +40,7 @@ export function shapeDashboard(raw: RawSummary): Dashboard {
     ...warning("CAMPAIGNS_WITH_FAILURES", raw.campaigns_with_failures),
     ...warning("OLD_SEMESTER_CAMPAIGNS_SCHEDULED", raw.old_semester_scheduled),
     ...warning("PROJECTS_WITHOUT_MEMBERS", raw.projects_without_members),
+    ...warning("PROJECTS_MISSING_SRS", raw.projects_missing_srs),
     ...warning("PROJECTS_MISSING_RESOURCES", raw.projects_missing_resources),
     ...warning("IMPORTS_EXPIRED_UNUSED", raw.imports_expired_unused),
   ];
@@ -48,6 +49,7 @@ export function shapeDashboard(raw: RawSummary): Dashboard {
 
   const software = Number(raw.projects?.software ?? 0);
   const hardware = Number(raw.projects?.hardware ?? 0);
+  const research = Number(raw.projects?.research ?? 0);
   const upcoming = raw.upcoming_campaigns ?? [];
   return {
     semester: raw.semester,
@@ -57,7 +59,8 @@ export function shapeDashboard(raw: RawSummary): Dashboard {
       projects: {
         software,
         hardware,
-        total: software + hardware,
+        research,
+        total: software + hardware + research,
         link: LINKS.projects,
       },
       upcoming_campaigns: {

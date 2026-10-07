@@ -42,6 +42,8 @@ const options = (maxAge: number): CookieOptions => ({
   maxAge,
 });
 
+export const roleCookieOptions = options(REFRESH_MAX_AGE_SECONDS);
+
 export function writeSession(
   cookies: CookieWriter,
   session: BackendSession,

@@ -16,11 +16,27 @@ export function bodyFields(body: unknown, keys: readonly string[]): Record<strin
   return body as Record<string, unknown>;
 }
 
+/** Comma-separated ALLOWED_EMAIL_DOMAINS; empty or unset means any domain is accepted. */
+function allowedEmailDomains(): string[] {
+  return (process.env.ALLOWED_EMAIL_DOMAINS ?? "")
+    .split(",")
+    .map((domain) => domain.trim().toLowerCase().replace(/^@/, ""))
+    .filter(Boolean);
+}
+
 export function emailInput(value: unknown): string {
   if (typeof value !== "string") invalid("A valid email is required.");
   const email = value.trim().toLowerCase();
   if (email.length > 320 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
     invalid("A valid email is required.");
+  const domains = allowedEmailDomains();
+  if (domains.length && !domains.includes(email.slice(email.lastIndexOf("@") + 1))) {
+    throw new HttpError(
+      400,
+      "EMAIL_DOMAIN_NOT_ALLOWED",
+      `Use your school email (${domains.map((domain) => `@${domain}`).join(", ")}).`,
+    );
+  }
   return email;
 }
 

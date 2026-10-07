@@ -65,7 +65,7 @@ export async function OverviewPage({
         <StatCard
           label="Projects"
           value={projects.total}
-          caption={`${projects.software} software · ${projects.hardware} hardware`}
+          caption={`${projects.software} software · ${projects.hardware} hardware · ${projects.research} research`}
         />
       </section>
 

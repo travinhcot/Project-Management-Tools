@@ -12,9 +12,9 @@ export default async function Page({
 }) {
   const { semester } = await searchParams;
   const semesterId = typeof semester === "string" ? semester.trim().slice(0, 64) : undefined;
-  const [{ semester: selected, projects }, semesters] = await Promise.all([
+  const [{ semester: selected, projects, links }, semesters] = await Promise.all([
     getMeetingEmails(semesterId || undefined),
     getSemesterOptions(),
   ]);
-  return <MeetingEmailsPage semester={selected} projects={projects} semesters={semesters} />;
+  return <MeetingEmailsPage semester={selected} projects={projects} links={links} semesters={semesters} />;
 }

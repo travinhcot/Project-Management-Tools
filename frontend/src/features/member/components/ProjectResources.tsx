@@ -38,14 +38,58 @@ function Tile({
 
 const hint = "text-[11px] font-medium text-muted";
 
-/** The three setup tiles of a project row: first meeting, BOM file and kickstart. */
+/** A file or link tile: what it is, plus the way to open it (or why there is nothing yet). */
+function SlotTile({
+  project,
+  slot,
+  title,
+  emptyHint,
+}: {
+  project: MemberProject;
+  slot: ResourceSlot;
+  title: string;
+  emptyHint: string;
+}) {
+  const resource = findResource(project.resources, slot);
+  return (
+    <Tile
+      title={title}
+      line={
+        resource?.kind === "file"
+          ? `${resource.filename} · ${formatSize(resource.sizeBytes)}`
+          : resource?.kind === "link"
+            ? (resource.label ?? displayUrl(resource.url))
+            : "Not shared yet"
+      }
+      strong={Boolean(resource)}
+      muted={!resource}
+    >
+      {resource?.kind === "file" ? (
+        <FileDownload projectId={project.id} fileId={resource.fileId} style="text">
+          Download →
+        </FileDownload>
+      ) : resource?.kind === "link" ? (
+        <ExternalLink href={resource.url} style="text">
+          Open link →
+        </ExternalLink>
+      ) : (
+        <p className={hint}>{emptyHint}</p>
+      )}
+    </Tile>
+  );
+}
+
+/**
+ * The setup tiles of a project row: SRS, first meeting, the type's own file (BOM or research
+ * template), kickstart, GitHub repo and demo video guide.
+ */
 export function ProjectResourceTiles({ project }: { project: MemberProject }) {
   const meeting = findResource(project.resources, "FIRST_MEETING");
-  const bom = findResource(project.resources, "BOM");
-  const hardware = project.type === "hardware";
 
   return (
-    <div className="grid min-w-0 flex-1 grid-cols-1 gap-[11px] sm:grid-cols-3">
+    <div className="grid min-w-0 flex-1 grid-cols-1 gap-[11px] min-[480px]:grid-cols-2 sm:grid-cols-3">
+      <SlotTile project={project} slot="SRS" title="SRS file" emptyHint="Your admin will add it" />
+
       <Tile
         title="First meeting"
         line={project.kickoffAt ? formatDayTime(project.kickoffAt) : "Not scheduled yet"}
@@ -63,34 +107,20 @@ export function ProjectResourceTiles({ project }: { project: MemberProject }) {
         )}
       </Tile>
 
-      <Tile
-        title="BOM file"
-        line={
-          !hardware
-            ? "Not applicable"
-            : bom?.kind === "file"
-              ? `${bom.filename} · ${formatSize(bom.sizeBytes)}`
-              : bom?.kind === "link"
-                ? displayUrl(bom.url)
-                : "Not shared yet"
-        }
-        strong={hardware && Boolean(bom)}
-        muted={!hardware || !bom}
-      >
-        {!hardware ? (
-          <p className={hint}>Software project</p>
-        ) : bom?.kind === "file" ? (
-          <FileDownload projectId={project.id} fileId={bom.fileId} style="text">
-            Download →
-          </FileDownload>
-        ) : bom?.kind === "link" ? (
-          <ExternalLink href={bom.url} style="text">
-            Open link →
-          </ExternalLink>
-        ) : (
-          <p className={hint}>Your admin will add it</p>
-        )}
-      </Tile>
+      {project.type === "research" ? (
+        <SlotTile
+          project={project}
+          slot="RESEARCH_TEMPLATE"
+          title="Research template"
+          emptyHint="Your admin will add it"
+        />
+      ) : project.type === "hardware" ? (
+        <SlotTile project={project} slot="BOM" title="BOM file" emptyHint="Your admin will add it" />
+      ) : (
+        <Tile title="BOM file" line="Not applicable" muted>
+          <p className={hint}>Hardware projects only</p>
+        </Tile>
+      )}
 
       <Tile
         title="Kickstart"
@@ -110,6 +140,19 @@ export function ProjectResourceTiles({ project }: { project: MemberProject }) {
           <p className={hint}>Your leader will share it</p>
         )}
       </Tile>
+
+      <SlotTile
+        project={project}
+        slot="GITHUB_REPO"
+        title="GitHub repo"
+        emptyHint="Shared after the kickstart"
+      />
+      <SlotTile
+        project={project}
+        slot="DEMO_GUIDE"
+        title="Demo video guide"
+        emptyHint="Shared after the kickstart"
+      />
     </div>
   );
 }

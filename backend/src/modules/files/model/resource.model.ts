@@ -1,22 +1,27 @@
-export const RESOURCE_SLOTS = [
-  "SRS",
-  "FIRST_MEETING",
-  "BOM",
-] as const;
-export type ResourceSlot = (typeof RESOURCE_SLOTS)[number];
+import type {
+  FileSlot,
+  ProjectType,
+  ResourceSlot,
+  ResourceSummary,
+} from "../../../shared/resource-rules.ts";
 
-export type ProjectType = "SOFTWARE" | "HARDWARE";
+export {
+  FILE_SLOTS,
+  LINK_SLOTS,
+  RESOURCE_SLOTS,
+  requiredSlots,
+  slotAppliesTo,
+  summarizeResources,
+} from "../../../shared/resource-rules.ts";
+export type {
+  FileSlot,
+  LinkSlot,
+  ProjectType,
+  ResourceSlot,
+  ResourceSummary,
+} from "../../../shared/resource-rules.ts";
+
 export type ResourceSource = "LINK" | "FILE";
-
-export const FILE_SLOTS = ["SRS", "BOM"] as const;
-export type FileSlot = (typeof FILE_SLOTS)[number];
-
-/** Slots a project of this type must fill to be complete. */
-export function requiredSlots(type: ProjectType): readonly ResourceSlot[] {
-  return type === "HARDWARE"
-    ? RESOURCE_SLOTS
-    : RESOURCE_SLOTS.filter((slot) => slot !== "BOM");
-}
 
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
 export const SIGNED_URL_TTL_SECONDS = 300;
@@ -50,8 +55,9 @@ export const ALLOWED_FILE_TYPES: Record<
   FileSlot,
   Readonly<Record<string, FileType>>
 > = {
-  SRS: { pdf: PDF, docx: DOCX },
+  SRS: { pdf: PDF },
   BOM: { xlsx: XLSX, pdf: PDF },
+  RESEARCH_TEMPLATE: { docx: DOCX, pdf: PDF },
 };
 
 /** Content types the upload route accepts as a raw body. */
@@ -78,12 +84,6 @@ export interface Resource {
   readonly label: string | null;
   readonly file: ResourceFile | null;
   readonly updated_at: string;
-}
-
-export interface ResourceSummary {
-  readonly present: readonly ResourceSlot[];
-  readonly missing: readonly ResourceSlot[];
-  readonly complete: boolean;
 }
 
 export interface UploadRequest {

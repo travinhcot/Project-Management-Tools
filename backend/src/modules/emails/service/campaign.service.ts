@@ -103,6 +103,24 @@ export function createCampaignService(
       );
     },
 
+    scheduleProjectResources(
+      actorId: string,
+      projectId: string,
+      scheduledAt: string | null,
+      sendNow: boolean,
+      requestId: string,
+    ): Promise<CampaignRow> {
+      return guarded(() =>
+        repository.scheduleProjectResources({
+          actorId,
+          projectId,
+          scheduledAt,
+          sendNow,
+          requestId,
+        }),
+      );
+    },
+
     scheduleDemo(
       actorId: string,
       semesterId: string,

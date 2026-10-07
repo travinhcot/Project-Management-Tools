@@ -49,7 +49,7 @@ export function resourceError(error: unknown): HttpError {
         return new HttpError(
           409,
           "RESOURCE_SLOT_NOT_ALLOWED",
-          "A BOM is only allowed on hardware projects.",
+          "This project type does not use that resource.",
         );
       case "RESOURCE_SOURCE_NOT_ALLOWED":
         return new HttpError(

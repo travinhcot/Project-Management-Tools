@@ -1,8 +1,9 @@
 import {
-  BOM_EXTENSIONS,
+  FILE_EXTENSIONS,
   MAX_FILE_BYTES,
   MAX_LABEL_LENGTH,
   MAX_URL_LENGTH,
+  type FileSlotName,
 } from "@/features/projects/models/project";
 
 // Mirrors backend/src/modules/files/dto/resource.dto.ts and model/resource.model.ts.
@@ -27,10 +28,17 @@ export function validateLabel(raw: string): string | undefined {
     return `Use ${MAX_LABEL_LENGTH} characters or fewer.`;
 }
 
-export function validateBomFile(file: File): string | undefined {
+/** "an .xlsx or .pdf file" */
+export function describeExtensions(slot: FileSlotName): string {
+  const list = FILE_EXTENSIONS[slot].map((ext) => `.${ext}`);
+  const joined = list.length > 1 ? `${list.slice(0, -1).join(", ")} or ${list.at(-1)}` : list[0];
+  return `${/^[aeiou]/i.test(FILE_EXTENSIONS[slot][0]) ? "an" : "a"} ${joined} file`;
+}
+
+export function validateResourceFile(slot: FileSlotName, file: File): string | undefined {
   const extension = file.name.split(".").pop()?.toLowerCase() ?? "";
-  if (!file.name.includes(".") || !(BOM_EXTENSIONS as readonly string[]).includes(extension))
-    return "Upload an .xlsx or .pdf file.";
+  if (!file.name.includes(".") || !FILE_EXTENSIONS[slot].includes(extension))
+    return `Upload ${describeExtensions(slot)}.`;
   if (file.size === 0) return "This file is empty.";
   if (file.size > MAX_FILE_BYTES) return "The file must be 10 MB or smaller.";
 }

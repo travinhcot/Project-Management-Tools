@@ -1,4 +1,4 @@
-export const CAMPAIGN_KINDS = ["KICKOFF", "DEMO"] as const;
+export const CAMPAIGN_KINDS = ["KICKOFF", "DEMO", "PROJECT_RESOURCES"] as const;
 export type CampaignKind = (typeof CAMPAIGN_KINDS)[number];
 
 export const CAMPAIGN_STATUSES = [

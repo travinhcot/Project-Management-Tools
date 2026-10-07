@@ -42,7 +42,14 @@ export async function requestOtp(email: string): Promise<AuthResult> {
   const response = await post("/api/auth/otp", { email: email.trim() });
   if (!response) return UNAVAILABLE;
   if (response.status === 400) {
-    return { ok: false, code: "INVALID_INPUT", message: "Enter a valid email address." };
+    const body = (await response.json().catch(() => null)) as {
+      error?: { code?: string; message?: string };
+    } | null;
+    const message =
+      body?.error?.code === "EMAIL_DOMAIN_NOT_ALLOWED" && body.error.message
+        ? body.error.message
+        : "Enter a valid email address.";
+    return { ok: false, code: "INVALID_INPUT", message };
   }
   if (!response.ok) return UNAVAILABLE;
   return { ok: true };

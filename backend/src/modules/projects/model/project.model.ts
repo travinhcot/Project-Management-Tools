@@ -1,5 +1,7 @@
-export const PROJECT_TYPES = ["SOFTWARE", "HARDWARE"] as const;
-export type ProjectType = (typeof PROJECT_TYPES)[number];
+import type { ProjectType, ResourceSlot } from "../../../shared/resource-rules.ts";
+
+export { PROJECT_TYPES } from "../../../shared/resource-rules.ts";
+export type { ProjectType, ResourceSlot };
 
 export const PROJECT_STATUSES = [
   "PLANNING",
@@ -139,12 +141,11 @@ export interface RosterLookup {
   findByIds(ids: readonly string[]): Promise<readonly RosterMemberRef[]>;
 }
 
-export type ResourceSlot = "SRS" | "FIRST_MEETING" | "BOM";
-
 export interface ResourceSummary {
   readonly present: readonly ResourceSlot[];
   readonly missing: readonly ResourceSlot[];
   readonly complete: boolean;
+  readonly applicable: readonly ResourceSlot[];
 }
 
 /** Optional: implemented by the resources module when it exists. One call per page. */

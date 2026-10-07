@@ -192,6 +192,22 @@ export function createEmailRepository(client: SupabaseClient) {
       });
     },
 
+    scheduleProjectResources(input: {
+      actorId: string;
+      projectId: string;
+      scheduledAt: string | null;
+      sendNow: boolean;
+      requestId: string;
+    }) {
+      return rowRpc("admin_schedule_project_resources", {
+        p_actor_id: input.actorId,
+        p_project_id: input.projectId,
+        p_scheduled_at: input.scheduledAt,
+        p_send_now: input.sendNow,
+        p_request_id: input.requestId,
+      });
+    },
+
     scheduleDemo(input: {
       actorId: string;
       semesterId: string;
