@@ -12,6 +12,8 @@ export interface Semester {
   readonly starts_on: string | null;
   readonly ends_on: string | null;
   readonly demo_registration_url: string | null;
+  /** Shared kick-start meeting link; a project's own first-meeting link overrides it. */
+  readonly kickoff_meeting_url: string | null;
   readonly created_at: string;
   readonly updated_at: string;
 }
@@ -33,7 +35,9 @@ export interface SemesterCreate {
 }
 
 /** A key that is present with null clears the field (dates and URL only). */
-export type SemesterChanges = Partial<SemesterCreate>;
+export type SemesterChanges = Partial<
+  SemesterCreate & { readonly kickoff_meeting_url: string | null }
+>;
 
 export interface SemesterListQuery {
   readonly year?: number;

@@ -39,7 +39,7 @@ function typeValue(value: unknown): ProjectType {
     typeof value !== "string" ||
     !PROJECT_TYPES.includes(value as ProjectType)
   ) {
-    invalid("type must be SOFTWARE or HARDWARE.");
+    invalid(`type must be one of ${PROJECT_TYPES.join(", ")}.`);
   }
   return value as ProjectType;
 }

@@ -1,17 +1,15 @@
-export type ProjectType = "SOFTWARE" | "HARDWARE";
+import type {
+  ProjectType,
+  ResourceSlot,
+  ResourceSummary,
+} from "../../../shared/resource-rules.ts";
+
+export { RESOURCE_SLOTS as SLOT_ORDER } from "../../../shared/resource-rules.ts";
+export type { ProjectType, ResourceSlot, ResourceSummary };
 
 export type ProjectStatus = "PLANNING" | "ONGOING" | "COMPLETED" | "FAILED";
 
 export type MemberRole = "LEADER" | "MEMBER";
-
-export type ResourceSlot = "SRS" | "FIRST_MEETING" | "BOM";
-
-/** Order in which slots are shown on the project page. */
-export const SLOT_ORDER: readonly ResourceSlot[] = [
-  "SRS",
-  "FIRST_MEETING",
-  "BOM",
-];
 
 /** Notifications badge counts resources changed within this window. */
 export const BADGE_WINDOW_DAYS = 7;
@@ -37,12 +35,6 @@ export interface PortalTeammate {
 export interface Eligibility {
   readonly eligible: boolean;
   readonly semester_id: string | null;
-}
-
-export interface ResourceSummary {
-  readonly present: readonly ResourceSlot[];
-  readonly missing: readonly ResourceSlot[];
-  readonly complete: boolean;
 }
 
 export interface PortalProjectSummary {
@@ -76,6 +68,7 @@ export interface PortalListItem {
   readonly resources: {
     readonly present: readonly ResourceSlot[];
     readonly missing: readonly ResourceSlot[];
+    readonly applicable: readonly ResourceSlot[];
   } | null;
   /** What the member may open or download for this project (absent slots omitted). */
   readonly resource_views: readonly ResourceView[];
@@ -168,6 +161,8 @@ export interface PortalProjectDetail {
   readonly kickoff_at: string | null;
   readonly semester: { readonly id: string; readonly name: string };
   readonly resources: readonly ResourceView[];
+  /** Required resources the admin has not shared yet. */
+  readonly missing_resources: readonly ResourceSlot[];
   readonly teammates: readonly {
     readonly full_name: string;
     readonly role: MemberRole;

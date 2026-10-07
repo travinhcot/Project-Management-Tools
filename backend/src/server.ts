@@ -59,10 +59,14 @@ const emails = createEmailsInterface(adminClient, {
   meetingLinks: {
     async meetingUrl(projectId) {
       const { resources } = await files.service.listForProject(projectId);
-      return (
-        resources.find((resource) => resource.slot === "FIRST_MEETING")?.url ??
-        null
-      );
+      const own = resources.find((resource) => resource.slot === "FIRST_MEETING")?.url;
+      if (own) return own;
+      // No link of its own: use the semester's shared kick-start link.
+      const { data, error } = await adminClient.rpc("project_semester_kickoff_url", {
+        p_project_id: projectId,
+      });
+      if (error) throw error;
+      return typeof data === "string" ? data : null;
     },
   },
   provider: createEmailProvider(),

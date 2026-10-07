@@ -7,7 +7,7 @@ import type {
 } from "../model/semester.model.ts";
 
 const columns =
-  "id,term,year,name,is_current,starts_on,ends_on,demo_registration_url,created_at,updated_at";
+  "id,term,year,name,is_current,starts_on,ends_on,demo_registration_url,kickoff_meeting_url,created_at,updated_at";
 
 export function createSemesterRepository(client: SupabaseClient) {
   return {

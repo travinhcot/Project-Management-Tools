@@ -16,7 +16,15 @@ const cardClass =
 const clock = (seconds: number) =>
   `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 
-export function SignInFlow({ next }: { next?: string }) {
+export function SignInFlow({
+  next,
+  allowedDomains = [],
+  contactEmail,
+}: {
+  next?: string;
+  allowedDomains?: string[];
+  contactEmail?: string;
+}) {
   const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -33,6 +41,10 @@ export function SignInFlow({ next }: { next?: string }) {
   function sendCode(event?: FormEvent) {
     event?.preventDefault();
     setError(undefined);
+    const domain = email.trim().toLowerCase().split("@").pop() ?? "";
+    if (allowedDomains.length && !allowedDomains.includes(domain)) {
+      return setError(`Use your school email (${allowedDomains.map((d) => `@${d}`).join(", ")}).`);
+    }
     startTransition(async () => {
       const result = await requestOtp(email);
       if (!result.ok) return setError(result.message);
@@ -85,7 +97,22 @@ export function SignInFlow({ next }: { next?: string }) {
       <form noValidate onSubmit={submitCode} className={cardClass} aria-label="Enter your code">
         <p className="text-[11px] font-bold text-accent">STEP 2</p>
         <h2 className="text-xl font-bold text-ink">Enter your code</h2>
-        <p className="break-all text-[13px] text-muted">Sent to {email.trim()}</p>
+        <p className="break-all text-[13px] text-muted">
+          If {email.trim()} is on the roster, a code was sent.
+        </p>
+        <p className="text-xs text-muted">
+          Not receiving one?{" "}
+          {contactEmail ? (
+            <a
+              className="font-medium text-accent underline"
+              href={`mailto:${contactEmail}?subject=${encodeURIComponent("Roster access request")}`}
+            >
+              Contact EBMB
+            </a>
+          ) : (
+            "Contact EBMB."
+          )}
+        </p>
         <OtpInput value={code} onChange={setCode} disabled={pending} invalid={Boolean(error)} />
         <Button type="submit" disabled={pending} className="h-11 w-full">
           {pending ? "Signing in…" : "Sign in"}
@@ -130,7 +157,7 @@ export function SignInFlow({ next }: { next?: string }) {
           type="email"
           autoComplete="email"
           autoFocus
-          placeholder="s1234567@student.example.edu"
+          placeholder={`s1234567@${allowedDomains[0] ?? "student.example.edu"}`}
           value={email}
           onChange={(event) => setEmail(event.target.value)}
           aria-invalid={Boolean(error)}

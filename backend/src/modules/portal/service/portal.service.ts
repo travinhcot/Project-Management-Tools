@@ -17,6 +17,7 @@ import {
   PROJECT_NOT_FOUND,
   portalError,
 } from "../common/portal-errors.ts";
+import { requiredSlots } from "../../../shared/resource-rules.ts";
 import { toResourceViews } from "../common/resource-view.ts";
 import { BADGE_WINDOW_DAYS } from "../model/portal.model.ts";
 
@@ -68,7 +69,11 @@ export function createPortalService(
         leader_name: head?.leader_name ?? null,
         member_count: head?.member_count ?? 0,
         resources: summary
-          ? { present: summary.present, missing: summary.missing }
+          ? {
+              present: summary.present,
+              missing: summary.missing,
+              applicable: summary.applicable,
+            }
           : null,
         resource_views: toResourceViews(
           row.id,
@@ -222,6 +227,8 @@ export function createPortalService(
           repository.teammates(actorId, projectId, allowPastSemesters),
           resources.listForProject(projectId),
         ]);
+        const views = toResourceViews(project.id, project.type, listed.resources);
+        const shared = new Set(views.map((view) => view.slot));
         return {
           id: project.id,
           name: project.name,
@@ -230,10 +237,9 @@ export function createPortalService(
           status: project.status,
           kickoff_at: project.kickoff_at,
           semester: { id: project.semester_id, name: project.semester_name },
-          resources: toResourceViews(
-            project.id,
-            project.type,
-            listed.resources,
+          resources: views,
+          missing_resources: requiredSlots(project.type).filter(
+            (slot) => !shared.has(slot),
           ),
           teammates,
         };

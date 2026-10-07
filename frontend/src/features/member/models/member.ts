@@ -1,9 +1,9 @@
 // Shapes follow backend/src/modules/portal/model/portal.model.ts. The backend uses UPPERCASE
 // enums and snake_case; service/member.service.ts maps them.
-import type { ProjectStatus } from "@/features/projects/models/project";
+import type { ProjectStatus, ResourceSlot } from "@/features/projects/models/project";
 import type { ProjectType } from "@/shared/models/project";
 
-export type ResourceSlot = "SRS" | "FIRST_MEETING" | "BOM";
+export type { ResourceSlot };
 
 /** A resource a member may open. Slots the admin has not filled are simply absent. */
 export type MemberResource =
@@ -50,6 +50,8 @@ export interface MemberProjectDetail {
   semesterName: string;
   kickoffAt: string | null;
   resources: MemberResource[];
+  /** Required resources the admin has not shared yet (decided by the backend). */
+  missingResources: ResourceSlot[];
   teammates: Teammate[];
 }
 

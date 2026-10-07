@@ -6,9 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { SemesterSwitcher, type SemesterOption } from "@/shared/components/SemesterSwitcher";
 import { Button } from "@/shared/components/Button";
 import { ArchiveProjectDrawer } from "@/features/projects/components/drawers/ArchiveProjectDrawer";
-import { BomFileDrawer } from "@/features/projects/components/drawers/BomFileDrawer";
+import { ResourceFileDrawer } from "@/features/projects/components/drawers/ResourceFileDrawer";
 import { ProjectMembersDrawer } from "@/features/projects/components/drawers/ProjectMembersDrawer";
-import { MeetingLinkDrawer } from "@/features/projects/components/drawers/MeetingLinkDrawer";
+import { ResourceLinkDrawer } from "@/features/projects/components/drawers/ResourceLinkDrawer";
 import { ProjectFormDrawer } from "@/features/projects/components/drawers/ProjectFormDrawer";
 import { ProjectRow } from "@/features/projects/components/ProjectRow";
 import { ProjectsToolbar } from "@/features/projects/components/ProjectsToolbar";
@@ -19,24 +19,48 @@ import {
   removeResource,
   saveResourceLink,
   updateProject,
-  uploadBomFile,
+  uploadResourceFile,
   type ActionResult,
   type ResourceSlotName,
 } from "@/features/projects/actions";
 import {
   STATUS_LABELS,
+  type FileSlotName,
+  type LinkSlotName,
   type ProjectFilters,
   type ProjectListPage,
+  type ProjectResources,
+  type ResourceSlot,
 } from "@/features/projects/models/project";
 
 type DrawerState =
   | { kind: "create" }
   | { kind: "edit"; id: string }
   | { kind: "archive"; id: string }
-  | { kind: "meeting"; id: string }
-  | { kind: "bom"; id: string }
+  | { kind: "resource"; id: string; slot: ResourceSlot }
   | { kind: "members"; id: string }
   | null;
+
+const FILE_SLOT_NAMES: readonly ResourceSlot[] = ["SRS", "BOM", "RESEARCH_TEMPLATE"];
+
+const DRAWER_TITLES: Record<ResourceSlot, string> = {
+  SRS: "SRS file",
+  FIRST_MEETING: "First meeting link",
+  BOM: "BOM file",
+  RESEARCH_TEMPLATE: "Research template",
+  GITHUB_REPO: "GitHub repository",
+  DEMO_GUIDE: "Demo video guide",
+};
+
+/** Where each slot's current value sits in the loaded resource details. */
+const RESOURCE_KEY: Record<ResourceSlot, keyof ProjectResources> = {
+  SRS: "srs",
+  FIRST_MEETING: "meeting",
+  BOM: "bom",
+  RESEARCH_TEMPLATE: "researchTemplate",
+  GITHUB_REPO: "githubRepo",
+  DEMO_GUIDE: "demoGuide",
+};
 
 // Filters live in the URL and the list is fetched by the server component; every action
 // revalidates the route, so this page keeps no copy of the projects.
@@ -98,11 +122,15 @@ export function ProjectsPage({
     });
   }
 
-  const link = (id: string, slot: ResourceSlotName) => ({
+  const link = (id: string, slot: LinkSlotName) => ({
     save: (value: { url: string; label: string | null }) =>
       saveResource(() => saveResourceLink(id, slot, value)),
-    remove: () => saveResource(() => removeResource(id, slot)),
+    remove: () => remove(id, slot),
   });
+
+  function remove(id: string, slot: ResourceSlotName) {
+    saveResource(() => removeResource(id, slot));
+  }
 
   const pageCount = Math.max(1, Math.ceil(list.total / list.size));
   const hasFilters =
@@ -170,8 +198,7 @@ export function ProjectsPage({
                   key={project.id}
                   project={project}
                   onEdit={() => open({ kind: "edit", id: project.id })}
-                  onEditMeeting={() => open({ kind: "meeting", id: project.id })}
-                  onEditBom={() => open({ kind: "bom", id: project.id })}
+                  onEditResource={(slot) => open({ kind: "resource", id: project.id, slot })}
                   onEditMembers={() => open({ kind: "members", id: project.id })}
                 />
               ))}
@@ -251,54 +278,51 @@ export function ProjectsPage({
           onClose={() => setDrawer(null)}
         />
       )}
-      {semester && drawer?.kind === "meeting" && selected && (
+      {semester && drawer?.kind === "resource" && selected && (
         <ResourceLoader
-          key={selected.id}
+          key={`${selected.id}-${drawer.slot}`}
           project={selected}
-          title="First meeting link"
+          title={DRAWER_TITLES[drawer.slot]}
           onClose={() => setDrawer(null)}
         >
-          {(resources) => (
-            <MeetingLinkDrawer
-              project={{
-                name: selected.name,
-                meetingUrl: resources.meetingUrl,
-                meetingLabel: resources.meetingLabel,
-              }}
-              semester={semester}
-              busy={busy}
-              error={resourceError}
-              onClose={() => setDrawer(null)}
-              onSave={link(selected.id, "FIRST_MEETING").save}
-              onRemove={link(selected.id, "FIRST_MEETING").remove}
-            />
-          )}
-        </ResourceLoader>
-      )}
-      {semester && drawer?.kind === "bom" && selected && (
-        <ResourceLoader
-          key={selected.id}
-          project={selected}
-          title="BOM file"
-          onClose={() => setDrawer(null)}
-        >
-          {(resources) => (
-            <BomFileDrawer
-              project={selected}
-              current={resources.bom}
-              semester={semester}
-              busy={busy}
-              error={resourceError}
-              onClose={() => setDrawer(null)}
-              onSaveLink={link(selected.id, "BOM").save}
-              onSaveFile={(file) => {
-                const data = new FormData();
-                data.set("file", file);
-                saveResource(() => uploadBomFile(selected.id, data));
-              }}
-              onRemove={link(selected.id, "BOM").remove}
-            />
-          )}
+          {(resources) => {
+            const current = resources[RESOURCE_KEY[drawer.slot]];
+            if (FILE_SLOT_NAMES.includes(drawer.slot)) {
+              const slot = drawer.slot as FileSlotName;
+              return (
+                <ResourceFileDrawer
+                  slot={slot}
+                  project={selected}
+                  current={current}
+                  semester={semester}
+                  busy={busy}
+                  error={resourceError}
+                  onClose={() => setDrawer(null)}
+                  onSaveLink={slot === "BOM" ? link(selected.id, "BOM").save : undefined}
+                  onSaveFile={(file) => {
+                    const data = new FormData();
+                    data.set("file", file);
+                    saveResource(() => uploadResourceFile(selected.id, slot, data));
+                  }}
+                  onRemove={() => remove(selected.id, slot)}
+                />
+              );
+            }
+            const slot = drawer.slot as Exclude<LinkSlotName, "BOM">;
+            return (
+              <ResourceLinkDrawer
+                slot={slot}
+                project={selected}
+                current={current}
+                semester={semester}
+                busy={busy}
+                error={resourceError}
+                onClose={() => setDrawer(null)}
+                onSave={link(selected.id, slot).save}
+                onRemove={link(selected.id, slot).remove}
+              />
+            );
+          }}
         </ResourceLoader>
       )}
     </div>

@@ -20,12 +20,13 @@ import {
   type ProjectStatus,
   type SemesterSummary,
 } from "@/features/projects/models/project";
-import type { ProjectType } from "@/shared/models/project";
+import { projectTypeMeta } from "@/shared/components/ProjectTypePill";
+import { PROJECT_TYPES, type ProjectType } from "@/shared/models/project";
 
-const TYPES: { value: ProjectType; label: string }[] = [
-  { value: "software", label: "Software" },
-  { value: "hardware", label: "Hardware" },
-];
+const TYPES = PROJECT_TYPES.map((value) => ({
+  value,
+  label: projectTypeMeta[value].label,
+}));
 
 const STATUS_OPTIONS = PROJECT_STATUSES.map((value) => ({
   value,
@@ -96,7 +97,9 @@ export function ProjectFormDrawer(props: Props) {
       if (result.code === "PROJECT_NAME_EXISTS") {
         setErrors({ name: "A project with this name already exists in this semester." });
       } else if (result.code === "PROJECT_HAS_BOM") {
-        setErrors({ type: "Remove the BOM before switching a hardware project to software." });
+        setErrors({ type: "Remove the BOM before changing the type of a hardware project." });
+      } else if (result.code === "PROJECT_HAS_RESEARCH_TEMPLATE") {
+        setErrors({ type: "Remove the research template before changing the type of a research project." });
       } else {
         setFormError({ code: result.code, message: result.message });
       }
@@ -150,8 +153,10 @@ export function ProjectFormDrawer(props: Props) {
           error={errors.type}
           hint={
             editing?.type === "hardware"
-              ? "Remove the BOM before switching a hardware project to software."
-              : undefined
+              ? "Remove the BOM before changing the type of a hardware project."
+              : editing?.type === "research"
+                ? "Remove the research template before changing the type of a research project."
+                : undefined
           }
         >
           <div role="radiogroup" aria-label="Type" className="flex flex-wrap gap-2">
@@ -217,8 +222,9 @@ export function ProjectFormDrawer(props: Props) {
 
         {!editing && (
           <p className="rounded-[10px] bg-accent-soft p-3 text-xs text-info-text">
-            After creating, add the SRS and first meeting link. Hardware
-            projects also need a BOM.
+            After creating, add the SRS (PDF) and first meeting link. Hardware
+            projects also need a BOM; research projects need a research
+            template.
           </p>
         )}
 

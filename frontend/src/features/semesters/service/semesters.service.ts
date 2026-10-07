@@ -17,6 +17,7 @@ interface SemesterDto {
   starts_on: string | null;
   ends_on: string | null;
   demo_registration_url: string | null;
+  kickoff_meeting_url?: string | null;
   roster_count: number;
   project_count: number;
 }
@@ -31,6 +32,7 @@ export function mapSemester(dto: SemesterDto): Semester {
     startsOn: dto.starts_on,
     endsOn: dto.ends_on,
     demoRegistrationUrl: dto.demo_registration_url,
+    kickoffMeetingUrl: dto.kickoff_meeting_url ?? null,
     rosterCount: dto.roster_count,
     projectCount: dto.project_count,
   };

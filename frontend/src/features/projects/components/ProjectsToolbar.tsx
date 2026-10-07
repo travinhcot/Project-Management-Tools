@@ -1,14 +1,15 @@
 import { Button } from "@/shared/components/Button";
 import { SelectBox } from "@/shared/components/Field";
+import { projectTypeMeta } from "@/shared/components/ProjectTypePill";
 import {
   PROJECT_STATUSES,
   STATUS_LABELS,
 } from "@/features/projects/models/project";
+import { PROJECT_TYPES } from "@/shared/models/project";
 
 export const TYPE_FILTER_OPTIONS = [
   { value: "all", label: "All types" },
-  { value: "software", label: "Software" },
-  { value: "hardware", label: "Hardware" },
+  ...PROJECT_TYPES.map((type) => ({ value: type, label: projectTypeMeta[type].label })),
 ] as const;
 
 export const STATUS_FILTER_OPTIONS = [

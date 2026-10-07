@@ -18,10 +18,37 @@ export const STATUS_LABELS: Record<ProjectStatus, string> = {
   failed: "Failed",
 };
 
-/** A BOM is either an uploaded file or an external https link (hardware projects only). */
-export type ProjectBom =
+export const RESOURCE_SLOTS = [
+  "SRS",
+  "FIRST_MEETING",
+  "BOM",
+  "RESEARCH_TEMPLATE",
+  "GITHUB_REPO",
+  "DEMO_GUIDE",
+] as const;
+export type ResourceSlot = (typeof RESOURCE_SLOTS)[number];
+
+/** Slots that take an uploaded file (BOM also takes a link). */
+export type FileSlotName = "SRS" | "BOM" | "RESEARCH_TEMPLATE";
+/** Slots that take an https link. */
+export type LinkSlotName = "FIRST_MEETING" | "BOM" | "GITHUB_REPO" | "DEMO_GUIDE";
+
+/** A resource is either an uploaded file or an external https link. */
+export type ResourceSource =
   | { kind: "file"; filename: string; sizeBytes: number }
   | { kind: "link"; url: string; label: string | null };
+
+/**
+ * What a project has measured against what its type requires. Computed by the backend
+ * (backend/src/shared/resource-rules.ts); the UI only reads it.
+ */
+export interface ProjectResourceSummary {
+  present: ResourceSlot[];
+  /** Required slots with nothing in them. */
+  missing: ResourceSlot[];
+  /** Slots this project type can hold; a slot outside it shows as not applicable. */
+  applicable: ResourceSlot[];
+}
 
 export interface Project {
   id: string;
@@ -33,20 +60,23 @@ export interface Project {
   leaderName: string | null;
   memberCount: number;
   /** Which setup resources exist; the details are loaded when a drawer opens. */
-  hasMeeting: boolean;
-  hasBom: boolean;
+  resources: ProjectResourceSummary;
   /** ISO timestamp of the kick-off email, null when none exists. */
   kickoffAt: string | null;
   /** Exact string from the backend; PATCH needs it back as expected_updated_at. */
   updatedAt: string;
 }
 
-/** Details of a project's first-meeting link and BOM (GET /api/admin/projects/:id/resources). */
+/** Details of a project's resources (GET /api/admin/projects/:id/resources). */
 export interface ProjectResources {
-  meetingUrl: string | null;
-  meetingLabel: string | null;
-  /** Hardware projects only; software projects never need a BOM. */
-  bom: ProjectBom | null;
+  srs: ResourceSource | null;
+  meeting: ResourceSource | null;
+  /** Hardware projects only. */
+  bom: ResourceSource | null;
+  /** Research projects only. */
+  researchTemplate: ResourceSource | null;
+  githubRepo: ResourceSource | null;
+  demoGuide: ResourceSource | null;
 }
 
 export interface ProjectArchiveImpact {
@@ -95,7 +125,12 @@ export const DESCRIPTION_MAX_LENGTH = 2000;
 export const MAX_URL_LENGTH = 2048;
 export const MAX_LABEL_LENGTH = 100;
 export const MAX_FILE_BYTES = 10 * 1024 * 1024;
-export const BOM_EXTENSIONS = ["xlsx", "pdf"] as const;
+/** Allowed extensions per file slot; mirrors ALLOWED_FILE_TYPES in the backend resource model. */
+export const FILE_EXTENSIONS: Record<FileSlotName, readonly string[]> = {
+  SRS: ["pdf"],
+  BOM: ["xlsx", "pdf"],
+  RESEARCH_TEMPLATE: ["docx", "pdf"],
+};
 
 export type MemberRole = "LEADER" | "MEMBER";
 

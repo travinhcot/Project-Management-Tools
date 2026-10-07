@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { SemesterSwitcher, type SemesterOption } from "@/shared/components/SemesterSwitcher";
 import {
   cancelCampaign,
+  saveSemesterLinks,
+  scheduleDemo,
+  scheduleKickoffForAll,
+  sendDemoNow,
   removeMeetingLink,
   rescheduleCampaign,
   resendCampaign,
@@ -16,20 +20,28 @@ import {
   sendKickoffNow,
   type ActionResult,
 } from "@/features/meeting-emails/actions";
+import { SemesterEmailsCard } from "@/features/meeting-emails/components/SemesterEmailsCard";
+import { SemesterLinksDrawer } from "@/features/meeting-emails/components/drawers/SemesterLinksDrawer";
 import { DeliveryDrawer } from "@/features/meeting-emails/components/drawers/DeliveryDrawer";
 import { ScheduleDrawer } from "@/features/meeting-emails/components/drawers/ScheduleDrawer";
 import { EmailPreview } from "@/features/meeting-emails/components/EmailPreview";
 import { MeetingEmailRow } from "@/features/meeting-emails/components/MeetingEmailRow";
-import type { MeetingEmailProject } from "@/features/meeting-emails/models/meeting-email";
+import type { MeetingEmailProject, SemesterEmails } from "@/features/meeting-emails/models/meeting-email";
 import { getSendStatus } from "@/features/meeting-emails/utils/send-status";
-import { MeetingLinkDrawer } from "@/features/projects/components/drawers/MeetingLinkDrawer";
+import { ResourceLinkDrawer } from "@/features/projects/components/drawers/ResourceLinkDrawer";
 import type { SemesterSummary } from "@/features/projects/models/project";
 
 type DrawerState =
   | { kind: "link"; id: string }
   | { kind: "delivery"; id: string }
   | { kind: "schedule"; id: string }
+  | { kind: "semester-links" }
+  | { kind: "kickoff-all" }
+  | { kind: "demo" }
   | null;
+
+/** Busy/error key for writes that belong to the semester rather than to one project. */
+const SEMESTER_KEY = "semester";
 
 /** While a campaign is queued or sending, the page re-reads the backend this often. */
 const REFRESH_MS = 5000;
@@ -37,10 +49,12 @@ const REFRESH_MS = 5000;
 export function MeetingEmailsPage({
   semester,
   projects,
+  links,
   semesters,
 }: {
   semester: SemesterSummary | null;
   projects: MeetingEmailProject[];
+  links: SemesterEmails | null;
   semesters: SemesterOption[];
 }) {
   const router = useRouter();
@@ -60,7 +74,8 @@ export function MeetingEmailsPage({
   }, [inFlight, router]);
 
   const selected = projects.find((project) => project.id === selectedId) ?? projects[0];
-  const drawerProject = drawer && projects.find((project) => project.id === drawer.id);
+  const drawerProject =
+    drawer && "id" in drawer ? projects.find((project) => project.id === drawer.id) : undefined;
   const errorMessage = (id: string) => (error?.id === id ? error.message : undefined);
 
   /** Runs a write for a project; closes the drawer on success, shows the backend message otherwise. */
@@ -87,7 +102,7 @@ export function MeetingEmailsPage({
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold sm:text-[30px] text-ink">Meeting emails</h1>
           <p className="text-sm text-muted">
-            Send each project’s first-meeting link to its assigned members.
+            Set the semester’s kick-start and demo links, then choose when each email goes out.
           </p>
         </div>
         {semester && (
@@ -95,16 +110,34 @@ export function MeetingEmailsPage({
         )}
       </div>
 
-      <div className="flex flex-col gap-[7px] rounded-[10px] bg-accent-soft p-[18px]">
-        <p className="text-[17px] font-semibold text-ink">
-          Send meeting links in one step
+      {links && (
+        <SemesterEmailsCard
+          links={links}
+          projects={projects}
+          busy={busyId === SEMESTER_KEY}
+          onEditLinks={() => {
+            setError(null);
+            setDrawer({ kind: "semester-links" });
+          }}
+          onScheduleKickoff={() => {
+            setError(null);
+            setDrawer({ kind: "kickoff-all" });
+          }}
+          onScheduleDemo={() => {
+            setError(null);
+            setDrawer({ kind: "demo" });
+          }}
+          onSendDemoNow={() => void perform(SEMESTER_KEY, () => sendDemoNow(links.semesterId))}
+          onCancelDemo={() =>
+            links.demo && void perform(SEMESTER_KEY, () => cancelCampaign(links.demo!.id))
+          }
+        />
+      )}
+      {!drawer && errorMessage(SEMESTER_KEY) && (
+        <p role="alert" className="rounded-[10px] bg-danger-soft p-3 text-[13px] font-medium text-danger-text">
+          {errorMessage(SEMESTER_KEY)}
         </p>
-        <p className="text-[13px] text-muted">
-          Save a meeting URL for the project, then press Send email, or schedule it
-          for a later date, to notify its active assigned members. Delivery results
-          appear here.
-        </p>
-      </div>
+      )}
 
       {selected && errorMessage(selected.id) && !drawer && (
         <p role="alert" className="rounded-[10px] bg-danger-soft p-3 text-[13px] font-medium text-danger-text">
@@ -178,10 +211,81 @@ export function MeetingEmailsPage({
         resend is a separate action.
       </p>
 
+      {semester && links && drawer?.kind === "semester-links" && (
+        <SemesterLinksDrawer
+          semester={semester}
+          links={links}
+          busy={busyId === SEMESTER_KEY}
+          error={errorMessage(SEMESTER_KEY)}
+          onClose={() => setDrawer(null)}
+          onSave={(next) =>
+            void perform(SEMESTER_KEY, () => saveSemesterLinks(links.semesterId, next))
+          }
+        />
+      )}
+      {semester && links && drawer?.kind === "kickoff-all" && (
+        <ScheduleDrawer
+          projectName="All projects"
+          semester={semester}
+          rescheduling={false}
+          title="Kick-start date"
+          note="Every project that is ready, or already scheduled, will send its kick-start email at 09:00 GMT+7 on this date. Projects already sending or sent are not changed."
+          busy={busyId === SEMESTER_KEY}
+          error={errorMessage(SEMESTER_KEY)}
+          onClose={() => setDrawer(null)}
+          onSchedule={(date) =>
+            void perform(SEMESTER_KEY, async () => {
+              const targets: { projectId: string; name: string; campaignId: string | null }[] = [];
+              for (const project of projects) {
+                const key = getSendStatus(project).key;
+                if (key === "scheduled" && project.kickoff) {
+                  targets.push({ projectId: project.id, name: project.name, campaignId: project.kickoff.id });
+                } else if (key === "ready") {
+                  targets.push({ projectId: project.id, name: project.name, campaignId: null });
+                }
+              }
+              const result = await scheduleKickoffForAll(targets, date);
+              if (!result.ok || result.failed.length === 0) return result;
+              return {
+                ok: false as const,
+                code: "PARTIAL",
+                message: `${result.done} scheduled. Could not schedule ${result.failed
+                  .map((item) => `${item.name} (${item.message})`)
+                  .join(", ")}.`,
+              };
+            })
+          }
+        />
+      )}
+      {semester && links && drawer?.kind === "demo" && (
+        <ScheduleDrawer
+          projectName="Demo registration"
+          semester={semester}
+          rescheduling={links.demo?.state === "scheduled"}
+          title={links.demo?.state === "scheduled" ? "Reschedule demo email" : "Schedule demo email"}
+          note="The demo registration email is sent at 09:00 GMT+7 on this date to everyone on the roster."
+          busy={busyId === SEMESTER_KEY}
+          error={errorMessage(SEMESTER_KEY)}
+          onClose={() => setDrawer(null)}
+          onSchedule={(date) =>
+            void perform(SEMESTER_KEY, () =>
+              links.demo?.state === "scheduled"
+                ? rescheduleCampaign(links.demo.id, date)
+                : scheduleDemo(links.semesterId, date),
+            )
+          }
+        />
+      )}
       {semester && drawer?.kind === "link" && drawerProject && (
-        <MeetingLinkDrawer
+        <ResourceLinkDrawer
           key={drawerProject.id}
+          slot="FIRST_MEETING"
           project={drawerProject}
+          current={
+            drawerProject.meetingUrl
+              ? { kind: "link", url: drawerProject.meetingUrl, label: drawerProject.meetingLabel }
+              : null
+          }
           semester={semester}
           busy={busyId === drawerProject.id}
           error={errorMessage(drawerProject.id)}

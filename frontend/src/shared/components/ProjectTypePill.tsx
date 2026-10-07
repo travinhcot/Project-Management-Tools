@@ -4,6 +4,7 @@ import type { ProjectType } from "@/shared/models/project";
 export const projectTypeMeta = {
   software: { label: "Software", icon: "⌘", tone: "accent", bar: "bg-primary" },
   hardware: { label: "Hardware", icon: "▦", tone: "cyan", bar: "bg-cyan" },
+  research: { label: "Research", icon: "◈", tone: "violet", bar: "bg-violet" },
 } as const;
 
 export function ProjectTypePill({

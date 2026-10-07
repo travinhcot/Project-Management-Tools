@@ -2,7 +2,7 @@
 // attaches the signed-in member's session token.
 import { cache } from "react";
 import { backendFetch } from "@/shared/api/backend";
-import type { ProjectStatus } from "@/features/projects/models/project";
+import type { ProjectStatus, ResourceSlot as AnySlot } from "@/features/projects/models/project";
 import type { ProjectType } from "@/shared/models/project";
 import type {
   ComingUpItem,
@@ -27,7 +27,7 @@ type ResourceDto =
 interface ListItemDto {
   id: string;
   name: string;
-  type: "SOFTWARE" | "HARDWARE";
+  type: "SOFTWARE" | "HARDWARE" | "RESEARCH";
   status: "PLANNING" | "ONGOING" | "COMPLETED" | "FAILED";
   kickoff_at: string | null;
   semester: { id: string; name: string };
@@ -45,6 +45,7 @@ interface DetailDto {
   kickoff_at: string | null;
   semester: { id: string; name: string };
   resources: ResourceDto[];
+  missing_resources: AnySlot[];
   teammates: { full_name: string; role: "LEADER" | "MEMBER" }[];
 }
 
@@ -104,6 +105,7 @@ export async function getMemberProject(id: string): Promise<MemberProjectDetail>
     semesterName: project.semester.name,
     kickoffAt: project.kickoff_at,
     resources: project.resources.map(mapResource),
+    missingResources: project.missing_resources ?? [],
     teammates: project.teammates.map((mate) => ({
       fullName: mate.full_name,
       isLeader: mate.role === "LEADER",

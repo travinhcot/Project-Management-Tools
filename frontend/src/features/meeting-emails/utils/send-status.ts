@@ -15,7 +15,7 @@ export function getSendStatus(project: MeetingEmailProject): SendStatus {
   const kickoff = project.kickoff;
   if (!kickoff || kickoff.state === "cancelled") {
     return {
-      key: project.meetingUrl ? "ready" : "link-missing",
+      key: project.effectiveMeetingUrl ? "ready" : "link-missing",
       sent: 0,
       failed: 0,
       total: project.memberCount,

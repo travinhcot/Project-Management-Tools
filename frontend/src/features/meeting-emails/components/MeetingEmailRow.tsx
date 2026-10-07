@@ -8,7 +8,7 @@ import {
 } from "@/features/meeting-emails/utils/send-status";
 import { formatGmt7 } from "@/features/projects/utils/format";
 
-const TYPE_LABEL = { software: "Software", hardware: "Hardware" } as const;
+const TYPE_LABEL = { software: "Software", hardware: "Hardware", research: "Research" } as const;
 
 function describe(status: SendStatus): { tone: PillTone; label: string } {
   switch (status.key) {
@@ -106,20 +106,22 @@ export function MeetingEmailRow({
         <p className="whitespace-pre text-xs font-medium text-muted">
           {`${TYPE_LABEL[project.type]}  ·  ${project.memberCount} assigned ${project.memberCount === 1 ? "member" : "members"}`}
         </p>
-        <p className="text-[10px] font-bold text-muted">FIRST MEETING URL</p>
-        {project.meetingUrl ? (
+        <p className="text-[10px] font-bold text-muted">
+          {project.usesSharedLink ? "FIRST MEETING URL · SEMESTER LINK" : "FIRST MEETING URL"}
+        </p>
+        {project.effectiveMeetingUrl ? (
           <a
-            href={project.meetingUrl}
+            href={project.effectiveMeetingUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(event) => event.stopPropagation()}
             className="break-all text-[13px] font-medium text-accent hover:underline"
           >
-            {displayUrl(project.meetingUrl)}
+            {displayUrl(project.effectiveMeetingUrl)}
           </a>
         ) : (
           <p className="text-[13px] font-medium text-amber">
-            No meeting link added yet
+            No meeting link yet. Add a semester link or set one for this project
           </p>
         )}
         <p className="text-[11px] text-muted">{note}</p>
@@ -172,6 +174,11 @@ export function MeetingEmailRow({
         {status.key === "link-missing" && (
           <Button variant="link" onClick={onAddLink} className="h-10 w-full">
             Add meeting link
+          </Button>
+        )}
+        {project.usesSharedLink && (status.key === "ready" || status.key === "scheduled") && (
+          <Button variant="ghost" onClick={onAddLink} disabled={busy} className="h-9 w-full text-xs">
+            Use own link
           </Button>
         )}
       </div>

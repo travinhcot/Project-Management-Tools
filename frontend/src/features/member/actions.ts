@@ -2,6 +2,8 @@
 
 import { backendFetch } from "@/shared/api/backend";
 import { ApiError } from "@/shared/api/errors";
+import type { Teammate } from "@/features/member/models/member";
+import { getMemberProject } from "@/features/member/service/member.service";
 
 export type DownloadResult =
   | { ok: true; url: string; filename: string }
@@ -21,6 +23,23 @@ export async function createDownloadUrl(
   } catch (error) {
     if (error instanceof ApiError) {
       return { ok: false, message: "This file is not available right now. Try again later." };
+    }
+    throw error;
+  }
+}
+
+export type TeammatesResult =
+  | { ok: true; teammates: Teammate[] }
+  | { ok: false; message: string };
+
+/** Names for the expandable team list on My projects; the detail route already scopes it to the member's own projects. */
+export async function getProjectTeammates(projectId: string): Promise<TeammatesResult> {
+  try {
+    const project = await getMemberProject(projectId);
+    return { ok: true, teammates: project.teammates };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return { ok: false, message: "Could not load the team. Try again later." };
     }
     throw error;
   }

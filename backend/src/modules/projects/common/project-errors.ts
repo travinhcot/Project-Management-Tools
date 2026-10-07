@@ -69,7 +69,13 @@ export function projectError(error: unknown): HttpError {
         return new HttpError(
           409,
           "PROJECT_HAS_BOM",
-          "Remove the BOM before changing the type to SOFTWARE.",
+          "Remove the BOM before changing the type away from HARDWARE.",
+        );
+      case "PROJECT_HAS_RESEARCH_TEMPLATE":
+        return new HttpError(
+          409,
+          "PROJECT_HAS_RESEARCH_TEMPLATE",
+          "Remove the research template before changing the type away from RESEARCH.",
         );
       case "PROJECT_HAS_ASSIGNMENTS":
         return new HttpError(

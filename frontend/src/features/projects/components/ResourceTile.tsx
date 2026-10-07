@@ -3,6 +3,8 @@ type ResourceTileProps = {
 } & (
   | { state: "set"; value: string; onOpen: () => void }
   | { state: "missing"; value: string; onOpen: () => void }
+  /** Nothing yet, and nothing required: shown quietly, not as a warning. */
+  | { state: "empty"; value: string; onOpen: () => void }
   | { state: "na"; value: string; note: string }
 );
 
@@ -24,6 +26,7 @@ export function ResourceTile(props: ResourceTileProps) {
   }
 
   const missing = props.state === "missing";
+  const empty = props.state === "empty";
   return (
     <button
       type="button"
@@ -32,12 +35,12 @@ export function ResourceTile(props: ResourceTileProps) {
     >
       {heading}
       <span
-        className={`w-full truncate text-xs ${missing ? "font-semibold text-accent" : "font-medium text-ink"}`}
+        className={`w-full truncate text-xs ${missing ? "font-semibold text-accent" : empty ? "font-medium text-muted" : "font-medium text-ink"}`}
       >
         {props.value}
       </span>
       <span className="whitespace-pre-wrap text-[11px] font-medium text-accent">
-        {missing ? "Add details  →" : "View / edit  →"}
+        {missing || empty ? "Add details  →" : "View / edit  →"}
       </span>
     </button>
   );
