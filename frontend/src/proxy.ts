@@ -1,6 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { API_BASE_URL } from "@/shared/api/config";
-import { isMemberPath, landingFor, resolveLanding, safeNextPath } from "@/shared/auth/redirect";
+import {
+  isMemberPath,
+  landingFor,
+  resolveLanding,
+  safeNextPath,
+} from "@/shared/auth/redirect";
 import {
   ACCESS_COOKIE,
   REFRESH_COOKIE,
@@ -41,15 +46,21 @@ export async function proxy(request: NextRequest) {
   // A rejected token sends the visitor to /sign-in?expired=1; don't bounce them back out.
   const staleSession = request.nextUrl.searchParams.has("expired");
   // Sessions from before roles were stored belong to admins (members could not sign in).
-  const role = () => parseRole(request.cookies.get(ROLE_COOKIE)?.value) ?? "ADMIN";
+  const role = () =>
+    parseRole(request.cookies.get(ROLE_COOKIE)?.value) ?? "ADMIN";
   const toLanding = () =>
     NextResponse.redirect(
-      new URL(resolveLanding(role(), request.nextUrl.searchParams.get("next")), request.url),
+      new URL(
+        resolveLanding(role(), request.nextUrl.searchParams.get("next")),
+        request.url,
+      ),
     );
   // Members live under /member, admins everywhere else; send each back to their own area.
   const wrongArea = () =>
-    !onSignIn && isMemberPath(request.nextUrl.pathname) !== (role() === "MEMBER");
-  const toOwnArea = () => NextResponse.redirect(new URL(landingFor(role()), request.url));
+    !onSignIn &&
+    isMemberPath(request.nextUrl.pathname) !== (role() === "MEMBER");
+  const toOwnArea = () =>
+    NextResponse.redirect(new URL(landingFor(role()), request.url));
   const proceed = (init?: Parameters<typeof NextResponse.next>[0]) =>
     wrongArea() ? toOwnArea() : NextResponse.next(init);
   const toSignIn = () => {
@@ -57,7 +68,8 @@ export async function proxy(request: NextRequest) {
     // Remember where they were headed so sign-in can continue there.
     const url = new URL(SIGN_IN_PATH, request.url);
     const wanted = request.nextUrl.pathname + request.nextUrl.search;
-    if (wanted !== "/" && safeNextPath(wanted) === wanted) url.searchParams.set("next", wanted);
+    if (wanted !== "/" && safeNextPath(wanted) === wanted)
+      url.searchParams.set("next", wanted);
     return NextResponse.redirect(url);
   };
 
@@ -86,6 +98,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|icons/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|icons/|api/health|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico)$).*)",
   ],
 };
