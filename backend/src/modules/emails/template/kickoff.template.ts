@@ -1,27 +1,15 @@
 import type { RenderedEmail, TemplateContext } from "./render.ts";
 
-import { renderBilingual } from "./render.ts";
+import { renderEmailBody } from "./render.ts";
 
 export function renderKickoff(context: TemplateContext): RenderedEmail {
   const project = context.projectName ?? "your project";
-  return renderBilingual(context.subject, {
-    intro: {
-      en: `Hi ${context.recipientName}, the kick-off for "${project}" (${context.semesterName}) is here.`,
-      vi: `Xin chào ${context.recipientName}, dự án "${project}" (${context.semesterName}) chính thức khởi động.`,
-    },
-    action: {
-      en: "Open the project page to find your resources:",
-      vi: "Mở trang dự án để xem tài liệu của bạn:",
-    },
+  return renderEmailBody(context.subject, {
+    intro: `Hi ${context.recipientName}, the kick-off for "${project}" (${context.semesterName}) is here.`,
+    action: "Open the project page to find your resources:",
     link: context.projectUrl ?? "",
     extra: context.meetingUrl
-      ? {
-          label: {
-            en: "Join the kick-off meeting:",
-            vi: "Tham gia buổi họp khởi động:",
-          },
-          link: context.meetingUrl,
-        }
+      ? { label: "Join the kick-off meeting:", link: context.meetingUrl }
       : undefined,
   });
 }

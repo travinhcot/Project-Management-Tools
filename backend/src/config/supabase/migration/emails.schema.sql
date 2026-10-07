@@ -135,7 +135,7 @@ BEGIN
      idempotency_key, created_by_user_id, subject_snapshot)
   VALUES (v_id, v_project.semester_id, p_project_id, 'KICKOFF', p_scheduled_at, 'project-kickoff', 1,
           'SCHEDULED', 'kickoff:' || v_id::text, p_actor_id,
-          'Project kick-off: ' || v_project.name || ' | Khởi động dự án: ' || v_project.name)
+          'Project kick-off: ' || v_project.name)
   RETURNING * INTO v_row;
 
   INSERT INTO public.audit_events (actor_user_id, action, entity_type, entity_id, metadata, request_id)
@@ -173,7 +173,7 @@ BEGIN
      idempotency_key, created_by_user_id, subject_snapshot)
   VALUES (v_id, p_semester_id, NULL, 'DEMO', p_scheduled_at, 'semester-demo', 1,
           'SCHEDULED', 'demo:' || v_id::text, p_actor_id,
-          'Demo registration: ' || v_semester.name || ' | Đăng ký demo: ' || v_semester.name)
+          'Demo registration: ' || v_semester.name)
   RETURNING * INTO v_row;
 
   INSERT INTO public.audit_events (actor_user_id, action, entity_type, entity_id, metadata, request_id)
