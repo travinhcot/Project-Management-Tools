@@ -50,11 +50,13 @@ export function ProjectRow({
   onEdit,
   onEditResource,
   onEditMembers,
+  onArchive,
 }: {
   project: Project;
   onEdit: () => void;
   onEditResource: (slot: ResourceSlot) => void;
   onEditMembers: () => void;
+  onArchive: () => void;
 }) {
   const memberLabel = project.memberCount === 1 ? "member" : "members";
 
@@ -91,14 +93,14 @@ export function ProjectRow({
             <ProjectMemberList projectId={project.id} memberCount={project.memberCount} />
           </div>
         )}
-        <Button
-          variant="link"
-          size="sm"
-          className="mt-auto w-full sm:w-[190px]"
-          onClick={onEditMembers}
-        >
-          Add / remove members
-        </Button>
+        <div className="mt-auto flex w-full flex-wrap gap-2">
+          <Button variant="link" size="sm" className="w-full sm:w-[190px]" onClick={onEditMembers}>
+            Add / remove members
+          </Button>
+          <Button variant="danger-outline" size="sm" className="w-full sm:w-auto" onClick={onArchive}>
+            Archive project
+          </Button>
+        </div>
       </div>
 
       <div className="h-px w-full shrink-0 bg-line xl:h-auto xl:w-px" />

@@ -44,7 +44,7 @@ type Props = {
   ) => Promise<ActionResult>;
 } & (
   | { mode: "create" }
-  | { mode: "edit"; project: Project; onArchive: () => void }
+  | { mode: "edit"; project: Project }
 );
 
 export function ProjectFormDrawer(props: Props) {
@@ -250,19 +250,6 @@ export function ProjectFormDrawer(props: Props) {
           )}
         </div>
       </form>
-
-      {props.mode === "edit" && (
-        <section className="flex flex-col items-start gap-2 rounded-[10px] border border-danger-line bg-surface p-3">
-          <h3 className="text-sm font-bold text-danger">Archive project</h3>
-          <p className="text-xs text-muted">
-            Hides the project from members and stops its emails. You can
-            unarchive it later.
-          </p>
-          <Button variant="danger-outline" onClick={props.onArchive}>
-            Archive project…
-          </Button>
-        </section>
-      )}
     </Drawer>
   );
 }

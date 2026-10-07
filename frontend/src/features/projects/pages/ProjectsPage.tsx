@@ -200,6 +200,7 @@ export function ProjectsPage({
                   onEdit={() => open({ kind: "edit", id: project.id })}
                   onEditResource={(slot) => open({ kind: "resource", id: project.id, slot })}
                   onEditMembers={() => open({ kind: "members", id: project.id })}
+                  onArchive={() => open({ kind: "archive", id: project.id })}
                 />
               ))}
             </div>
@@ -258,7 +259,6 @@ export function ProjectsPage({
           semester={semester}
           onClose={() => setDrawer(null)}
           onSubmit={(input, changes, loadedAt) => updateProject(selected.id, loadedAt, changes)}
-          onArchive={() => open({ kind: "archive", id: selected.id })}
         />
       )}
       {semester && drawer?.kind === "archive" && selected && (
