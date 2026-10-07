@@ -43,7 +43,7 @@ const linksHtml = LINKS.map(
 ).join(" | ");
 
 export const FOOTER_HTML = `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>
-<td style="padding: 28px 32px 36px; font-family: Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #9aa0a6;">
+<td style="padding: 28px 0 36px; font-family: Helvetica, Arial, sans-serif; font-size: 12px; line-height: 1.5; color: #9aa0a6;">
 <h1 style="${HEADING_FONT} color: #6d9eeb;">RMIT VIETNAM NEO CULTURE TECHNOLOGY CLUB</h1>
 <img src="${LOGO_URL}" alt="Club logo" width="100" height="100" style="display: block; width: 100px; max-width: 100%; height: 100px; border: 0; outline: none; text-decoration: none;" />
 <h3 style="${HEADING_FONT} font-weight: normal; color: #bf9000;">RMIT University Vietnam (SGS campus)</h3>
