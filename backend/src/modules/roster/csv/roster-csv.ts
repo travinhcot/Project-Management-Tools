@@ -12,6 +12,7 @@ import {
   nameProblem,
   normalizeEmail,
 } from "../../../shared/roster-rules.ts";
+import { startsWithFormula } from "../../../shared/csv-safety.ts";
 import { CsvSyntaxError, parseCsv } from "./csv-parser.ts";
 
 export const MAX_IMPORT_ROWS = 5000;
@@ -86,6 +87,14 @@ export function parseRosterCsv(text: string): ParsedRosterCsv {
     if (emailError) errors.push(emailError);
     const majorError = majorProblem(major);
     if (majorError) errors.push(majorError);
+    // Stored cells reach exports and spreadsheets later; refuse ones a spreadsheet would run.
+    for (const [label, value] of [
+      ["Full Name", fullName],
+      ["Major", major],
+    ] as const) {
+      if (startsWithFormula(value))
+        errors.push(`${label} cannot start with = + - or @.`);
+    }
 
     return {
       row_number: record.line,
