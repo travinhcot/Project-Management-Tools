@@ -11,6 +11,7 @@ import { createHash, randomUUID } from "node:crypto";
 import { HttpError } from "../../../shared/http-error.ts";
 import { resourceError } from "../common/resource-errors.ts";
 import {
+  contentProblem,
   extensionOf,
   fileTypeFor,
   matchesSignature,
@@ -96,6 +97,11 @@ export function createFileService(
             "The file content does not match its extension.",
           );
         }
+        const problem = contentProblem(
+          request.bytes,
+          extensionOf(request.filename),
+        );
+        if (problem) throw new HttpError(415, "UNSUPPORTED_FILE_TYPE", problem);
 
         const objectPath = `projects/${request.projectId}/${request.slot.toLowerCase()}/${randomUUID()}.${extensionOf(request.filename)}`;
         const pending = await repository.beginUpload({

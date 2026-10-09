@@ -9,6 +9,7 @@ import type {
 } from "../model/audit.model.ts";
 import type { Page } from "../../../shared/pagination.ts";
 
+import { neutralizeFormula } from "../../../shared/csv-safety.ts";
 import { auditError, EVENT_NOT_FOUND } from "../common/audit-errors.ts";
 import {
   allowlistedMetadata,
@@ -56,8 +57,9 @@ function toEvent(row: AuditEventRow): AuditEvent {
 
 /** Spreadsheet formulas must stay text: prefix risky leading characters, then quote. */
 export function csvCell(value: unknown): string {
-  let text = value === null || value === undefined ? "" : String(value);
-  if (/^[=+\-@\t\r]/.test(text)) text = `'${text}`;
+  const text = neutralizeFormula(
+    value === null || value === undefined ? "" : String(value),
+  );
   return `"${text.replaceAll('"', '""')}"`;
 }
 

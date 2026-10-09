@@ -53,7 +53,13 @@ export function uploadFilename(req: Request<{ projectId: string; slot: string }>
   );
   const raw = single(query, "filename");
   if (raw === undefined) invalid("Query parameter filename is required.");
-  const base = raw.split(/[\\/]/).pop()!.trim();
+  // Quotes, semicolons and percent signs would reach the Content-Disposition header.
+  const base = raw
+    .normalize("NFC")
+    .split(/[\\/]/)
+    .pop()!
+    .replace(/["';%]/g, "")
+    .trim();
   // eslint-disable-next-line no-control-regex
   if (!base || [...base].length > 255 || /[\u0000-\u001f\u007f]/.test(base)) {
     invalid("filename must be 1-255 characters without control characters.");
