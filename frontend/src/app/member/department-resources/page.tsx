@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { DEPARTMENT_LABELS } from "@/config/departments";
 import { DepartmentResourcesPage } from "@/features/department-resources/components/DepartmentResourcesPage";
 import type { DepartmentResource } from "@/features/department-resources/models/department-resource";
@@ -11,6 +12,8 @@ export const metadata: Metadata = { title: "Department resources" };
 
 export default async function Page() {
   const status = await getMemberStatus();
+  // Department resources belong to Marcom; other departments have no such tab.
+  if (status.departmentCode !== "MARCOM") redirect("/member/projects");
   if (!status.eligible) return <NoAccessCard email={status.email} />;
 
   // A member's library is their roster department's; the backend decides which that is.

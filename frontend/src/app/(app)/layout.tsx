@@ -6,7 +6,7 @@ import { getViewer } from "@/shared/auth/viewer";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const viewer = await getViewer();
-  const items = workspaceNavFor(viewer.role);
+  const items = workspaceNavFor(viewer.role, viewer.departmentCode);
   const departmentAdmin = viewer.role === "DEPT_ADMIN";
 
   return (

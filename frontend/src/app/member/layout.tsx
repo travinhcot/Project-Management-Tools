@@ -12,7 +12,7 @@ export default async function MemberLayout({ children }: { children: React.React
   const dashboard = overview
     ? (memberDashboardPath(status.departmentCode) ?? "/member/overview")
     : "/member/projects";
-  const memberNav = memberNavFor(dashboard, { overview });
+  const memberNav = memberNavFor(dashboard, { overview, departmentCode: status.departmentCode });
   // Without a roster entry only the profile stays usable.
   const disabledHrefs = status.eligible
     ? []
