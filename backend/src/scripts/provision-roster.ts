@@ -140,7 +140,7 @@ for (const member of members) {
       const profile = await users.provisionVerifiedProfile(
         { id: auth.id, email, email_verified_at: new Date().toISOString() },
         member.full_name,
-        "MEMBER",
+        "MEMBER", // gets the TECH department by default; change it in Users & access
       );
       profileId = profile.id;
       profileByEmail.set(email, profileId);

@@ -1,7 +1,9 @@
 import type { ProjectType, ResourceSlot } from "../../../shared/resource-rules.ts";
 
-export { PROJECT_TYPES } from "../../../shared/resource-rules.ts";
-export type { ProjectType, ResourceSlot };
+import type { DepartmentCode } from "../../../shared/resource-rules.ts";
+
+export { PROJECT_TYPES, DEPARTMENT_PROJECT_TYPES } from "../../../shared/resource-rules.ts";
+export type { ProjectType, ResourceSlot, DepartmentCode };
 
 export const PROJECT_STATUSES = [
   "PLANNING",
@@ -37,6 +39,8 @@ export interface ProjectCreate {
   readonly type: ProjectType;
   readonly description: string | null;
   readonly status: ProjectStatus | null;
+  /** Only the super-admin chooses; a department admin always creates in their own department. */
+  readonly department_code?: DepartmentCode;
 }
 
 export interface ProjectChanges {
@@ -54,6 +58,8 @@ export interface ProjectUpdate {
 }
 
 export interface ProjectListQuery {
+  /** Set by the controller from the actor (null/absent = every department). Never from the client. */
+  readonly departmentId?: string | null;
   readonly semesterId?: string;
   readonly search?: string;
   readonly type?: ProjectType;
@@ -69,6 +75,7 @@ export interface ProjectLeader {
 }
 
 export interface ProjectRow extends Project {
+  readonly department_code: DepartmentCode;
   readonly member_count: number;
   readonly leader: ProjectLeader | null;
 }

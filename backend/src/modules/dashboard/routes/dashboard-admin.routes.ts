@@ -2,6 +2,7 @@ import type { DashboardService } from "../service/dashboard.service.ts";
 
 import { Router } from "express";
 import { adminOnly } from "../../../shared/admin-only.ts";
+import { staffOnly } from "../../../shared/staff-only.ts";
 import { createDashboardController } from "../controller/dashboard.controller.ts";
 
 /** Mounted at /api/admin/dashboard (after requireAuth + requireRole("ADMIN")). */
@@ -12,8 +13,8 @@ export function createDashboardAdminRouter(service: DashboardService) {
     res.set("Cache-Control", "no-store");
     next();
   });
-  router.use(adminOnly);
+  router.use(staffOnly);
   router.get("/", controller.summary);
-  router.get("/trends", controller.trends);
+  router.get("/trends", adminOnly, controller.trends); // all-department figures: super-admin only
   return router;
 }

@@ -57,6 +57,12 @@ export function resourceError(error: unknown): HttpError {
           "RESOURCE_SOURCE_NOT_ALLOWED",
           "This slot does not accept that kind of source.",
         );
+      case "PROJECT_TYPE_NOT_IN_DEPARTMENT":
+        return new HttpError(
+          409,
+          "PROJECT_TYPE_NOT_IN_DEPARTMENT",
+          "This project type does not belong to the project department.",
+        );
       case "FILE_NOT_PENDING":
       case "RESOURCE_FILE_MISMATCH":
         return new HttpError(

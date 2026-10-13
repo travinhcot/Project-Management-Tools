@@ -3,6 +3,7 @@ import type { ProjectService } from "../service/project.service.ts";
 import type { ActorLocals } from "../../../shared/request-actor.ts";
 
 import { randomUUID } from "node:crypto";
+import { scopeFor } from "../../../shared/department-scope.ts";
 import { requireActor } from "../../../shared/request-actor.ts";
 import { projectIdParam } from "../common/project-params.ts";
 import {
@@ -17,11 +18,12 @@ type IdRequest = Request<{ projectId: string }>;
 export function createProjectAdminController(service: ProjectService) {
   return {
     async list(req: Request, res: Response<unknown, ActorLocals>) {
-      requireActor(res.locals);
+      const actor = requireActor(res.locals);
       res.json(
-        await service.list(
-          listProjectsQuery(req.query as Record<string, unknown>),
-        ),
+        await service.list({
+          ...listProjectsQuery(req.query as Record<string, unknown>),
+          departmentId: scopeFor(actor),
+        }),
       );
     },
     async get(req: IdRequest, res: Response<unknown, ActorLocals>) {

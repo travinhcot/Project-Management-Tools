@@ -104,7 +104,12 @@ export function createFileService(
         if (problem) throw new HttpError(415, "UNSUPPORTED_FILE_TYPE", problem);
 
         const objectPath = `projects/${request.projectId}/${request.slot.toLowerCase()}/${randomUUID()}.${extensionOf(request.filename)}`;
+        // A member can only submit the final package, never another slot.
+        if (request.as === "MEMBER" && request.slot !== "FINAL_PACKAGE") {
+          throw new HttpError(403, "FORBIDDEN", "You do not have permission for this action.");
+        }
         const pending = await repository.beginUpload({
+          as: request.as,
           actorId: request.actorId,
           projectId: request.projectId,
           slot: request.slot,
@@ -124,6 +129,7 @@ export function createFileService(
             type.contentType,
           );
           return await repository.finalizeUpload({
+            as: request.as,
             actorId: request.actorId,
             fileId: pending.id,
             requestId: request.requestId,
@@ -133,7 +139,7 @@ export function createFileService(
             storage.remove(pending.bucket_id, [pending.object_path]),
           );
           await quietly(() =>
-            repository.abortUpload(request.actorId, pending.id),
+            repository.abortUpload(request.as, request.actorId, pending.id),
           );
           throw error;
         }

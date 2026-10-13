@@ -65,6 +65,12 @@ export function projectError(error: unknown): HttpError {
           "PROJECT_ARCHIVED",
           "This project is archived. Unarchive it first.",
         );
+      case "PROJECT_TYPE_NOT_IN_DEPARTMENT":
+        return new HttpError(
+          409,
+          "PROJECT_TYPE_NOT_IN_DEPARTMENT",
+          "This project type does not belong to the project department.",
+        );
       case "PROJECT_HAS_BOM":
         return new HttpError(
           409,

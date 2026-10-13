@@ -1,6 +1,7 @@
 import type { PortalRepository } from "../repository/portal.repository.ts";
 import type {
   ComingUpItem,
+  DepartmentCode,
   Eligibility,
   PortalDependencies,
   PortalListItem,
@@ -10,6 +11,7 @@ import type {
   PortalProjectDetail,
   PortalProjectList,
   PortalProjectRow,
+  ProjectType,
 } from "../model/portal.model.ts";
 
 import {
@@ -17,7 +19,10 @@ import {
   PROJECT_NOT_FOUND,
   portalError,
 } from "../common/portal-errors.ts";
-import { requiredSlots } from "../../../shared/resource-rules.ts";
+import {
+  DEPARTMENT_PROJECT_TYPES,
+  requiredSlots,
+} from "../../../shared/resource-rules.ts";
 import { toResourceViews } from "../common/resource-view.ts";
 import { BADGE_WINDOW_DAYS } from "../model/portal.model.ts";
 
@@ -99,16 +104,24 @@ export function createPortalService(
     /** Drives the "no access" page: signed in but not eligible sees no project data. */
     status(
       actorId: string,
-    ): Promise<Eligibility & { email: string | null; full_name: string | null }> {
+    ): Promise<
+      Eligibility & {
+        email: string | null;
+        full_name: string | null;
+        department_code: DepartmentCode | null;
+      }
+    > {
       return guarded(async () => {
-        const [eligibility, profile] = await Promise.all([
+        const [eligibility, profile, department] = await Promise.all([
           repository.eligibility(actorId),
           repository.profile(actorId),
+          repository.department(actorId),
         ]);
         return {
           ...eligibility,
           email: profile?.email ?? null,
           full_name: profile?.full_name ?? null,
+          department_code: department,
         };
       });
     },
@@ -128,11 +141,22 @@ export function createPortalService(
     overview(actorId: string, now: Date = new Date()): Promise<PortalOverview> {
       return guarded(async () => {
         await requireEligible(actorId);
-        const [{ items }, profile, semesters] = await Promise.all([
+        const [list, profile, semesters, department] = await Promise.all([
           buildList(actorId, false),
           repository.profile(actorId),
           repository.semesters(actorId),
+          repository.department(actorId),
         ]);
+        // A department's dashboard shows only that department's project types (the super-admin
+        // can assign a member to another department's project). No department, or one without
+        // project types yet (HR), keeps the full list.
+        const types: readonly ProjectType[] = department
+          ? DEPARTMENT_PROJECT_TYPES[department]
+          : [];
+        const items =
+          types.length > 0
+            ? list.items.filter((item) => types.includes(item.type))
+            : list.items;
         const current = semesters.find((row) => row.is_current) ?? null;
         const upcoming = items
           .filter((item) => item.kickoff_at && new Date(item.kickoff_at) >= now)
@@ -178,6 +202,7 @@ export function createPortalService(
         }
         const next = upcoming[0];
         return {
+          department_code: department,
           semester: current
             ? { id: current.semester_id, name: current.name, ends_on: current.ends_on }
             : null,

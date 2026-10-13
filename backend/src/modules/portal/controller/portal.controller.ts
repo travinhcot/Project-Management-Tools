@@ -9,8 +9,8 @@ export function createPortalController(service: PortalService) {
   return {
     async status(_req: Request, res: Response<unknown, ActorLocals>) {
       const actor = requireActor(res.locals);
-      const { eligible, email, full_name } = await service.status(actor.userId);
-      res.json({ role: actor.role, eligible, email, full_name });
+      const { eligible, email, full_name, department_code } = await service.status(actor.userId);
+      res.json({ role: actor.role, eligible, email, full_name, department_code });
     },
     async overview(_req: Request, res: Response<unknown, ActorLocals>) {
       res.json(await service.overview(requireActor(res.locals).userId));

@@ -44,7 +44,7 @@ export function linkBody(body: unknown): LinkRequest {
 }
 
 /** `?filename=` - base name only, no control characters, with an extension. */
-export function uploadFilename(req: Request<{ projectId: string; slot: string }>): string {
+export function uploadFilename(req: Pick<Request, "query">): string {
   const query = req.query as Record<string, unknown>;
   rejectUnknownKeys(
     query,

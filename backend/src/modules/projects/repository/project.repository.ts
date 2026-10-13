@@ -6,6 +6,7 @@ import type {
   ProjectCreate,
   ProjectListQuery,
   ProjectRow,
+  DepartmentCode,
 } from "../model/project.model.ts";
 
 const columns =
@@ -42,9 +43,11 @@ export function createProjectRepository(client: SupabaseClient) {
       p_archived: query.archived,
       p_limit: limit,
       p_offset: offset,
+      p_department_id: query.departmentId ?? null,
     });
     if (error) throw error;
     return (data ?? []) as (Project & {
+      department_code: DepartmentCode;
       member_count: number | string;
       leader_roster_member_id: string | null;
       leader_name: string | null;
@@ -72,6 +75,7 @@ export function createProjectRepository(client: SupabaseClient) {
       return {
         rows: rows.map((row) => ({
           ...toProject(row),
+          department_code: row.department_code,
           member_count: Number(row.member_count),
           leader: row.leader_roster_member_id
             ? {
@@ -138,6 +142,7 @@ export function createProjectRepository(client: SupabaseClient) {
         p_type: input.project.type,
         p_description: input.project.description,
         p_status: input.project.status,
+        p_department_code: input.project.department_code ?? null,
         p_request_id: input.requestId,
       });
       if (error) throw error;

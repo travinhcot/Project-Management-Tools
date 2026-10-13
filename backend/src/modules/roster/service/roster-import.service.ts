@@ -8,6 +8,8 @@ import type {
 import type { RosterImportRepository } from "../repository/roster-import.repository.ts";
 import type { Page, PageRequest } from "../../../shared/pagination.ts";
 
+import type { RequestActor } from "../../../shared/request-actor.ts";
+
 import { createHash } from "node:crypto";
 import { HttpError } from "../../../shared/http-error.ts";
 import { importError } from "../common/import-errors.ts";
@@ -26,9 +28,20 @@ function effective<T extends RosterImportListItem>(item: T): T {
 }
 
 export function createRosterImportService(repository: RosterImportRepository) {
-  async function summary(importId: string): Promise<RosterImportSummary> {
+  /**
+   * `actor` set: a department admin only sees the imports they started themselves (a missing and
+   * a foreign import answer alike, 404); the super-admin sees every import.
+   */
+  async function summary(
+    importId: string,
+    actor?: RequestActor,
+  ): Promise<RosterImportSummary> {
     try {
-      return await repository.getSummary(importId);
+      const found = await repository.getSummary(importId);
+      if (actor?.role === "DEPT_ADMIN" && found.initiated_by_user_id !== actor.userId) {
+        throw new HttpError(404, "IMPORT_NOT_FOUND", "Roster import not found.");
+      }
+      return found;
     } catch (error) {
       throw importError(error);
     }
@@ -84,12 +97,14 @@ export function createRosterImportService(repository: RosterImportRepository) {
     async history(
       semesterId: string,
       request: PageRequest,
+      actor?: RequestActor,
     ): Promise<Page<RosterImportListItem>> {
       try {
         const { rows, total } = await repository.listForSemester(
           semesterId,
           request.page,
           request.size,
+          actor?.role === "DEPT_ADMIN" ? actor.userId : undefined,
         );
         return {
           items: rows.map(effective),
@@ -106,8 +121,9 @@ export function createRosterImportService(repository: RosterImportRepository) {
       importId: string,
       status: ImportRowStatus | undefined,
       request: PageRequest,
+      actor?: RequestActor,
     ): Promise<Page<ImportRowView>> {
-      await summary(importId); // 404 for an unknown import
+      await summary(importId, actor); // 404 for an unknown (or foreign) import
       try {
         const { rows, total } = await repository.listRows(
           importId,
@@ -124,7 +140,9 @@ export function createRosterImportService(repository: RosterImportRepository) {
     async missing(
       importId: string,
       request: PageRequest,
+      actor?: RequestActor,
     ): Promise<Page<ImportMissingMember>> {
+      await summary(importId, actor);
       try {
         const { rows, total } = await repository.listMissing(
           importId,
@@ -144,6 +162,7 @@ export function createRosterImportService(repository: RosterImportRepository) {
       requestId: string,
     ): Promise<RosterImportSummary> {
       try {
+        // The SQL refuses a foreign import for a department admin too.
         await repository.commit({
           actorId,
           importId,

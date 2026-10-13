@@ -1,11 +1,12 @@
 import type {
+  DepartmentCode,
   ProjectType,
   ResourceSlot,
   ResourceSummary,
 } from "../../../shared/resource-rules.ts";
 
 export { RESOURCE_SLOTS as SLOT_ORDER } from "../../../shared/resource-rules.ts";
-export type { ProjectType, ResourceSlot, ResourceSummary };
+export type { DepartmentCode, ProjectType, ResourceSlot, ResourceSummary };
 
 export type ProjectStatus = "PLANNING" | "ONGOING" | "COMPLETED" | "FAILED";
 
@@ -92,6 +93,8 @@ export interface ComingUpItem {
 }
 
 export interface PortalOverview {
+  /** The member's roster department; the projects below are limited to its project types. */
+  readonly department_code: DepartmentCode | null;
   readonly semester: {
     readonly id: string;
     readonly name: string;

@@ -8,7 +8,13 @@ import {
 } from "@/features/meeting-emails/utils/send-status";
 import { formatGmt7 } from "@/features/projects/utils/format";
 
-const TYPE_LABEL = { software: "Software", hardware: "Hardware", research: "Research" } as const;
+const TYPE_LABEL = {
+  software: "Software",
+  hardware: "Hardware",
+  research: "Research",
+  event: "Event",
+  content: "Content",
+} as const;
 
 function describe(status: SendStatus): { tone: PillTone; label: string } {
   switch (status.key) {
