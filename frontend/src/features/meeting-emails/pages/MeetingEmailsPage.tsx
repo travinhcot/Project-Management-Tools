@@ -59,11 +59,14 @@ export function MeetingEmailsPage({
   projects,
   links,
   semesters,
+  superAdmin,
 }: {
   semester: SemesterSummary | null;
   projects: MeetingEmailProject[];
   links: SemesterEmails | null;
   semesters: SemesterOption[];
+  /** Semester links, the demo email and bulk scheduling are super-admin only (the backend enforces it). */
+  superAdmin: boolean;
 }) {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState(projects[0]?.id ?? "");
@@ -131,7 +134,7 @@ export function MeetingEmailsPage({
         )}
       </div>
 
-      {links && (
+      {links && superAdmin && (
         <SemesterEmailsCard
           links={links}
           projects={projects}

@@ -1,4 +1,11 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import {
+  DEPARTMENT_LABELS,
+  hasMemberOverview,
+  memberDashboardPath,
+  type DepartmentCode,
+} from "@/config/departments";
 import { ComingUpCard } from "@/features/member/components/ComingUpCard";
 import { MemberPageHeader } from "@/features/member/components/MemberPageHeader";
 import { NoAccessCard } from "@/features/member/components/NoAccessCard";
@@ -11,20 +18,36 @@ import {
 import type { MemberProject } from "@/features/member/models/member";
 import { StatCard } from "@/features/overview/components/StatCard";
 
-export async function MemberOverviewPage() {
+/**
+ * `department` set: that department's dashboard (/member/tech, /member/marcom), only for its own
+ * members; anyone else is sent to theirs. Unset: /member/overview, which forwards to the
+ * member's dashboard, or shows every project when their department has none (HR, none).
+ */
+export async function MemberOverviewPage({ department }: { department?: DepartmentCode } = {}) {
   const status = await getMemberStatus();
   if (!status.eligible) return <NoAccessCard email={status.email} />;
+
+  // Some departments (Marcom) have no overview: their members start from My projects.
+  if (!hasMemberOverview(status.departmentCode)) redirect("/member/projects");
+
+  const own = memberDashboardPath(status.departmentCode);
+  if (department ? status.departmentCode !== department : own) redirect(own ?? "/member/overview");
 
   const { semester, firstName, projects, nextMeeting, comingUp } = await getMemberOverview();
   const countOf = (type: MemberProject["type"]) =>
     projects.filter((project) => project.type === type).length;
+  const label = department ? DEPARTMENT_LABELS[department] : null;
 
   return (
     <div className="flex flex-col gap-[22px]">
       <MemberPageHeader
-        breadcrumb={"Workspace  /  Project Management  /  Overview"}
+        breadcrumb={`Workspace  /  ${label ?? "Project Management"}  /  Overview`}
         title={firstName ? `Welcome back, ${firstName}` : "Welcome back"}
-        subtitle="Your projects and what’s coming up this semester."
+        subtitle={
+          label
+            ? `Your ${label} projects and what’s coming up this semester.`
+            : "Your projects and what’s coming up this semester."
+        }
         semesterName={semester?.name}
       />
 
@@ -32,7 +55,12 @@ export async function MemberOverviewPage() {
         <StatCard
           label="My projects"
           value={projects.length}
-          caption={`${countOf("software")} software · ${countOf("hardware")} hardware · ${countOf("research")} research`}
+          caption={
+            (["software", "hardware", "research", "event", "content"] as const)
+              .filter((type) => countOf(type) > 0)
+              .map((type) => `${countOf(type)} ${type}`)
+              .join(" · ") || "No projects yet"
+          }
         />
         <StatCard
           featured

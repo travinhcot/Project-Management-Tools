@@ -5,10 +5,25 @@ export const REFRESH_COOKIE = "nct_refresh";
 /** Which area to show (admin or member). Only a routing hint: the backend enforces roles. */
 export const ROLE_COOKIE = "nct_role";
 
-export type AccountRole = "ADMIN" | "MEMBER";
+/**
+ * ADMIN = EB super-admin (every department); DEPT_ADMIN = admin of one department;
+ * MEMBER = a member (the member portal). Everyone but ADMIN has a department on their account.
+ * Mirrors ACCOUNT_ROLES in backend/src/shared/roles.ts.
+ */
+export const MEMBER_ROLES = ["MEMBER"] as const;
+export type MemberRole = (typeof MEMBER_ROLES)[number];
+export const ACCOUNT_ROLES = ["ADMIN", "DEPT_ADMIN", ...MEMBER_ROLES] as const;
+export type AccountRole = (typeof ACCOUNT_ROLES)[number];
+export type AdminRole = Exclude<AccountRole, MemberRole>;
+
+export function isMemberRole(role: AccountRole): role is MemberRole {
+  return (MEMBER_ROLES as readonly string[]).includes(role);
+}
 
 export function parseRole(value: string | undefined): AccountRole | null {
-  return value === "ADMIN" || value === "MEMBER" ? value : null;
+  return (ACCOUNT_ROLES as readonly (string | undefined)[]).includes(value)
+    ? (value as AccountRole)
+    : null;
 }
 
 /** Supabase refresh tokens last far longer than access tokens; this only bounds the cookie. */

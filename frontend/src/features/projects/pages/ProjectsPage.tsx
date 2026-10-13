@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import type { ProjectType } from "@/shared/models/project";
 import { SemesterSwitcher, type SemesterOption } from "@/shared/components/SemesterSwitcher";
 import { Button } from "@/shared/components/Button";
 import { ArchiveProjectDrawer } from "@/features/projects/components/drawers/ArchiveProjectDrawer";
@@ -43,7 +44,7 @@ type DrawerState =
   | { kind: "github"; id: string }
   | null;
 
-const FILE_SLOT_NAMES: readonly ResourceSlot[] = ["SRS", "BOM", "RESEARCH_TEMPLATE"];
+const FILE_SLOT_NAMES: readonly ResourceSlot[] = ["SRS", "BOM", "RESEARCH_TEMPLATE", "FINAL_PACKAGE"];
 
 const DRAWER_TITLES: Record<ResourceSlot, string> = {
   SRS: "SRS file",
@@ -52,6 +53,7 @@ const DRAWER_TITLES: Record<ResourceSlot, string> = {
   RESEARCH_TEMPLATE: "Research template",
   GITHUB_REPO: "GitHub repository",
   DEMO_GUIDE: "Demo video guide",
+  FINAL_PACKAGE: "Final package",
 };
 
 /** Where each slot's current value sits in the loaded resource details. */
@@ -62,6 +64,7 @@ const RESOURCE_KEY: Record<ResourceSlot, keyof ProjectResources> = {
   RESEARCH_TEMPLATE: "researchTemplate",
   GITHUB_REPO: "githubRepo",
   DEMO_GUIDE: "demoGuide",
+  FINAL_PACKAGE: "finalPackage",
 };
 
 // Filters live in the URL and the list is fetched by the server component; every action
@@ -70,10 +73,13 @@ export function ProjectsPage({
   list,
   filters,
   semesters,
+  allowedTypes,
 }: {
   list: ProjectListPage;
   filters: ProjectFilters;
   semesters: SemesterOption[];
+  /** Project types the signed-in admin works with (their department's, or all). */
+  allowedTypes: readonly ProjectType[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -182,6 +188,7 @@ export function ProjectsPage({
               navigate({ status: value as ProjectFilters["status"] })
             }
             onCreate={() => open({ kind: "create" })}
+            types={allowedTypes}
           />
 
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
@@ -250,6 +257,7 @@ export function ProjectsPage({
         <ProjectFormDrawer
           mode="create"
           semester={semester}
+          allowedTypes={allowedTypes}
           onClose={() => setDrawer(null)}
           onSubmit={(input) => createProject(semester.id, input)}
         />
@@ -260,6 +268,7 @@ export function ProjectsPage({
           mode="edit"
           project={selected}
           semester={semester}
+          allowedTypes={allowedTypes}
           onClose={() => setDrawer(null)}
           onSubmit={(input, changes, loadedAt) => updateProject(selected.id, loadedAt, changes)}
         />

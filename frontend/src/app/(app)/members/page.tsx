@@ -3,6 +3,7 @@ import { MembersPage } from "@/features/members/pages/MembersPage";
 import { getSemesterOptions } from "@/features/semesters/service/semesters.service";
 import { getMembers } from "@/features/members/service/members.service";
 import type { MemberFilters } from "@/features/members/models/member";
+import { getViewer } from "@/shared/auth/viewer";
 
 export const metadata: Metadata = { title: "Members" };
 
@@ -24,6 +25,17 @@ function parseFilters(params: SearchParams): MemberFilters {
 
 export default async function Page({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const filters = parseFilters(await searchParams);
-  const [list, semesters] = await Promise.all([getMembers(filters), getSemesterOptions()]);
-  return <MembersPage list={list} filters={filters} semesters={semesters} />;
+  const [list, semesters, viewer] = await Promise.all([
+    getMembers(filters),
+    getSemesterOptions(),
+    getViewer(),
+  ]);
+  return (
+    <MembersPage
+      list={list}
+      filters={filters}
+      semesters={semesters}
+      canImport={viewer.role === "ADMIN" || viewer.role === "DEPT_ADMIN"}
+    />
+  );
 }

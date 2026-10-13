@@ -86,6 +86,35 @@ function SlotTile({
 export function ProjectResourceTiles({ project }: { project: MemberProject }) {
   const meeting = findResource(project.resources, "FIRST_MEETING");
 
+  if (project.type === "event" || project.type === "content") {
+    return (
+      <div className="grid min-w-0 flex-1 grid-cols-1 gap-[11px] min-[480px]:grid-cols-2 sm:grid-cols-3">
+        <Tile
+          title="First meeting"
+          line={project.kickoffAt ? formatDayTime(project.kickoffAt) : "Not scheduled yet"}
+          strong
+          muted={!project.kickoffAt}
+        >
+          {meeting?.kind === "link" ? (
+            <ExternalLink href={meeting.url} style="text">
+              Open meeting link →
+            </ExternalLink>
+          ) : (
+            <p className={hint}>
+              {project.kickoffAt ? "Link not shared yet" : "Your leader will share it"}
+            </p>
+          )}
+        </Tile>
+        <SlotTile
+          project={project}
+          slot="FINAL_PACKAGE"
+          title="Final package"
+          emptyHint="Submit it from the project page"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="grid min-w-0 flex-1 grid-cols-1 gap-[11px] min-[480px]:grid-cols-2 sm:grid-cols-3">
       <SlotTile project={project} slot="SRS" title="SRS file" emptyHint="Your admin will add it" />

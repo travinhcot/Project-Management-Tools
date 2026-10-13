@@ -1,6 +1,7 @@
 // Reads the member portal (GET /api/me/*). Server-only: it goes through backendFetch, which
 // attaches the signed-in member's session token.
 import { cache } from "react";
+import type { DepartmentCode } from "@/config/departments";
 import { backendFetch } from "@/shared/api/backend";
 import type { ProjectStatus, ResourceSlot as AnySlot } from "@/features/projects/models/project";
 import type { ProjectType } from "@/shared/models/project";
@@ -27,7 +28,7 @@ type ResourceDto =
 interface ListItemDto {
   id: string;
   name: string;
-  type: "SOFTWARE" | "HARDWARE" | "RESEARCH";
+  type: "SOFTWARE" | "HARDWARE" | "RESEARCH" | "EVENT" | "CONTENT";
   status: "PLANNING" | "ONGOING" | "COMPLETED" | "FAILED";
   kickoff_at: string | null;
   semester: { id: string; name: string };
@@ -85,8 +86,14 @@ export const getMemberStatus = cache(async (): Promise<MemberStatus> => {
     eligible: boolean;
     email: string | null;
     full_name: string | null;
+    department_code: DepartmentCode | null;
   }>("/api/me");
-  return { eligible: dto.eligible, email: dto.email, fullName: dto.full_name };
+  return {
+    eligible: dto.eligible,
+    email: dto.email,
+    fullName: dto.full_name,
+    departmentCode: dto.department_code,
+  };
 });
 
 export async function getMemberProjects(): Promise<MemberProject[]> {
@@ -115,6 +122,7 @@ export async function getMemberProject(id: string): Promise<MemberProjectDetail>
 
 export async function getMemberOverview(): Promise<MemberOverview> {
   const dto = await backendFetch<{
+    department_code: DepartmentCode | null;
     semester: { id: string; name: string; ends_on: string | null } | null;
     first_name: string;
     projects: ListItemDto[];
@@ -129,6 +137,7 @@ export async function getMemberOverview(): Promise<MemberOverview> {
     }[];
   }>("/api/me/overview");
   return {
+    departmentCode: dto.department_code,
     semester: dto.semester && {
       id: dto.semester.id,
       name: dto.semester.name,

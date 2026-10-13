@@ -36,9 +36,12 @@ function toFormErrors(result: Extract<ActionResult, { ok: false }>): ServerError
 export function SemestersPage({
   semesters,
   today,
+  canManage = true,
 }: {
   semesters: Semester[];
   today: string;
+  /** False for a department admin: the list is read-only (semesters are shared by every department). */
+  canManage?: boolean;
 }) {
   const [form, setForm] = useState<FormState>({ kind: "create", key: 0 });
   const [focusForm, setFocusForm] = useState(false);
@@ -110,7 +113,9 @@ export function SemestersPage({
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold sm:text-[30px] text-ink">Semesters</h1>
           <p className="text-sm text-muted">
-            Create terms, set dates and choose which semester is current.
+            {canManage
+              ? "Create terms, set dates and choose which semester is current."
+              : "The terms every department works in. Only the super-admin can change them."}
           </p>
         </div>
         {!current && (
@@ -139,15 +144,17 @@ export function SemestersPage({
         <p className="text-sm font-semibold text-ink" aria-live="polite">
           {semesters.length} {semesters.length === 1 ? "semester" : "semesters"}
         </p>
-        <Button
-          className="whitespace-pre"
-          onClick={() => {
-            setFocusForm(true);
-            resetForm();
-          }}
-        >
-          {"＋  New semester"}
-        </Button>
+        {canManage && (
+          <Button
+            className="whitespace-pre"
+            onClick={() => {
+              setFocusForm(true);
+              resetForm();
+            }}
+          >
+            {"＋  New semester"}
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-col items-start gap-5 lg:flex-row">
@@ -155,14 +162,19 @@ export function SemestersPage({
           semesters={sorted}
           today={today}
           highlightId={switching?.id ?? null}
-          onEdit={(semester) => {
-            setFocusForm(true);
-            setServerErrors(undefined);
-            setForm({ kind: "edit", id: semester.id });
-          }}
-          onSetCurrent={reviewSwitch}
+          onEdit={
+            canManage
+              ? (semester) => {
+                  setFocusForm(true);
+                  setServerErrors(undefined);
+                  setForm({ kind: "edit", id: semester.id });
+                }
+              : undefined
+          }
+          onSetCurrent={canManage ? reviewSwitch : undefined}
         />
 
+        {canManage && (
         <div className="flex w-full flex-col gap-4 lg:w-[380px] lg:shrink-0">
           <SemesterForm
             key={form.kind === "edit" ? form.id : `create-${form.key}`}
@@ -190,6 +202,7 @@ export function SemestersPage({
             />
           )}
         </div>
+        )}
       </div>
     </div>
   );

@@ -8,6 +8,7 @@ import {
   ACCESS_COOKIE,
   clearSession,
   writeSession,
+  type AccountRole,
   type BackendSession,
 } from "@/shared/auth/session";
 
@@ -76,7 +77,7 @@ export async function verifyOtp(
   if (!response.ok) return UNAVAILABLE;
 
   const body = (await response.json()) as {
-    user: { role: "ADMIN" | "MEMBER" };
+    user: { role: AccountRole };
     session: BackendSession;
   };
 

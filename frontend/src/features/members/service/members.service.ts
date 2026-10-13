@@ -159,7 +159,7 @@ export async function fetchDeleteImpact(id: string): Promise<MemberDeleteImpact>
   const { impact } = await backendFetch<{
     impact: {
       has_account: boolean;
-      account_role: "ADMIN" | "MEMBER" | null;
+      account_role: "ADMIN" | "DEPT_ADMIN" | "MEMBER" | null;
       roster_entries: number;
       projects: number;
       deliveries: number;

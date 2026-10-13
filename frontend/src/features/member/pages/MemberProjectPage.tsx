@@ -4,6 +4,7 @@ import {
   ExternalLink,
   FileDownload,
 } from "@/features/member/components/ResourceAction";
+import { FinalPackageCard } from "@/features/member/components/FinalPackageCard";
 import { GithubActivityPanel } from "@/features/github/components/GithubActivityPanel";
 import { MemberPageHeader } from "@/features/member/components/MemberPageHeader";
 import { NoAccessCard } from "@/features/member/components/NoAccessCard";
@@ -203,8 +204,16 @@ export async function MemberProjectPage({ id }: { id: string }) {
 
       <div className="flex flex-col items-stretch gap-5 lg:flex-row lg:items-start">
         <div className="flex min-w-0 flex-1 flex-col gap-5">
+          {(project.type === "event" || project.type === "content") && (
+            <FinalPackageCard
+              projectId={project.id}
+              current={findResource(project.resources, "FINAL_PACKAGE")}
+            />
+          )}
           <Resources project={project} />
-          <GithubActivityPanel projectId={project.id} audience="member" />
+          {project.type !== "event" && project.type !== "content" && (
+            <GithubActivityPanel projectId={project.id} audience="member" />
+          )}
         </div>
         <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[360px]">
           <TeamCard teammates={project.teammates} me={status.fullName} />

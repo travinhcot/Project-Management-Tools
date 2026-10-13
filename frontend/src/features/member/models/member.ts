@@ -1,5 +1,6 @@
 // Shapes follow backend/src/modules/portal/model/portal.model.ts. The backend uses UPPERCASE
 // enums and snake_case; service/member.service.ts maps them.
+import type { DepartmentCode } from "@/config/departments";
 import type { ProjectStatus, ResourceSlot } from "@/features/projects/models/project";
 import type { ProjectType } from "@/shared/models/project";
 
@@ -21,6 +22,8 @@ export interface MemberStatus {
   eligible: boolean;
   email: string | null;
   fullName: string | null;
+  /** The department of the member's roster entry; decides which dashboard they get. */
+  departmentCode: DepartmentCode | null;
 }
 
 export interface MemberProject {
@@ -65,6 +68,7 @@ export interface ComingUpItem {
 }
 
 export interface MemberOverview {
+  departmentCode: DepartmentCode | null;
   semester: { id: string; name: string; endsOn: string | null } | null;
   firstName: string;
   projects: MemberProject[];

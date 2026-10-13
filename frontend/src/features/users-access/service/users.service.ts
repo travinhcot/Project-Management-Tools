@@ -1,6 +1,7 @@
 // Reads users from the backend (GET /api/admin/users). Server-only: it goes through
 // backendFetch, which attaches the admin session token from the httpOnly cookie.
 import { backendFetch } from "@/shared/api/backend";
+import type { DepartmentCode } from "@/config/departments";
 import type {
   AppUser,
   UserFilters,
@@ -16,6 +17,7 @@ interface UserDto {
   email: string;
   full_name: string;
   role: UserRole;
+  department_code: DepartmentCode | null;
   is_active: boolean;
   last_sign_in_at: string | null;
 }
@@ -26,6 +28,7 @@ function mapUser(dto: UserDto): AppUser {
     email: dto.email,
     fullName: dto.full_name,
     role: dto.role,
+    departmentCode: dto.department_code,
     isActive: dto.is_active,
     lastSignInAt: dto.last_sign_in_at,
   };
