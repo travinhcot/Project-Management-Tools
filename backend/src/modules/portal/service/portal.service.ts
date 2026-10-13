@@ -11,7 +11,6 @@ import type {
   PortalProjectDetail,
   PortalProjectList,
   PortalProjectRow,
-  ProjectType,
 } from "../model/portal.model.ts";
 
 import {
@@ -19,10 +18,7 @@ import {
   PROJECT_NOT_FOUND,
   portalError,
 } from "../common/portal-errors.ts";
-import {
-  DEPARTMENT_PROJECT_TYPES,
-  requiredSlots,
-} from "../../../shared/resource-rules.ts";
+import { requiredSlots } from "../../../shared/resource-rules.ts";
 import { toResourceViews } from "../common/resource-view.ts";
 import { BADGE_WINDOW_DAYS } from "../model/portal.model.ts";
 
@@ -43,6 +39,8 @@ export function createPortalService(
   async function requireEligible(actorId: string): Promise<void> {
     const { eligible } = await repository.eligibility(actorId);
     if (!eligible) throw NOT_ELIGIBLE;
+    // Projects are separated by department, so a member without one has nothing to see.
+    if (!(await repository.department(actorId))) throw NOT_ELIGIBLE;
   }
 
   /** The member's name is the last word in Vietnamese order ("Bùi Hoàng Nam" -> "Nam"). */
@@ -147,16 +145,8 @@ export function createPortalService(
           repository.semesters(actorId),
           repository.department(actorId),
         ]);
-        // A department's dashboard shows only that department's project types (the super-admin
-        // can assign a member to another department's project). No department, or one without
-        // project types yet (HR), keeps the full list.
-        const types: readonly ProjectType[] = department
-          ? DEPARTMENT_PROJECT_TYPES[department]
-          : [];
-        const items =
-          types.length > 0
-            ? list.items.filter((item) => types.includes(item.type))
-            : list.items;
+        // The database already limits the list to the member's own department.
+        const items = list.items;
         const current = semesters.find((row) => row.is_current) ?? null;
         const upcoming = items
           .filter((item) => item.kickoff_at && new Date(item.kickoff_at) >= now)

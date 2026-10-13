@@ -1,3 +1,4 @@
+import { DEPARTMENT_PROJECT_TYPES } from "@/config/departments";
 import { MemberPageHeader } from "@/features/member/components/MemberPageHeader";
 import { NoAccessCard } from "@/features/member/components/NoAccessCard";
 import { ProjectsExplorer } from "@/features/member/components/ProjectsExplorer";
@@ -21,7 +22,11 @@ export async function MemberProjectsPage() {
         subtitle="Projects you’re assigned to this semester. Resources are read-only."
         semesterName={semesterName}
       />
-      <ProjectsExplorer projects={projects} semesterName={semesterName} />
+      <ProjectsExplorer
+        projects={projects}
+        semesterName={semesterName}
+        types={status.departmentCode ? DEPARTMENT_PROJECT_TYPES[status.departmentCode] : []}
+      />
     </div>
   );
 }

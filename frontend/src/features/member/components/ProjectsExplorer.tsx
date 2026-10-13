@@ -10,7 +10,7 @@ import {
 } from "@/features/projects/models/project";
 import { normalizeText } from "@/features/projects/utils/format";
 import { projectTypeMeta } from "@/shared/components/ProjectTypePill";
-import { PROJECT_TYPES, type ProjectType } from "@/shared/models/project";
+import type { ProjectType } from "@/shared/models/project";
 
 const control =
   "h-11 rounded-lg border border-line bg-surface px-3 text-[13px] font-medium text-ink";
@@ -19,9 +19,12 @@ const control =
 export function ProjectsExplorer({
   projects,
   semesterName,
+  types,
 }: {
   projects: MemberProject[];
   semesterName: string | null;
+  /** The project types of the member's department, offered in the type filter. */
+  types: readonly ProjectType[];
 }) {
   const [query, setQuery] = useState("");
   const [type, setType] = useState<ProjectType | "all">("all");
@@ -67,7 +70,7 @@ export function ProjectsExplorer({
             className={`${control} w-[142px]`}
           >
             <option value="all">All types</option>
-            {PROJECT_TYPES.map((value) => (
+            {types.map((value) => (
               <option key={value} value={value}>
                 {projectTypeMeta[value].label}
               </option>

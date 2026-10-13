@@ -1,4 +1,8 @@
-import { hasMemberOverview, memberDashboardPath } from "@/config/departments";
+import {
+  DEPARTMENT_WORKSPACE_LABELS,
+  hasMemberOverview,
+  memberDashboardPath,
+} from "@/config/departments";
 import { memberNavFor } from "@/config/navigation";
 import { getMemberStatus } from "@/features/member/service/member.service";
 import { Sidebar } from "@/shared/components/navigation/Sidebar";
@@ -22,6 +26,9 @@ export default async function MemberLayout({ children }: { children: React.React
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
       <TopBar
+        workspaceLabel={
+          status.departmentCode ? DEPARTMENT_WORKSPACE_LABELS[status.departmentCode] : undefined
+        }
         userLabel={who ? `${who} · Member` : "Member"}
         nav={{ heading: HEADING, items: memberNav, disabledHrefs }}
       />

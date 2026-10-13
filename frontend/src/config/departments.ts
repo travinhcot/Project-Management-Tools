@@ -13,7 +13,7 @@ export const DEPARTMENT_LABELS: Record<DepartmentCode, string> = {
 
 /** Top-bar workspace name of a department admin. */
 export const DEPARTMENT_WORKSPACE_LABELS: Record<DepartmentCode, string> = {
-  TECH: "Tech Workspace",
+  TECH: "Technology Workspace",
   MARCOM: "Marketing & Communication Workspace",
   HR: "HR Workspace",
 };
