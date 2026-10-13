@@ -36,7 +36,10 @@ const auth = createAuthInterface({
   audit: audit.recorder,
 });
 const members = createMembersInterface(adminClient);
-const roster = createRosterInterface(adminClient);
+const roster = createRosterInterface(adminClient, {
+  profiles: users.service,
+  audit: audit.recorder,
+});
 // semesters needs project counts, while projects (built below) needs semesters.service.
 // The gateway resolves `projects` at call time, which breaks the construction cycle.
 const projectStats: ProjectStatsGateway = {

@@ -39,3 +39,6 @@ next-env.d.ts
 
 # Mypy cache
 .mypy_cache/
+
+
+test-data/

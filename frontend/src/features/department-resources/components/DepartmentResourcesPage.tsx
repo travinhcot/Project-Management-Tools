@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, useTransition, type FormEvent } from "react";
+import { useMemo, useState, useTransition, type FormEvent } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/shared/components/Button";
 import { Drawer } from "@/shared/components/Drawer";
@@ -266,12 +266,10 @@ export function DepartmentResourcesPage({
   const pathname = usePathname();
   const [tab, setTab] = useState(ALL);
   const [drawer, setDrawer] = useState<DrawerState>(null);
-  const [dragging, setDragging] = useState(false);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState<string>();
   const [, startWork] = useTransition();
-  const picker = useRef<HTMLInputElement>(null);
   // Members read and download; only the department head and the super-admin change the library.
   const canManage = audience === "admin";
 
@@ -313,10 +311,6 @@ export function DepartmentResourcesPage({
       else router.refresh();
       setBusyId(null);
     });
-  }
-
-  function chooseFile(file: File | undefined) {
-    if (file) setDrawer({ kind: "file", file });
   }
 
   const tabClass = (active: boolean) =>
@@ -476,45 +470,6 @@ export function DepartmentResourcesPage({
             </div>
           </section>
         ))
-      )}
-
-      {canManage && (
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => picker.current?.click()}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") picker.current?.click();
-          }}
-          onDragOver={(event) => {
-            event.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(event) => {
-            event.preventDefault();
-            setDragging(false);
-            chooseFile(event.dataTransfer.files[0]);
-          }}
-          className={`flex cursor-pointer flex-col items-center gap-1.5 rounded-xl border-[1.5px] border-dashed border-primary p-[22px] text-center ${
-            dragging ? "bg-accent-soft" : "bg-white/70"
-          }`}
-        >
-          <span aria-hidden="true" className="text-[22px] font-bold leading-none text-accent">⤒</span>
-          <p className="text-sm font-semibold text-ink">Drop brand files here, or browse</p>
-          <p className="text-xs text-muted">PDF, PNG, JPG, Word, Excel or PowerPoint · up to 10 MB · Head only</p>
-          <input
-            ref={picker}
-            type="file"
-            accept={FILE_ACCEPT}
-            className="hidden"
-            onClick={(event) => event.stopPropagation()}
-            onChange={(event) => {
-              chooseFile(event.target.files?.[0]);
-              event.target.value = "";
-            }}
-          />
-        </div>
       )}
 
       {canManage && drawer && (drawer.kind === "link" || drawer.kind === "file" || selected) && (

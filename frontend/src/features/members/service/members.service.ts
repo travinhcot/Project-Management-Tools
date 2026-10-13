@@ -41,6 +41,14 @@ export interface ImportSummaryDto {
   expires_at: string;
   created_at: string;
   missing_active_rows: number;
+  provisioning?: {
+    linked: number;
+    skipped: number;
+    failed: number;
+    remaining: number;
+    failures: { email: string; reason: string }[];
+    error?: true;
+  };
 }
 
 interface ImportRowDto {
@@ -76,6 +84,7 @@ export function mapImportSummary(dto: ImportSummaryDto): ImportSummary {
     expiresAt: dto.expires_at,
     createdAt: dto.created_at,
     missingActiveRows: dto.missing_active_rows,
+    provisioning: dto.provisioning && { ...dto.provisioning, error: dto.provisioning.error === true },
   };
 }
 

@@ -51,6 +51,19 @@ export interface ImportSummary {
   createdAt: string;
   /** Active members whose email is not in the file. */
   missingActiveRows: number;
+  /** Present on the commit response: accounts created for the people just imported. */
+  provisioning?: ImportProvisioning;
+}
+
+export interface ImportProvisioning {
+  linked: number;
+  skipped: number;
+  failed: number;
+  /** People beyond the inline limit; they need `provision:roster`. */
+  remaining: number;
+  failures: { email: string; reason: string }[];
+  /** True when provisioning could not run at all. */
+  error: boolean;
 }
 
 export interface ImportRow {

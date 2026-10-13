@@ -6,6 +6,7 @@ import type {
   RosterImportSummary,
 } from "../model/roster-import.model.ts";
 import type { RosterImportRepository } from "../repository/roster-import.repository.ts";
+import type { RosterProvisionService } from "./roster-provision.service.ts";
 import type { Page, PageRequest } from "../../../shared/pagination.ts";
 
 import type { RequestActor } from "../../../shared/request-actor.ts";
@@ -27,7 +28,10 @@ function effective<T extends RosterImportListItem>(item: T): T {
   return item;
 }
 
-export function createRosterImportService(repository: RosterImportRepository) {
+export function createRosterImportService(
+  repository: RosterImportRepository,
+  provisioner?: Pick<RosterProvisionService, "provisionImport">,
+) {
   /**
    * `actor` set: a department admin only sees the imports they started themselves (a missing and
    * a foreign import answer alike, 404); the super-admin sees every import.
@@ -169,7 +173,14 @@ export function createRosterImportService(repository: RosterImportRepository) {
           deactivateMissing,
           requestId,
         });
-        return await repository.getSummary(importId);
+        const committed = await repository.getSummary(importId);
+        // Accounts for the people just imported. Never throws: the import is already committed.
+        const provisioning = await provisioner?.provisionImport(importId, {
+          actorId,
+          semesterId: committed.semester_id,
+          requestId,
+        });
+        return provisioning ? { ...committed, provisioning } : committed;
       } catch (error) {
         throw importError(error);
       }
