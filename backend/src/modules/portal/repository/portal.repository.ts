@@ -10,6 +10,9 @@ import type {
   PortalProjectRow,
   ProjectType,
 } from "../model/portal.model.ts";
+import type { DepartmentCode } from "../../../shared/resource-rules.ts";
+
+import { DEPARTMENT_PROJECT_TYPES } from "../../../shared/resource-rules.ts";
 
 function asRows(data: unknown): Record<string, unknown>[] {
   if (!Array.isArray(data))
@@ -46,6 +49,17 @@ export function createPortalRepository(client: SupabaseClient) {
       return row
         ? { eligible: true, semester_id: String(row.semester_id) }
         : { eligible: false, semester_id: null };
+    },
+
+    /** Department code of the member's current roster entry; null when there is none. */
+    async department(actorId: string): Promise<DepartmentCode | null> {
+      const { data, error } = await client.rpc("member_department", {
+        p_actor_id: actorId,
+      });
+      if (error) throw error;
+      return typeof data === "string" && data in DEPARTMENT_PROJECT_TYPES
+        ? (data as DepartmentCode)
+        : null;
     },
 
     /** One query for the whole list. */

@@ -2,11 +2,11 @@ import type { ProjectService } from "../service/project.service.ts";
 import type { ProjectMemberService } from "../service/project-member.service.ts";
 
 import { Router } from "express";
-import { adminOnly } from "../../../shared/admin-only.ts";
+import { staffOnly } from "../../../shared/staff-only.ts";
 import { createProjectAdminController } from "../controller/project-admin.controller.ts";
 import { createProjectMemberController } from "../controller/project-member.controller.ts";
 
-/** Mounted at /api/admin/projects (after requireAuth + requireRole("ADMIN")). */
+/** Mounted at /api/admin/projects (after requireAuth + requireRole("ADMIN", "DEPT_ADMIN"); department scope in SQL and app.ts). */
 export function createProjectAdminRouter(
   service: ProjectService,
   memberService: ProjectMemberService,
@@ -18,7 +18,7 @@ export function createProjectAdminRouter(
     res.set("Cache-Control", "no-store");
     next();
   });
-  router.use(adminOnly);
+  router.use(staffOnly);
   router.get("/", controller.list);
   router.post("/", controller.create);
   router.get("/:projectId", controller.get);

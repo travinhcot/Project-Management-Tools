@@ -2,13 +2,22 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   AppUser,
   UserRole,
+  DepartmentCode,
   AdminUserView,
   AdminUserListQuery,
   AdminUserAccessUpdate,
 } from "../model/user.model.ts";
 
 const columns =
-  "id,email,normalized_email,full_name,role,is_active,created_at,updated_at";
+  "id,email,normalized_email,full_name,role,department_id,is_active,created_at,updated_at,department:departments(code)";
+
+type AppUserRow = Omit<AppUser, "department_code"> & {
+  department: { code: DepartmentCode } | null;
+};
+
+function toAppUser({ department, ...row }: AppUserRow): AppUser {
+  return { ...row, department_code: department?.code ?? null };
+}
 
 export function createUserRepository(client: SupabaseClient) {
   return {
@@ -17,14 +26,26 @@ export function createUserRepository(client: SupabaseClient) {
       email: string;
       full_name: string;
       role: UserRole;
+      department_code?: DepartmentCode;
     }): Promise<AppUser> {
+      const { department_code, ...profile } = input;
+      let department_id: string | null = null;
+      if (department_code) {
+        const { data: department, error: lookup } = await client
+          .from("departments")
+          .select("id")
+          .eq("code", department_code)
+          .single();
+        if (lookup) throw lookup;
+        department_id = department.id;
+      }
       const { data, error } = await client
         .from("app_users")
-        .insert(input)
+        .insert({ ...profile, department_id })
         .select(columns)
         .single();
       if (error) throw error;
-      return data;
+      return toAppUser(data as unknown as AppUserRow);
     },
     async findById(id: string): Promise<AppUser | null> {
       const { data, error } = await client
@@ -33,7 +54,7 @@ export function createUserRepository(client: SupabaseClient) {
         .eq("id", id)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return data ? toAppUser(data as unknown as AppUserRow) : null;
     },
     async listForAdmin(
       query: AdminUserListQuery,
@@ -44,6 +65,7 @@ export function createUserRepository(client: SupabaseClient) {
         p_is_active: query.is_active ?? null,
         p_limit: query.size,
         p_offset: (query.page - 1) * query.size,
+        p_department_code: query.department ?? null,
       });
       if (error) throw error;
       const rows = (data ?? []) as (AdminUserView & { total_count: number })[];
@@ -64,9 +86,13 @@ export function createUserRepository(client: SupabaseClient) {
         p_role: input.change.role ?? null,
         p_is_active: input.change.is_active ?? null,
         p_request_id: input.requestId,
+        p_department_code: input.change.department_code ?? null,
       });
       if (error) throw error;
-      return data as AppUser;
+      // The RPC returns the bare row; re-read so the response carries the department code.
+      const updated = await this.findById((data as { id: string }).id);
+      if (!updated) throw new Error("Updated user not found.");
+      return updated;
     },
     async updateName(id: string, fullName: string): Promise<AppUser | null> {
       const { data, error } = await client
@@ -77,7 +103,7 @@ export function createUserRepository(client: SupabaseClient) {
         .select(columns)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      return data ? toAppUser(data as unknown as AppUserRow) : null;
     },
   };
 }

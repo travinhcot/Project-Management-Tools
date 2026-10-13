@@ -75,6 +75,8 @@ export interface Delivery {
 }
 
 export interface CampaignListQuery {
+  /** Set for a DEPT_ADMIN (scopeFor): only campaigns of that department's projects. */
+  readonly departmentId?: string | null;
   readonly semesterId?: string;
   readonly kind?: CampaignKind;
   readonly status?: CampaignStatus;

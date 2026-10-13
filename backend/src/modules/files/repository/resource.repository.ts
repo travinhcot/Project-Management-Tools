@@ -139,6 +139,7 @@ export function createResourceRepository(client: SupabaseClient) {
     },
 
     async beginUpload(input: {
+      as: "ADMIN" | "MEMBER";
       actorId: string;
       projectId: string;
       slot: FileSlot;
@@ -149,17 +150,21 @@ export function createResourceRepository(client: SupabaseClient) {
       sizeBytes: number;
       checksum: string;
     }): Promise<PendingFile> {
-      const { data, error } = await client.rpc("admin_begin_file_upload", {
-        p_actor_id: input.actorId,
-        p_project_id: input.projectId,
-        p_slot: input.slot,
-        p_bucket_id: input.bucketId,
-        p_object_path: input.objectPath,
-        p_original_filename: input.filename,
-        p_content_type: input.contentType,
-        p_size_bytes: input.sizeBytes,
-        p_checksum_sha256: input.checksum,
-      });
+      const member = input.as === "MEMBER";
+      const { data, error } = await client.rpc(
+        member ? "member_begin_final_package_upload" : "admin_begin_file_upload",
+        {
+          p_actor_id: input.actorId,
+          p_project_id: input.projectId,
+          ...(member ? {} : { p_slot: input.slot }),
+          p_bucket_id: input.bucketId,
+          p_object_path: input.objectPath,
+          p_original_filename: input.filename,
+          p_content_type: input.contentType,
+          p_size_bytes: input.sizeBytes,
+          p_checksum_sha256: input.checksum,
+        },
+      );
       if (error) throw error;
       const row = asRecord(data);
       return {
@@ -170,26 +175,41 @@ export function createResourceRepository(client: SupabaseClient) {
     },
 
     async finalizeUpload(input: {
+      as: "ADMIN" | "MEMBER";
       actorId: string;
       fileId: string;
       requestId: string;
     }): Promise<ResourceFile> {
-      const { data, error } = await client.rpc("finalize_file_upload", {
-        p_actor_id: input.actorId,
-        p_file_id: input.fileId,
-        p_request_id: input.requestId,
-      });
+      const { data, error } = await client.rpc(
+        input.as === "MEMBER"
+          ? "member_finalize_final_package_upload"
+          : "finalize_file_upload",
+        {
+          p_actor_id: input.actorId,
+          p_file_id: input.fileId,
+          p_request_id: input.requestId,
+        },
+      );
       if (error) throw error;
       const file = toFile(data);
       if (!file) throw new TypeError("Unexpected database response.");
       return file;
     },
 
-    async abortUpload(actorId: string, fileId: string): Promise<void> {
-      const { error } = await client.rpc("admin_abort_file_upload", {
-        p_actor_id: actorId,
-        p_file_id: fileId,
-      });
+    async abortUpload(
+      as: "ADMIN" | "MEMBER",
+      actorId: string,
+      fileId: string,
+    ): Promise<void> {
+      const { error } = await client.rpc(
+        as === "MEMBER"
+          ? "member_abort_final_package_upload"
+          : "admin_abort_file_upload",
+        {
+          p_actor_id: actorId,
+          p_file_id: fileId,
+        },
+      );
       if (error) throw error;
     },
 

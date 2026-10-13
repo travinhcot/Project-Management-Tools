@@ -3,6 +3,7 @@ import type { RosterMemberService } from "../service/roster-member.service.ts";
 import type { ActorLocals } from "../../../shared/request-actor.ts";
 
 import { randomUUID } from "node:crypto";
+import { scopeFor } from "../../../shared/department-scope.ts";
 import { requireActor } from "../../../shared/request-actor.ts";
 import { rosterMemberIdParam, semesterIdParam } from "../common/member-params.ts";
 import {
@@ -14,11 +15,12 @@ import {
 export function createRosterMemberController(service: RosterMemberService) {
   return {
     async list(req: Request<{ semesterId: string }>, res: Response<unknown, ActorLocals>) {
-      requireActor(res.locals);
+      const actor = requireActor(res.locals);
       res.json(
-        await service.list(
-          listRosterQuery(req.params.semesterId, req.query as Record<string, unknown>),
-        ),
+        await service.list({
+          ...listRosterQuery(req.params.semesterId, req.query as Record<string, unknown>),
+          departmentId: scopeFor(actor),
+        }),
       );
     },
     async add(req: Request<{ semesterId: string }>, res: Response<unknown, ActorLocals>) {

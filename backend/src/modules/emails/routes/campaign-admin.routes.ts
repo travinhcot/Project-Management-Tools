@@ -2,9 +2,14 @@ import type { CampaignService } from "../service/campaign.service.ts";
 
 import { Router } from "express";
 import { adminOnly } from "../../../shared/admin-only.ts";
+import { staffOnly } from "../../../shared/staff-only.ts";
 import { createCampaignController } from "../controller/campaign.controller.ts";
 
-/** Mounted at /api/admin (after requireAuth + requireRole("ADMIN")). */
+/**
+ * Mounted at /api/admin. Staff (ADMIN, DEPT_ADMIN) manage project campaigns; the database limits a
+ * DEPT_ADMIN to their department's projects. Demo campaigns are semester-wide: super-admin only.
+ * The router has no path prefix, so its staffOnly sees every request mounted after it; keep adminOnly-only routers behind their own guard.
+ */
 export function createCampaignAdminRouter(service: CampaignService) {
   const router = Router();
   const controller = createCampaignController(service);
@@ -12,13 +17,17 @@ export function createCampaignAdminRouter(service: CampaignService) {
     res.set("Cache-Control", "no-store");
     next();
   });
-  router.use(adminOnly);
+  router.use(staffOnly);
   router.post("/projects/:projectId/kickoff-campaign", controller.scheduleKickoff);
   router.post(
     "/projects/:projectId/resources-campaign",
     controller.scheduleProjectResources,
   );
-  router.post("/semesters/:semesterId/demo-campaign", controller.scheduleDemo);
+  router.post(
+    "/semesters/:semesterId/demo-campaign",
+    adminOnly,
+    controller.scheduleDemo,
+  );
   router.get("/campaigns", controller.list);
   router.get("/campaigns/:campaignId", controller.get);
   router.get("/campaigns/:campaignId/deliveries", controller.listDeliveries);

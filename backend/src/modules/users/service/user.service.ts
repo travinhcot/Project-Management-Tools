@@ -1,6 +1,7 @@
 import type {
   AppUser,
   UserRole,
+  DepartmentCode,
   AdminUserView,
   AdminUserListQuery,
   AdminUserAccessUpdate,
@@ -17,6 +18,7 @@ export interface VerifiedProfileIdentity extends ProfileIdentity {
 }
 
 import { HttpError } from "../../../shared/http-error.ts";
+import { DEPARTMENT_CODES, USER_ROLES } from "../model/user.model.ts";
 
 function accessError(error: unknown): HttpError {
   const code =
@@ -31,7 +33,7 @@ function accessError(error: unknown): HttpError {
     return new HttpError(
       400,
       "INVALID_INPUT",
-      "Provide a valid role or is_active.",
+      "Provide a valid role, department or is_active.",
     );
   if (code === "42501")
     return new HttpError(
@@ -75,7 +77,8 @@ export function createUserService(repository: UserRepository) {
       );
     }
     if (
-      !["ADMIN", "MEMBER"].includes(profile.role) ||
+      !USER_ROLES.includes(profile.role) ||
+      (profile.role === "ADMIN") !== (profile.department_id === null) ||
       profile.normalized_email !== identity.email.trim().toLowerCase()
     ) {
       throw new HttpError(
@@ -94,12 +97,17 @@ export function createUserService(repository: UserRepository) {
       identity: VerifiedProfileIdentity,
       fullName: string,
       role: UserRole = "MEMBER",
+      departmentCode?: DepartmentCode,
     ) {
       if (
         !identity?.id ||
         !identity.email ||
         !identity.email_verified_at ||
-        !["ADMIN", "MEMBER"].includes(role) ||
+        !USER_ROLES.includes(role) ||
+        // ADMIN has no department; DEPT_ADMIN needs one; a MEMBER without one gets TECH.
+        (role === "ADMIN" && departmentCode !== undefined) ||
+        (role === "DEPT_ADMIN" && departmentCode === undefined) ||
+        (departmentCode !== undefined && !DEPARTMENT_CODES.includes(departmentCode)) ||
         typeof fullName !== "string" ||
         !fullName.trim() ||
         [...fullName.trim()].length > 200
@@ -116,6 +124,7 @@ export function createUserService(repository: UserRepository) {
           email: identity.email,
           full_name: fullName.trim(),
           role,
+          department_code: departmentCode,
         });
       } catch (error) {
         if (

@@ -39,6 +39,7 @@ export function createRosterMemberRepository(client: SupabaseClient) {
         p_birth_year: null,
         p_limit: query.size,
         p_offset: (query.page - 1) * query.size,
+        p_department_id: query.departmentId ?? null,
       });
       if (error) throw error;
       const rows = (data ?? []) as (RosterMember & { total_count: number })[];
@@ -58,6 +59,7 @@ export function createRosterMemberRepository(client: SupabaseClient) {
             p_birth_year: null,
             p_limit: 1,
             p_offset: 0,
+            p_department_id: query.departmentId ?? null,
           },
         );
         if (firstError) throw firstError;

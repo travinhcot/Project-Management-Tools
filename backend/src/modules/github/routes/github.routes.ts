@@ -4,7 +4,7 @@ import type { GithubService } from "../service/github.service.ts";
 import { timingSafeEqual } from "node:crypto";
 import { Router } from "express";
 import { HttpError } from "../../../shared/http-error.ts";
-import { adminOnly } from "../../../shared/admin-only.ts";
+import { staffOnly } from "../../../shared/staff-only.ts";
 import { createGithubController } from "../controller/github.controller.ts";
 
 const noStore: RequestHandler = (_req, res, next) => {
@@ -16,13 +16,13 @@ const noStore: RequestHandler = (_req, res, next) => {
 export function createGithubAdminRouter(service: GithubService) {
   const router = Router();
   const controller = createGithubController(service);
-  router.use(noStore, adminOnly);
+  router.use(noStore, staffOnly);
   router.get("/:projectId/github", controller.getAdmin);
   router.post("/:projectId/github/refresh", controller.refreshAdmin);
   return router;
 }
 
-/** Mounted at /api/me (after requireAuth + requireRole("MEMBER")). */
+/** Mounted at /api/me (after requireAuth + requireRole(...MEMBER_ROLES)). */
 export function createGithubMemberRouter(service: GithubService) {
   const router = Router();
   const controller = createGithubController(service);

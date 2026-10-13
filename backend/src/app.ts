@@ -10,11 +10,17 @@ import type { EmailsInterface } from "./modules/emails/interface/emails.interfac
 import type { AuditInterface } from "./modules/audit/interface/audit.interface.ts";
 import type { DashboardInterface } from "./modules/dashboard/interface/dashboard.interface.ts";
 import type { GithubInterface } from "./modules/github/interface/github.interface.ts";
+import type { DepartmentResourcesInterface } from "./modules/department-resources/interface/department-resources.interface.ts";
+
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 import express from "express";
+import { createDepartmentGuards } from "./shared/department-guards.ts";
+import { ACCOUNT_ROLES, MEMBER_ROLES } from "./shared/roles.ts";
 import { HttpError, errorHandler } from "./shared/http-error.ts";
 
 export function createApplication({
+  database,
   auth,
   users,
   semesters,
@@ -27,8 +33,11 @@ export function createApplication({
   audit,
   dashboard,
   github,
+  departmentResources,
   allowedOrigins = process.env.ALLOWED_ORIGINS || "http://localhost:5173",
 }: {
+  /** Service-role client, used only by the department guards (shared/department-guards.ts). */
+  database: SupabaseClient;
   auth: AuthInterface;
   users: UsersInterface;
   semesters: SemestersInterface;
@@ -41,6 +50,7 @@ export function createApplication({
   audit: AuditInterface;
   dashboard: DashboardInterface;
   github: GithubInterface;
+  departmentResources: DepartmentResourcesInterface;
   allowedOrigins?: string;
 }) {
   const app = express();
@@ -75,7 +85,13 @@ export function createApplication({
   app.use("/api/auth", auth.router);
   // Authenticate once for the whole admin area, then mount each module's router.
   const admin = express.Router();
-  admin.use(auth.requireAuth, auth.requireRole("ADMIN"));
+  // ADMIN (all departments) and DEPT_ADMIN (one department). Each module's router narrows this:
+  // adminOnly for users/semesters/audit, staffOnly + department scope for the rest.
+  admin.use(auth.requireAuth, auth.requireRole("ADMIN", "DEPT_ADMIN"));
+  // A department admin can only reach rows of their own department (404 otherwise).
+  const guards = createDepartmentGuards(database);
+  admin.use("/projects/:projectId", guards.projectInScope);
+  admin.use("/roster/:rosterMemberId", guards.rosterMemberInScope);
   admin.use("/users", users.adminRouter);
   admin.use("/semesters", semesters.adminRouter);
   admin.use("/projects", projects.adminRouter);
@@ -83,17 +99,24 @@ export function createApplication({
   admin.use("/projects", github.adminRouter); // /projects/:id/github, /projects/:id/github/refresh
   admin.use(members.adminRouter); // /semesters/:id/roster, /roster/:rosterMemberId
   admin.use(roster.adminRouter); // /semesters/:id/roster/imports, /roster/imports/...
+  admin.use("/dashboard", dashboard.adminRouter);
   admin.use(emails.adminRouter); // /projects/:id/kickoff-campaign, /semesters/:id/demo-campaign, /campaigns/...
   admin.use("/audit-events", audit.adminRouter);
-  admin.use("/dashboard", dashboard.adminRouter);
   app.use("/api/admin", admin);
   app.use(
     "/api/me",
     auth.requireAuth,
-    auth.requireRole("MEMBER"),
+    auth.requireRole(...MEMBER_ROLES),
     portal.memberRouter, // GET /, /projects, /projects/:id, /overview, /profile, /notifications/badge
     files.memberRouter, // POST /projects/:id/files/:fileId/download-url
     github.memberRouter, // GET /projects/:id/github
+  );
+  // Shared library of one department: members, its admin and the super-admin (scope decided in SQL).
+  app.use(
+    "/api/department-resources",
+    auth.requireAuth,
+    auth.requireRole(...ACCOUNT_ROLES),
+    departmentResources.router,
   );
   app.use(
     "/api/internal",
@@ -101,6 +124,7 @@ export function createApplication({
     emails.internalRouter,
     audit.internalRouter, // POST /audit/retention
     github.internalRouter, // POST /github/refresh-all
+    departmentResources.internalRouter, // POST /department-resources/cleanup
   );
   app.use((_req, _res, next) =>
     next(new HttpError(404, "NOT_FOUND", "Endpoint not found.")),

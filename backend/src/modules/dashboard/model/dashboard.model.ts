@@ -7,6 +7,7 @@ export type WarningCode =
   | "PROJECTS_WITHOUT_MEMBERS"
   | "PROJECTS_MISSING_SRS"
   | "PROJECTS_MISSING_RESOURCES"
+  | "PROJECTS_WITHOUT_FINAL_PACKAGE"
   | "CAMPAIGNS_WITH_FAILURES"
   | "IMPORTS_EXPIRED_UNUSED"
   | "OLD_SEMESTER_CAMPAIGNS_SCHEDULED";
@@ -32,6 +33,8 @@ export interface RawSummary {
     readonly software: number;
     readonly hardware: number;
     readonly research: number;
+    readonly event?: number;
+    readonly content?: number;
   };
   readonly upcoming_campaigns?: readonly (RawItem & {
     readonly kind: "KICKOFF" | "DEMO" | "PROJECT_RESOURCES";
@@ -43,6 +46,7 @@ export interface RawSummary {
   readonly projects_without_members?: RawWarning;
   readonly projects_missing_srs?: RawWarning;
   readonly projects_missing_resources?: RawWarning;
+  readonly projects_without_final_package?: RawWarning;
   readonly campaigns_with_failures?: RawWarning;
   readonly imports_expired_unused?: RawWarning;
   readonly old_semester_scheduled?: RawWarning;
@@ -67,6 +71,8 @@ export interface Dashboard {
       readonly software: number;
       readonly hardware: number;
       readonly research: number;
+      readonly event: number;
+      readonly content: number;
       readonly total: number;
       readonly link: string;
     };

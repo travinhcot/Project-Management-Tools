@@ -28,11 +28,8 @@ export const SIGNED_URL_TTL_SECONDS = 300;
 /** Pending uploads older than this are removed by the cleanup job. */
 export const ORPHAN_AFTER_MINUTES = 60;
 
-export interface FileType {
-  readonly contentType: string;
-  /** Leading bytes that must match (magic number). */
-  readonly signature: readonly number[];
-}
+import type { FileType } from "../../../shared/file-signature.ts";
+export type { FileType };
 
 const PDF: FileType = {
   contentType: "application/pdf",
@@ -58,6 +55,8 @@ export const ALLOWED_FILE_TYPES: Record<
   SRS: { pdf: PDF },
   BOM: { xlsx: XLSX, pdf: PDF },
   RESEARCH_TEMPLATE: { docx: DOCX, pdf: PDF },
+  /** Excel only: the package is a workbook. Macro-enabled files are refused by contentProblem. */
+  FINAL_PACKAGE: { xlsx: XLSX },
 };
 
 /** Content types the upload route accepts as a raw body. */
@@ -87,6 +86,8 @@ export interface Resource {
 }
 
 export interface UploadRequest {
+  /** Who uploads: an admin uses the admin_* SQL functions, a member the member_* ones. */
+  readonly as: "ADMIN" | "MEMBER";
   readonly actorId: string;
   readonly projectId: string;
   readonly slot: FileSlot;

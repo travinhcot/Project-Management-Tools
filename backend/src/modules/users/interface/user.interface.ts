@@ -7,9 +7,11 @@ export type {
 export type {
   AppUser,
   UserRole,
+  DepartmentCode,
   AdminUserView,
   Page,
 } from "../model/user.model.ts";
+export { DEPARTMENT_CODES, USER_ROLES } from "../model/user.model.ts";
 
 import { createUserRepository } from "../repository/user.repository.ts";
 import { createUserService } from "../service/user.service.ts";

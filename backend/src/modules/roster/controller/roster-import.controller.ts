@@ -45,11 +45,12 @@ export function createRosterImportController(service: RosterImportService) {
       req: Request<{ semesterId: string }>,
       res: Response<unknown, ActorLocals>,
     ) {
-      requireActor(res.locals);
+      const actor = requireActor(res.locals);
       res.json(
         await service.history(
           semesterIdParam(req.params.semesterId),
           historyQuery(req.query as Record<string, unknown>),
+          actor,
         ),
       );
     },
@@ -57,35 +58,38 @@ export function createRosterImportController(service: RosterImportService) {
       req: Request<{ importId: string }>,
       res: Response<unknown, ActorLocals>,
     ) {
-      requireActor(res.locals);
+      const actor = requireActor(res.locals);
       res.json({
-        import: await service.getSummary(importIdParam(req.params.importId)),
+        import: await service.getSummary(importIdParam(req.params.importId), actor),
       });
     },
     async rows(
       req: Request<{ importId: string }>,
       res: Response<unknown, ActorLocals>,
     ) {
-      requireActor(res.locals);
+      const actor = requireActor(res.locals);
       const { status, page, size } = rowsQuery(
         req.query as Record<string, unknown>,
       );
       res.json(
-        await service.rows(importIdParam(req.params.importId), status, {
-          page,
-          size,
-        }),
+        await service.rows(
+          importIdParam(req.params.importId),
+          status,
+          { page, size },
+          actor,
+        ),
       );
     },
     async missing(
       req: Request<{ importId: string }>,
       res: Response<unknown, ActorLocals>,
     ) {
-      requireActor(res.locals);
+      const actor = requireActor(res.locals);
       res.json(
         await service.missing(
           importIdParam(req.params.importId),
           missingQuery(req.query as Record<string, unknown>),
+          actor,
         ),
       );
     },

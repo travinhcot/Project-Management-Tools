@@ -3,7 +3,7 @@ import type { PortalService } from "../service/portal.service.ts";
 import { Router } from "express";
 import { createPortalController } from "../controller/portal.controller.ts";
 
-/** Mounted at /api/me (after requireAuth + requireRole("MEMBER")). Eligibility is checked per request in SQL. */
+/** Mounted at /api/me (after requireAuth + requireRole(...MEMBER_ROLES)). Eligibility is checked per request in SQL. */
 export function createPortalMemberRouter(service: PortalService) {
   const router = Router();
   const controller = createPortalController(service);
