@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { LogoLoader } from "@/shared/components/LogoLoader";
 import { SignInFlow } from "@/features/auth/components/SignInFlow";
 import { safeNextPath } from "@/shared/auth/redirect";
@@ -22,6 +23,12 @@ export default async function Page({
         <span className="whitespace-pre-wrap text-base font-bold uppercase text-ink sm:text-lg">
           Project Management
         </span>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-muted transition hover:bg-chrome hover:text-ink"
+        >
+          <span aria-hidden="true">←</span> Back
+        </Link>
       </header>
       <main className="flex flex-1 flex-col items-center bg-hub gap-8 px-4 pb-20 pt-10 sm:pt-[72px]">
         <div className="flex flex-col items-center gap-1.5 text-center">
