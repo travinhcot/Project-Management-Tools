@@ -7,15 +7,16 @@ import { SelectBox } from "@/shared/components/Field";
 import { updateUserAccess } from "@/features/users-access/actions";
 import { UsersTable } from "@/features/users-access/components/UsersTable";
 import type {
+  AccessChange,
   AppUser,
   UserFilters,
   UserListPage,
-  UserRole,
 } from "@/features/users-access/models/user";
 
 const ROLE_OPTIONS = [
   { value: "all", label: "All roles" },
   { value: "ADMIN", label: "Admins" },
+  { value: "DEPT_ADMIN", label: "Dept admins" },
   { value: "MEMBER", label: "Members" },
 ] as const;
 
@@ -64,7 +65,7 @@ export function UsersAccessPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
-  function change(user: AppUser, update: { role?: UserRole; isActive?: boolean }) {
+  function change(user: AppUser, update: AccessChange) {
     setError(undefined);
     setConfirmingId(null);
     setBusyId(user.id);
@@ -158,7 +159,7 @@ export function UsersAccessPage({
           currentUserId={currentUserId}
           busyId={busyId}
           confirmingId={confirmingId}
-          onRoleChange={(user, role) => change(user, { role })}
+          onRoleChange={(user, access) => change(user, access)}
           onToggleActive={toggleActive}
           onCancelConfirm={() => setConfirmingId(null)}
         />

@@ -62,6 +62,13 @@ const COPY: Record<FileSlotName, SlotCopy> = {
     hint: "Word (.docx) or PDF, up to 10 MB.",
     note: "Only research projects use a template. Members download it from their project page.",
   },
+  FINAL_PACKAGE: {
+    noun: "final package",
+    title: "Final package",
+    allowLink: false,
+    hint: "Excel (.xlsx) only, up to 10 MB.",
+    note: "Members of the team submit this from their project page. Upload one here to submit or replace it for them.",
+  },
 };
 
 function describe(source: ResourceSource) {

@@ -1,6 +1,8 @@
 // Mirrors AdminUserView / Page in backend/src/modules/users/model/user.model.ts
 // (snake_case there, camelCase here). Mapping lives in service/users.service.ts.
-export const USER_ROLES = ["ADMIN", "MEMBER"] as const;
+import type { DepartmentCode } from "@/config/departments";
+
+export const USER_ROLES = ["ADMIN", "DEPT_ADMIN", "MEMBER"] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 export interface AppUser {
@@ -8,6 +10,8 @@ export interface AppUser {
   email: string;
   fullName: string;
   role: UserRole;
+  /** Null for ADMIN (every department); every other account has one. */
+  departmentCode: DepartmentCode | null;
   isActive: boolean;
   /** ISO timestamp; null when the user has never signed in. */
   lastSignInAt: string | null;
@@ -30,5 +34,7 @@ export interface UserFilters {
 
 export interface AccessChange {
   role?: UserRole;
+  /** Not allowed with role ADMIN; omitted keeps the current department. */
+  departmentCode?: DepartmentCode;
   isActive?: boolean;
 }

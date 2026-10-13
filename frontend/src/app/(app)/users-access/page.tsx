@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { UsersAccessPage } from "@/features/users-access/pages/UsersAccessPage";
 import { getCurrentUserId, getUsers } from "@/features/users-access/service/users.service";
 import { USER_ROLES, type UserFilters, type UserRole } from "@/features/users-access/models/user";
+import { requireSuperAdmin } from "@/shared/auth/viewer";
 
 export const metadata: Metadata = { title: "Users & access" };
 
@@ -22,6 +23,7 @@ function parseFilters(params: SearchParams): UserFilters {
 }
 
 export default async function Page({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  await requireSuperAdmin();
   const filters = parseFilters(await searchParams);
   const [list, currentUserId] = await Promise.all([getUsers(filters), getCurrentUserId()]);
   return <UsersAccessPage list={list} filters={filters} currentUserId={currentUserId} />;

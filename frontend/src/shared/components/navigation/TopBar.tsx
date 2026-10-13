@@ -4,10 +4,13 @@ import { signOut } from "@/features/auth/actions";
 
 export function TopBar({
   userLabel,
+  workspaceLabel = "Technology Department workspace",
   nav,
 }: {
   /** Signed-in member shown as a pill (e.g. "Bùi Hoàng Nam · Member"); admins show "EBMB". */
   userLabel?: string;
+  /** Text next to the pills: the department a department admin works in, or "All departments". */
+  workspaceLabel?: string;
   nav?: React.ComponentProps<typeof MobileNav>;
 }) {
   return (
@@ -18,9 +21,8 @@ export function TopBar({
       </span>
       <div className="flex-1" />
       <span className="hidden text-[13px] font-medium text-muted sm:inline">
-        Dept Tech workspace
+        {workspaceLabel}
       </span>
-      <Pill>EN / VI</Pill>
       <Pill tone="accent">{userLabel ?? "EBMB"}</Pill>
       <form action={signOut}>
         <button

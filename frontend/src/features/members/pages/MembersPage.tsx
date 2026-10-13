@@ -18,10 +18,13 @@ export function MembersPage({
   list,
   filters,
   semesters,
+  canImport,
 }: {
   list: MemberListPage;
   filters: MemberFilters;
   semesters: SemesterOption[];
+  /** Only the super-admin imports a roster CSV. */
+  canImport: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -91,7 +94,7 @@ export function MembersPage({
             onQueryChange={setSearch}
             status={filters.status}
             onStatusChange={(value) => navigate({ status: value as MemberFilters["status"] })}
-            onImport={() => setImporting(true)}
+            onImport={canImport ? () => setImporting(true) : undefined}
             onAdd={() => setAdding(true)}
           />
 

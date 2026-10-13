@@ -19,6 +19,7 @@ const SLOT_TILES: Record<ResourceSlot, { label: string; set: string; add: string
   RESEARCH_TEMPLATE: { label: "Research template", set: "View template", add: "Upload template" },
   GITHUB_REPO: { label: "GitHub repo", set: "Open repo link", add: "Add repo link" },
   DEMO_GUIDE: { label: "Demo video guide", set: "Open guide link", add: "Add guide link" },
+  FINAL_PACKAGE: { label: "Final package", set: "View package (Excel)", add: "Waiting for the team" },
 };
 
 function SlotTile({
@@ -99,9 +100,11 @@ export function ProjectRow({
           <Button variant="link" size="sm" className="w-full sm:w-[190px]" onClick={onEditMembers}>
             Add / remove members
           </Button>
-          <Button variant="link" size="sm" className="w-full sm:w-auto" onClick={onOpenGithub}>
-            GitHub activity
-          </Button>
+          {project.type !== "event" && project.type !== "content" && (
+            <Button variant="link" size="sm" className="w-full sm:w-auto" onClick={onOpenGithub}>
+              GitHub activity
+            </Button>
+          )}
           <Button variant="danger-outline" size="sm" className="w-full sm:w-auto" onClick={onArchive}>
             Archive project
           </Button>
@@ -110,6 +113,22 @@ export function ProjectRow({
 
       <div className="h-px w-full shrink-0 bg-line xl:h-auto xl:w-px" />
 
+      {project.type === "event" || project.type === "content" ? (
+        <div className="grid min-w-0 flex-1 grid-cols-1 gap-[11px] min-[480px]:grid-cols-2 xl:grid-cols-3">
+          <SlotTile project={project} slot="FIRST_MEETING" onOpen={onEditResource} />
+          <SlotTile project={project} slot="FINAL_PACKAGE" onOpen={onEditResource} />
+          {project.kickoffAt ? (
+            <ResourceTile
+              label="Kickstart"
+              state="set"
+              value={formatKickoff(project.kickoffAt)}
+              onOpen={onEdit}
+            />
+          ) : (
+            <ResourceTile label="Kickstart" state="missing" value="Set kickstart date" onOpen={onEdit} />
+          )}
+        </div>
+      ) : (
       <div className="grid min-w-0 flex-1 grid-cols-1 gap-[11px] min-[480px]:grid-cols-2 xl:grid-cols-3">
         <SlotTile project={project} slot="SRS" onOpen={onEditResource} />
         <SlotTile project={project} slot="FIRST_MEETING" onOpen={onEditResource} />
@@ -146,6 +165,7 @@ export function ProjectRow({
         <SlotTile project={project} slot="GITHUB_REPO" onOpen={onEditResource} />
         <SlotTile project={project} slot="DEMO_GUIDE" onOpen={onEditResource} />
       </div>
+      )}
     </article>
   );
 }

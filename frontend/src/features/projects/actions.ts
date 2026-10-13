@@ -14,6 +14,7 @@ import type {
   RosterCandidate,
 } from "@/features/projects/models/project";
 import { FILE_EXTENSIONS } from "@/features/projects/models/project";
+import { departmentOfType } from "@/config/departments";
 import { describeExtensions } from "@/features/projects/utils/validation";
 import {
   fetchArchiveImpact,
@@ -52,6 +53,8 @@ export async function createProject(semesterId: string, input: ProjectInput): Pr
         type: toBackendType(input.type),
         status: toBackendStatus(input.status),
         description: input.description || undefined,
+        // A department admin's own department wins on the server; the super-admin's comes from the type.
+        department_code: departmentOfType(input.type),
       },
     });
     revalidatePath(PROJECTS_PATH);

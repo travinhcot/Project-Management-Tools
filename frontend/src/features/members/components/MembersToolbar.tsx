@@ -19,7 +19,8 @@ export function MembersToolbar({
   onQueryChange: (value: string) => void;
   status: string;
   onStatusChange: (value: string) => void;
-  onImport: () => void;
+  /** Omitted when the signed-in admin cannot import (department admins). */
+  onImport?: () => void;
   onAdd: () => void;
 }) {
   return (
@@ -51,9 +52,11 @@ export function MembersToolbar({
       >
         Add member
       </Button>
-      <Button onClick={onImport} className="h-11 w-full sm:w-[160px]">
-        Import roster
-      </Button>
+      {onImport && (
+        <Button onClick={onImport} className="h-11 w-full sm:w-[160px]">
+          Import roster
+        </Button>
+      )}
     </div>
   );
 }

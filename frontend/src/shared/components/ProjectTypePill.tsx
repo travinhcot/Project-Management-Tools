@@ -5,6 +5,8 @@ export const projectTypeMeta = {
   software: { label: "Software", icon: "⌘", tone: "accent", bar: "bg-primary" },
   hardware: { label: "Hardware", icon: "▦", tone: "cyan", bar: "bg-cyan" },
   research: { label: "Research", icon: "◈", tone: "violet", bar: "bg-violet" },
+  event: { label: "Event", icon: "◷", tone: "amber", bar: "bg-amber" },
+  content: { label: "Content series", icon: "▤", tone: "success", bar: "bg-success" },
 } as const;
 
 export function ProjectTypePill({

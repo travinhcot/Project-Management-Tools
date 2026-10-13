@@ -5,6 +5,7 @@ import {
   getAuditFilterOptions,
 } from "@/features/audit-log/service/audit-log.service";
 import type { AuditFilters } from "@/features/audit-log/models/audit-event";
+import { requireSuperAdmin } from "@/shared/auth/viewer";
 
 export const metadata: Metadata = { title: "Audit log" };
 
@@ -30,6 +31,7 @@ function parseFilters(params: SearchParams): AuditFilters {
 }
 
 export default async function Page({ searchParams }: { searchParams: Promise<SearchParams> }) {
+  await requireSuperAdmin();
   const filters = parseFilters(await searchParams);
   const [list, options] = await Promise.all([getAuditEvents(filters), getAuditFilterOptions()]);
   return <AuditLogPage list={list} filters={filters} options={options} />;

@@ -21,12 +21,7 @@ import {
   type SemesterSummary,
 } from "@/features/projects/models/project";
 import { projectTypeMeta } from "@/shared/components/ProjectTypePill";
-import { PROJECT_TYPES, type ProjectType } from "@/shared/models/project";
-
-const TYPES = PROJECT_TYPES.map((value) => ({
-  value,
-  label: projectTypeMeta[value].label,
-}));
+import type { ProjectType } from "@/shared/models/project";
 
 const STATUS_OPTIONS = PROJECT_STATUSES.map((value) => ({
   value,
@@ -35,6 +30,8 @@ const STATUS_OPTIONS = PROJECT_STATUSES.map((value) => ({
 
 type Props = {
   semester: SemesterSummary;
+  /** Types this admin can pick: their department's, or all for the super-admin. */
+  allowedTypes: readonly ProjectType[];
   onClose: () => void;
   /** `changes` holds only the edited fields; `loadedAt` is the updated_at the form was loaded from. */
   onSubmit: (
@@ -48,11 +45,15 @@ type Props = {
 );
 
 export function ProjectFormDrawer(props: Props) {
-  const { semester, onClose, onSubmit } = props;
+  const { semester, allowedTypes, onClose, onSubmit } = props;
   const editing = props.mode === "edit" ? props.project : null;
+  const typeOptions = allowedTypes.map((value) => ({
+    value,
+    label: projectTypeMeta[value].label,
+  }));
 
   const [name, setName] = useState(editing?.name ?? "");
-  const [type, setType] = useState<ProjectType>(editing?.type ?? "software");
+  const [type, setType] = useState<ProjectType>(editing?.type ?? allowedTypes[0] ?? "software");
   const [status, setStatus] = useState<ProjectStatus>(editing?.status ?? "planning");
   const [description, setDescription] = useState(editing?.description ?? "");
   const [loadedAt, setLoadedAt] = useState(editing?.updatedAt ?? "");
@@ -160,7 +161,7 @@ export function ProjectFormDrawer(props: Props) {
           }
         >
           <div role="radiogroup" aria-label="Type" className="flex flex-wrap gap-2">
-            {TYPES.map((option) => {
+            {typeOptions.map((option) => {
               const selected = type === option.value;
               return (
                 <button
@@ -222,9 +223,9 @@ export function ProjectFormDrawer(props: Props) {
 
         {!editing && (
           <p className="rounded-[10px] bg-accent-soft p-3 text-xs text-info-text">
-            After creating, add the SRS (PDF) and first meeting link. Hardware
-            projects also need a BOM; research projects need a research
-            template.
+            {type === "event" || type === "content"
+              ? "After creating, add the first meeting link and assign the team. Members submit the final package (Excel) from their project page."
+              : "After creating, add the SRS (PDF) and first meeting link. Hardware projects also need a BOM; research projects need a research template."}
           </p>
         )}
 

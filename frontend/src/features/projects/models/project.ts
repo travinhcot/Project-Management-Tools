@@ -25,11 +25,12 @@ export const RESOURCE_SLOTS = [
   "RESEARCH_TEMPLATE",
   "GITHUB_REPO",
   "DEMO_GUIDE",
+  "FINAL_PACKAGE",
 ] as const;
 export type ResourceSlot = (typeof RESOURCE_SLOTS)[number];
 
 /** Slots that take an uploaded file (BOM also takes a link). */
-export type FileSlotName = "SRS" | "BOM" | "RESEARCH_TEMPLATE";
+export type FileSlotName = "SRS" | "BOM" | "RESEARCH_TEMPLATE" | "FINAL_PACKAGE";
 /** Slots that take an https link. */
 export type LinkSlotName = "FIRST_MEETING" | "BOM" | "GITHUB_REPO" | "DEMO_GUIDE";
 
@@ -77,6 +78,8 @@ export interface ProjectResources {
   researchTemplate: ResourceSource | null;
   githubRepo: ResourceSource | null;
   demoGuide: ResourceSource | null;
+  /** Event and content projects only: the Excel package the team submitted. */
+  finalPackage: ResourceSource | null;
 }
 
 export interface ProjectArchiveImpact {
@@ -130,6 +133,7 @@ export const FILE_EXTENSIONS: Record<FileSlotName, readonly string[]> = {
   SRS: ["pdf"],
   BOM: ["xlsx", "pdf"],
   RESEARCH_TEMPLATE: ["docx", "pdf"],
+  FINAL_PACKAGE: ["xlsx"],
 };
 
 export type MemberRole = "LEADER" | "MEMBER";

@@ -12,7 +12,7 @@ export async function updateUserAccess(id: string, change: AccessChange): Promis
   try {
     await backendFetch(`/api/admin/users/${id}`, {
       method: "PATCH",
-      body: { role: change.role, is_active: change.isActive },
+      body: { role: change.role, department_code: change.departmentCode, is_active: change.isActive },
     });
     return { ok: true };
   } catch (error) {

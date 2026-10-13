@@ -2,7 +2,13 @@ import Link from "next/link";
 import { Pill } from "@/shared/components/Pill";
 import type { DashboardWarning } from "@/features/overview/models/dashboard";
 
-export function AttentionCard({ warnings }: { warnings: DashboardWarning[] }) {
+export function AttentionCard({
+  warnings,
+  marcom = false,
+}: {
+  warnings: DashboardWarning[];
+  marcom?: boolean;
+}) {
   return (
     <section className="flex flex-col gap-3 rounded-2xl bg-surface shadow-card p-5">
       <div className="flex h-7 items-center justify-between">
@@ -12,7 +18,7 @@ export function AttentionCard({ warnings }: { warnings: DashboardWarning[] }) {
         </Pill>
       </div>
       <p className="text-[13px] text-muted">
-        Resolve these before the next project kick-off.
+        {marcom ? "Resolve these before the next content deadline." : "Resolve these before the next project kick-off."}
       </p>
       {warnings.map((warning) => (
         <div
