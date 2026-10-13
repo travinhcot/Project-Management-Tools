@@ -49,6 +49,60 @@
   background-image: linear-gradient(160deg, #116af8 0%, #20bced 71.4%);
 }
 
+/* Landing page motion */
+@keyframes nct-rise {
+  from { opacity: 0; transform: translateY(28px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes nct-fade-down {
+  from { opacity: 0; transform: translateY(-16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes nct-bar {
+  from { opacity: 0; transform: scaleX(0); }
+  to { opacity: 1; transform: scaleX(1); }
+}
+@keyframes nct-glow {
+  0%, 100% { opacity: 0.75; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.08); }
+}
+.nct-rise { opacity: 0; animation: nct-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.nct-fade-down { animation: nct-fade-down 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.8s both; }
+.nct-bar { opacity: 0; animation: nct-bar 1s cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.nct-glow img { animation: nct-glow 9s ease-in-out infinite; }
+@keyframes nct-splash {
+  0%, 60% { opacity: 1; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
+}
+@keyframes nct-splash-logo {
+  0% { opacity: 0; transform: scale(0.7) rotate(0deg); }
+  20% { opacity: 1; }
+  100% { opacity: 1; transform: scale(1) rotate(720deg); }
+}
+.nct-splash { animation: nct-splash 1.6s ease-in-out forwards; }
+.nct-splash-logo { animation: nct-splash-logo 1.2s cubic-bezier(0.45, 0, 0.25, 1) both; }
+@keyframes nct-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes nct-loader-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.nct-spin { animation: nct-spin 1.2s cubic-bezier(0.45, 0, 0.25, 1) infinite; }
+.nct-loader-in { animation: nct-loader-in 0.3s ease-out both; }
+.nct-reveal {
+  opacity: 0;
+  transform: translateY(32px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1), transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.nct-reveal-in { opacity: 1; transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .nct-rise, .nct-fade-down, .nct-bar, .nct-reveal { opacity: 1; transform: none; animation: none; transition: none; }
+  .nct-glow img { animation: none; }
+  .nct-splash { display: none; }
+  .nct-spin { animation: none; }
+}
+
 body {
   background: var(--color-canvas);
   color: var(--color-ink);

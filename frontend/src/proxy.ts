@@ -100,6 +100,11 @@ export async function proxy(request: NextRequest) {
   };
 
   const accessToken = request.cookies.get(ACCESS_COOKIE)?.value;
+  // The landing page at "/" is public; signed-in visitors skip it and go to their own area.
+  if (request.nextUrl.pathname === "/") {
+    if (!accessToken && !request.cookies.get(REFRESH_COOKIE)?.value) return NextResponse.next();
+    return toOwnArea();
+  }
   if (accessToken) {
     const live = await fetchLiveRole(accessToken);
     if (live.status !== "rejected") {
