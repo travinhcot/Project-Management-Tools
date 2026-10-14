@@ -74,7 +74,7 @@ export function ImportDropzone({
           aria-label="Upload roster CSV"
           disabled={busy}
           onClick={() => inputRef.current?.click()}
-          className="flex size-14 items-center justify-center rounded-full bg-accent-soft text-accent transition-colors hover:bg-primary hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
+          className="flex size-14 items-center justify-center rounded-full bg-accent-soft text-accent transition-colors hover:bg-primary hover:text-on-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50"
         >
           <UploadIcon />
         </button>

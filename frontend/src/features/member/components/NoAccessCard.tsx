@@ -39,7 +39,7 @@ export function NoAccessCard({
           {contactEmail && (
             <a
               href={`mailto:${contactEmail}?subject=${encodeURIComponent("Roster access request")}`}
-              className="inline-flex items-center justify-center rounded-lg bg-primary px-[18px] py-[11px] text-[13px] font-semibold text-white hover:bg-primary/90"
+              className="inline-flex items-center justify-center rounded-lg bg-primary px-[18px] py-[11px] text-[13px] font-semibold text-on-primary hover:bg-primary/90"
             >
               Contact EBMB
             </a>

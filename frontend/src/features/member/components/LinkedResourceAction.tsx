@@ -26,7 +26,7 @@ export function LinkedResourceDownload({ id }: { id: string }) {
         type="button"
         onClick={download}
         disabled={busy}
-        className="whitespace-nowrap rounded-lg bg-primary px-4 py-[9px] text-[13px] font-semibold text-white hover:bg-primary/90 disabled:opacity-50"
+        className="whitespace-nowrap rounded-lg bg-primary px-4 py-[9px] text-[13px] font-semibold text-on-primary hover:bg-primary/90 disabled:opacity-50"
       >
         {busy ? "Preparing…" : "Download"}
       </button>

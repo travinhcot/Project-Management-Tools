@@ -99,7 +99,7 @@ export function FinalPackageCard({
           type="button"
           onClick={submit}
           disabled={!file || pending}
-          className="rounded-lg bg-primary px-4 py-[9px] text-[13px] font-semibold text-white hover:bg-primary/90 disabled:opacity-50"
+          className="rounded-lg bg-primary px-4 py-[9px] text-[13px] font-semibold text-on-primary hover:bg-primary/90 disabled:opacity-50"
         >
           {pending ? "Submitting…" : submitted ? "Replace package" : "Submit package"}
         </button>

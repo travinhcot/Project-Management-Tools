@@ -117,7 +117,7 @@ export function ImportReview({
                 aria-pressed={selected}
                 onClick={() => chooseFilter(item.value)}
                 className={`inline-flex h-[26px] items-center rounded-full px-2.5 text-xs font-semibold ${
-                  selected ? "bg-ink text-white" : "bg-chrome text-muted hover:bg-line/60"
+                  selected ? "bg-accent text-on-primary" : "bg-chrome text-muted hover:bg-line/60"
                 }`}
               >
                 {item.label}

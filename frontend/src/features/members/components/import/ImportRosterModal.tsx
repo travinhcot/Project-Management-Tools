@@ -35,7 +35,7 @@ function Stepper({ step }: { step: 1 | 2 }) {
                 done
                   ? "bg-success-soft text-success"
                   : active
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-on-primary"
                     : "bg-chrome text-muted"
               }`}
             >

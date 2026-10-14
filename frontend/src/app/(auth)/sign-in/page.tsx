@@ -20,7 +20,8 @@ export default async function Page({
     <div className="flex min-h-screen flex-col bg-canvas">
       <LogoLoader once />
       <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line bg-topbar px-4 py-4 sm:px-[31px] sm:py-[22px]">
-        <span className="whitespace-pre-wrap text-base font-bold uppercase text-ink sm:text-lg">
+        <span className="flex items-center gap-2.5 whitespace-pre-wrap text-base font-bold uppercase text-ink sm:text-lg">
+          <img src="/landing/logo.png" alt="" className="h-8 w-auto object-contain" />
           Project Management
         </span>
         <Link

@@ -315,7 +315,7 @@ export function DepartmentResourcesPage({
 
   const tabClass = (active: boolean) =>
     `inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[13px] font-semibold ${
-      active ? "bg-primary text-white" : "border border-line bg-surface text-ink hover:bg-chrome"
+      active ? "bg-primary text-on-primary" : "border border-line bg-surface text-ink hover:bg-chrome"
     }`;
 
   return (
@@ -368,7 +368,7 @@ export function DepartmentResourcesPage({
               + Add link
             </Button>
             <Button
-              className="h-11 flex-1 bg-gradient-to-br from-primary to-[#1a8bf2] sm:w-[180px] sm:flex-none"
+              className="h-11 flex-1 bg-gradient-to-br from-primary to-[#8cedff] sm:w-[180px] sm:flex-none"
               onClick={() => setDrawer({ kind: "file" })}
             >
               ⤒&nbsp;&nbsp;Upload resource

@@ -16,7 +16,8 @@ export function TopBar({
   return (
     <header className="flex min-h-[68px] shrink-0 flex-wrap items-center gap-x-5 gap-y-1 border border-line bg-topbar px-4 py-2 sm:px-[30px]">
       <MobileNav {...nav} />
-      <span className="text-base font-bold uppercase text-ink sm:text-lg">
+      <img src="/landing/logo.png" alt="" className="h-8 w-auto object-contain" />
+      <span className="-ml-3 text-base font-bold uppercase text-ink sm:text-lg">
         Project Management
       </span>
       <div className="flex-1" />
