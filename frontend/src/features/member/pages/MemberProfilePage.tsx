@@ -1,5 +1,6 @@
 import { signOut } from "@/features/auth/actions";
 import { MemberPageHeader } from "@/features/member/components/MemberPageHeader";
+import { ProfileNameEditor } from "@/features/member/components/ProfileNameEditor";
 import { getMemberProfile, getMemberStatus } from "@/features/member/service/member.service";
 import { formatDay } from "@/features/member/utils/format";
 import { Pill } from "@/shared/components/Pill";
@@ -52,7 +53,7 @@ export async function MemberProfilePage() {
           </div>
           <div className="h-px bg-line" />
           <dl className="flex flex-col">
-            <Field label="Full name" value={profile.fullName} />
+            <ProfileNameEditor key={profile.fullName} fullName={profile.fullName} />
             <Field label="Email" value={profile.email} />
             <Field label="Department" value={profile.department ?? "Not set"} />
             <Field label="Hub role" value="Member · no admin permissions" />

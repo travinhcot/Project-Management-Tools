@@ -6,6 +6,7 @@ const variants = {
   danger: "bg-danger text-white hover:bg-danger/90",
   "danger-outline":
     "border border-danger-line bg-surface text-danger hover:bg-danger-soft",
+  success: "bg-success text-white hover:bg-success/90",
   link: "border border-link-line bg-surface text-accent hover:bg-accent-soft",
   /** Borderless text action, e.g. "Edit" inside a table row. */
   ghost: "text-accent hover:bg-accent-soft",

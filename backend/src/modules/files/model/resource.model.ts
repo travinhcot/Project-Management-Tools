@@ -57,6 +57,8 @@ export const ALLOWED_FILE_TYPES: Record<
   RESEARCH_TEMPLATE: { docx: DOCX, pdf: PDF },
   /** Excel only: the package is a workbook. Macro-enabled files are refused by contentProblem. */
   FINAL_PACKAGE: { xlsx: XLSX },
+  /** Staff documentation: a workbook or a Word file (macro-enabled files are refused by contentProblem). */
+  DOCUMENTATION: { xlsx: XLSX, docx: DOCX },
 };
 
 /** Content types the upload route accepts as a raw body. */

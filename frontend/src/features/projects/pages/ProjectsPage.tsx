@@ -9,6 +9,7 @@ import { Button } from "@/shared/components/Button";
 import { ArchiveProjectDrawer } from "@/features/projects/components/drawers/ArchiveProjectDrawer";
 import { ResourceFileDrawer } from "@/features/projects/components/drawers/ResourceFileDrawer";
 import { GithubActivityDrawer } from "@/features/projects/components/drawers/GithubActivityDrawer";
+import { ProjectDepartmentResourcesDrawer } from "@/features/projects/components/drawers/ProjectDepartmentResourcesDrawer";
 import { ProjectMembersDrawer } from "@/features/projects/components/drawers/ProjectMembersDrawer";
 import { ResourceLinkDrawer } from "@/features/projects/components/drawers/ResourceLinkDrawer";
 import { ProjectFormDrawer } from "@/features/projects/components/drawers/ProjectFormDrawer";
@@ -42,9 +43,16 @@ type DrawerState =
   | { kind: "resource"; id: string; slot: ResourceSlot }
   | { kind: "members"; id: string }
   | { kind: "github"; id: string }
+  | { kind: "departmentResources"; id: string }
   | null;
 
-const FILE_SLOT_NAMES: readonly ResourceSlot[] = ["SRS", "BOM", "RESEARCH_TEMPLATE", "FINAL_PACKAGE"];
+const FILE_SLOT_NAMES: readonly ResourceSlot[] = [
+  "SRS",
+  "BOM",
+  "RESEARCH_TEMPLATE",
+  "FINAL_PACKAGE",
+  "DOCUMENTATION",
+];
 
 const DRAWER_TITLES: Record<ResourceSlot, string> = {
   SRS: "SRS file",
@@ -54,6 +62,7 @@ const DRAWER_TITLES: Record<ResourceSlot, string> = {
   GITHUB_REPO: "GitHub repository",
   DEMO_GUIDE: "Demo video guide",
   FINAL_PACKAGE: "Final package",
+  DOCUMENTATION: "Project documentation",
 };
 
 /** Where each slot's current value sits in the loaded resource details. */
@@ -65,6 +74,7 @@ const RESOURCE_KEY: Record<ResourceSlot, keyof ProjectResources> = {
   GITHUB_REPO: "githubRepo",
   DEMO_GUIDE: "demoGuide",
   FINAL_PACKAGE: "finalPackage",
+  DOCUMENTATION: "documentation",
 };
 
 // Filters live in the URL and the list is fetched by the server component; every action
@@ -74,8 +84,11 @@ export function ProjectsPage({
   filters,
   semesters,
   allowedTypes,
+  linkedCounts,
 }: {
   list: ProjectListPage;
+  /** Library entries linked to each project (by project id); missing means none. */
+  linkedCounts: Record<string, number>;
   filters: ProjectFilters;
   semesters: SemesterOption[];
   /** Project types the signed-in admin works with (their department's, or all). */
@@ -210,6 +223,10 @@ export function ProjectsPage({
                   onEditResource={(slot) => open({ kind: "resource", id: project.id, slot })}
                   onEditMembers={() => open({ kind: "members", id: project.id })}
                   onOpenGithub={() => open({ kind: "github", id: project.id })}
+                  linkedResourceCount={linkedCounts[project.id] ?? 0}
+                  onEditDepartmentResources={() =>
+                    open({ kind: "departmentResources", id: project.id })
+                  }
                   onArchive={() => open({ kind: "archive", id: project.id })}
                 />
               ))}
@@ -294,6 +311,14 @@ export function ProjectsPage({
         <GithubActivityDrawer
           key={selected.id}
           project={selected}
+          onClose={() => setDrawer(null)}
+        />
+      )}
+      {semester && drawer?.kind === "departmentResources" && selected && (
+        <ProjectDepartmentResourcesDrawer
+          key={selected.id}
+          project={selected}
+          semester={semester}
           onClose={() => setDrawer(null)}
         />
       )}

@@ -21,6 +21,25 @@ import {
 } from "../model/department-resource.model.ts";
 
 export const resourceIdParam = (value: unknown) => uuidParam(value, "resource id");
+export const projectIdParam = (value: unknown) => uuidParam(value, "project id");
+
+/** `?ids=a,b,c`: the projects to count linked library entries for (at most 100). */
+export function projectCountsQuery(query: Record<string, unknown>): string[] {
+  const raw = single(query, "ids");
+  if (raw === undefined || raw === "") return [];
+  const ids = raw.split(",");
+  if (ids.length > 100) invalid("ids must list at most 100 projects.");
+  return [...new Set(ids.map((id) => uuidParam(id.trim(), "project id")))];
+}
+
+/** `{ resource_ids: string[] }`: the full list of library entries the project links to (may be empty). */
+export function projectLinksBody(body: unknown): string[] {
+  const input = objectBody(body);
+  rejectUnknownKeys(input, ["resource_ids"], "Only resource_ids can be provided.");
+  const ids = input.resource_ids;
+  if (!Array.isArray(ids) || ids.length > 100) invalid("resource_ids must be a list of at most 100 ids.");
+  return [...new Set(ids.map((id) => uuidParam(id, "resource id")))];
+}
 
 function departmentValue(value: unknown): DepartmentCodeName | null {
   if (value === undefined || value === null) return null;

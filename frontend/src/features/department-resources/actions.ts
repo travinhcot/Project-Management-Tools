@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { backendFetch } from "@/shared/api/backend";
 import { ApiError } from "@/shared/api/errors";
 import type { DepartmentCode } from "@/config/departments";
+import type { DepartmentResource } from "@/features/department-resources/models/department-resource";
+import { mapResource } from "@/features/department-resources/service/department-resources.service";
 import {
   CONTENT_TYPES,
   validateFile,
@@ -128,6 +130,54 @@ export async function createDownload(
     if (error instanceof ApiError) {
       return { ok: false, message: "This file is not available right now. Try again later." };
     }
+    throw error;
+  }
+}
+
+export type ProjectLinksResult =
+  | { ok: true; resources: DepartmentResource[]; linkedIds: string[] }
+  | { ok: false; message: string };
+
+interface ProjectLinksDto {
+  resource_ids: string[];
+  resources: Parameters<typeof mapResource>[0][];
+}
+
+function toLinks(dto: ProjectLinksDto): ProjectLinksResult {
+  return { ok: true, resources: dto.resources.map(mapResource), linkedIds: dto.resource_ids };
+}
+
+/** The project's department library plus the entries the project links to. */
+export async function getProjectDepartmentResources(projectId: string): Promise<ProjectLinksResult> {
+  try {
+    return toLinks(
+      await backendFetch<ProjectLinksDto>(
+        `/api/department-resources/projects/${encodeURIComponent(projectId)}`,
+      ),
+    );
+  } catch (error) {
+    if (error instanceof ApiError) return { ok: false, message: error.message };
+    throw error;
+  }
+}
+
+/** Replaces the whole list of library entries linked to the project (staff only). */
+export async function setProjectDepartmentResources(
+  projectId: string,
+  resourceIds: string[],
+): Promise<ProjectLinksResult> {
+  try {
+    const result = toLinks(
+      await backendFetch<ProjectLinksDto>(
+        `/api/department-resources/projects/${encodeURIComponent(projectId)}`,
+        { method: "PUT", body: { resource_ids: resourceIds } },
+      ),
+    );
+    revalidatePath("/projects");
+    revalidatePath("/member/projects", "layout");
+    return result;
+  } catch (error) {
+    if (error instanceof ApiError) return { ok: false, message: error.message };
     throw error;
   }
 }

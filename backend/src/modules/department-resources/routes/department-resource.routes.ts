@@ -21,6 +21,10 @@ export function createDepartmentResourceRouter(service: DepartmentResourceServic
     next();
   });
   router.get("/", controller.list);
+  // Which library entries a project links to: staff set them, project members read them.
+  router.get("/project-counts", staffOnly, controller.projectLinkCounts);
+  router.get("/projects/:projectId", controller.projectResources);
+  router.put("/projects/:projectId", staffOnly, controller.setProjectResources);
   router.post("/links", staffOnly, controller.createLink);
   router.post("/files", staffOnly, fileBody, controller.upload);
   router.patch("/:resourceId", staffOnly, controller.update);

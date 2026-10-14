@@ -9,6 +9,7 @@ import {
 } from "@/features/projects/models/project";
 import { isProjectType } from "@/shared/models/project";
 import { creatableTypes } from "@/config/departments";
+import { getProjectLinkCounts } from "@/features/department-resources/service/department-resources.service";
 import { getViewer } from "@/shared/auth/viewer";
 
 export const metadata: Metadata = { title: "Projects" };
@@ -38,9 +39,11 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sea
     getSemesterOptions(),
     getViewer(),
   ]);
+  const linkedCounts = await getProjectLinkCounts(list.items.map((project) => project.id));
   return (
     <ProjectsPage
       list={list}
+      linkedCounts={linkedCounts}
       filters={filters}
       semesters={semesters}
       allowedTypes={creatableTypes(viewer)}

@@ -100,13 +100,6 @@ export function LandingPage() {
             <img src="/landing/glow-desktop.svg" alt="" className="size-full" />
           </div>
 
-          <span
-            className="nct-rise relative rounded-full bg-[#6ce7ff]/10 px-[11px] py-[5px] text-xs font-semibold tracking-[0.36px] text-[#6ce7ff]"
-            style={{ animationDelay: "950ms" }}
-          >
-            {"NCT HUB  ·  DEPT TECH CLUB"}
-          </span>
-
           <h1
             className="relative text-[min(36px,8.4vw)] font-extrabold uppercase leading-[1.08] tracking-[-0.36px] md:text-[78px] md:leading-[1.04] md:tracking-[-0.78px]"
             style={{ fontFamily: "var(--font-poppins)" }}

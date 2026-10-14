@@ -8,6 +8,9 @@ import { requireActor } from "../../../shared/request-actor.ts";
 import {
   departmentQuery,
   linkBody,
+  projectCountsQuery,
+  projectIdParam,
+  projectLinksBody,
   resourceIdParam,
   updateBody,
   uploadQuery,
@@ -21,6 +24,32 @@ export function createDepartmentResourceController(service: DepartmentResourceSe
       const actor = requireActor(res.locals);
       const department = departmentQuery(req.query as Record<string, unknown>);
       res.json({ resources: await service.list(actor.userId, department) });
+    },
+    async projectLinkCounts(req: Request, res: Response<unknown, ActorLocals>) {
+      requireActor(res.locals);
+      const ids = projectCountsQuery(req.query as Record<string, unknown>);
+      res.json({ counts: await service.projectLinkCounts(ids) });
+    },
+    async projectResources(
+      req: Request<{ projectId: string }>,
+      res: Response<unknown, ActorLocals>,
+    ) {
+      const actor = requireActor(res.locals);
+      res.json(await service.projectResources(actor.userId, projectIdParam(req.params.projectId)));
+    },
+    async setProjectResources(
+      req: Request<{ projectId: string }>,
+      res: Response<unknown, ActorLocals>,
+    ) {
+      const actor = requireActor(res.locals);
+      res.json(
+        await service.setProjectResources(
+          actor.userId,
+          projectIdParam(req.params.projectId),
+          projectLinksBody(req.body),
+          randomUUID(),
+        ),
+      );
     },
     async createLink(req: Request, res: Response<unknown, ActorLocals>) {
       const actor = requireActor(res.locals);

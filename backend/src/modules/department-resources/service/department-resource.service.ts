@@ -63,6 +63,37 @@ export function createDepartmentResourceService(
       return guarded(() => repository.list(actorId, department));
     },
 
+    /** The project's department library plus which entries the project links to. */
+    projectResources(
+      actorId: string,
+      projectId: string,
+    ): Promise<{ resource_ids: string[]; resources: DepartmentResource[] }> {
+      return guarded(async () => {
+        // The ids call is the access check: it fails for a project the actor may not see.
+        const resource_ids = await repository.projectLinkIds(actorId, projectId);
+        const department = await repository.projectDepartment(projectId);
+        return { resource_ids, resources: await repository.list(actorId, department) };
+      });
+    },
+
+    projectLinkCounts(projectIds: readonly string[]): Promise<Record<string, number>> {
+      return guarded(() => repository.projectLinkCounts(projectIds));
+    },
+
+    setProjectResources(
+      actorId: string,
+      projectId: string,
+      resourceIds: readonly string[],
+      requestId: string,
+    ): Promise<{ resource_ids: string[]; resources: DepartmentResource[] }> {
+      return guarded(async () => {
+        await repository.setProjectLinks({ actorId, projectId, resourceIds, requestId });
+        const resource_ids = await repository.projectLinkIds(actorId, projectId);
+        const department = await repository.projectDepartment(projectId);
+        return { resource_ids, resources: await repository.list(actorId, department) };
+      });
+    },
+
     createLink(
       actorId: string,
       department: DepartmentCodeName | null,

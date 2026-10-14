@@ -44,3 +44,26 @@ export async function getDepartmentResources(
   );
   return resources.map(mapResource);
 }
+
+/** The library entries a project links to (members see only these; the backend checks access). */
+export async function getLinkedDepartmentResources(projectId: string): Promise<DepartmentResource[]> {
+  const { resource_ids, resources } = await backendFetch<{
+    resource_ids: string[];
+    resources: ResourceDto[];
+  }>(`/api/department-resources/projects/${encodeURIComponent(projectId)}`);
+  const linked = new Set(resource_ids);
+  return resources.filter((resource) => linked.has(resource.id)).map(mapResource);
+}
+
+/** Linked library entries per project, for the admin project list. Never fails the page. */
+export async function getProjectLinkCounts(projectIds: string[]): Promise<Record<string, number>> {
+  if (projectIds.length === 0) return {};
+  try {
+    const { counts } = await backendFetch<{ counts: Record<string, number> }>(
+      `/api/department-resources/project-counts?ids=${projectIds.join(",")}`,
+    );
+    return counts;
+  } catch {
+    return {};
+  }
+}

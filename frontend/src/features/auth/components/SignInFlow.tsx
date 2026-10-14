@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useTransition, type FormEvent } from "react";
 import { Button } from "@/shared/components/Button";
-import { LogoLoader } from "@/shared/components/LogoLoader";
 import { Field, TextInput } from "@/shared/components/Field";
 import { requestOtp, verifyOtp } from "@/features/auth/actions";
 import { OTP_LENGTH, OtpInput } from "@/features/auth/components/OtpInput";
@@ -96,7 +95,6 @@ export function SignInFlow({
   if (step === "code") {
     return (
       <form noValidate onSubmit={submitCode} className={cardClass} aria-label="Enter your code">
-        {pending && <LogoLoader label="Signing in" />}
         <h2 className="text-xl font-bold text-ink">Enter your code</h2>
         <p className="break-all text-[13px] text-muted">
           If {email.trim()} is on the roster, a code was sent.
@@ -150,7 +148,6 @@ export function SignInFlow({
 
   return (
     <form noValidate onSubmit={sendCode} className={cardClass} aria-label="Get a sign-in code">
-      {pending && <LogoLoader label="Sending code" />}
       <h2 className="text-center text-xl font-bold text-ink">Get a sign-in code</h2>
       <Field label="School email" htmlFor="sign-in-email" error={error}>
         <TextInput

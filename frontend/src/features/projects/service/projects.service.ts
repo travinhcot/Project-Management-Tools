@@ -104,6 +104,7 @@ export function mapResources(resources: ResourceDto[]): ProjectResources {
     githubRepo: source("GITHUB_REPO"),
     demoGuide: source("DEMO_GUIDE"),
     finalPackage: source("FINAL_PACKAGE"),
+    documentation: source("DOCUMENTATION"),
   };
 }
 

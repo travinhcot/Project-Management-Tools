@@ -72,6 +72,7 @@ function mapProject(dto: ListItemDto): MemberProject {
     name: dto.name,
     type: toType(dto.type),
     status: toStatus(dto.status),
+    semesterId: dto.semester.id,
     semesterName: dto.semester.name,
     leaderName: dto.leader_name,
     memberCount: dto.member_count,
@@ -99,6 +100,17 @@ export const getMemberStatus = cache(async (): Promise<MemberStatus> => {
 export async function getMemberProjects(): Promise<MemberProject[]> {
   const dto = await backendFetch<{ items: ListItemDto[] }>("/api/me/projects");
   return dto.items.map(mapProject);
+}
+
+/** Current-semester projects plus the member's other semesters (empty if the backend hides them). */
+export async function getMemberProjectsAllSemesters(): Promise<{
+  current: MemberProject[];
+  other: MemberProject[];
+}> {
+  const dto = await backendFetch<{ items: ListItemDto[]; past: ListItemDto[] | null }>(
+    "/api/me/projects?include=past",
+  );
+  return { current: dto.items.map(mapProject), other: (dto.past ?? []).map(mapProject) };
 }
 
 export async function getMemberProject(id: string): Promise<MemberProjectDetail> {

@@ -31,6 +31,7 @@ export interface MemberProject {
   name: string;
   type: ProjectType;
   status: ProjectStatus;
+  semesterId: string;
   semesterName: string;
   leaderName: string | null;
   memberCount: number;

@@ -189,6 +189,62 @@ export function createDepartmentResourceRepository(client: SupabaseClient) {
       };
     },
 
+    /** Ids of the library entries a project links to; the function checks the actor may see the project. */
+    async projectLinkIds(actorId: string, projectId: string): Promise<string[]> {
+      const { data, error } = await client.rpc("project_department_resource_ids", {
+        p_actor_id: actorId,
+        p_project_id: projectId,
+      });
+      if (error) throw error;
+      if (!Array.isArray(data)) throw new TypeError("Unexpected database response.");
+      return data.map(String);
+    },
+
+    /** Replaces the project's linked entries (staff only, checked in SQL). */
+    async setProjectLinks(input: {
+      actorId: string;
+      projectId: string;
+      resourceIds: readonly string[];
+      requestId: string;
+    }): Promise<void> {
+      const { error } = await client.rpc("admin_set_project_department_resources", {
+        p_actor_id: input.actorId,
+        p_project_id: input.projectId,
+        p_resource_ids: [...input.resourceIds],
+        p_request_id: input.requestId,
+      });
+      if (error) throw error;
+    },
+
+    /** How many library entries each of the given projects links to (projects with none are omitted). */
+    async projectLinkCounts(projectIds: readonly string[]): Promise<Record<string, number>> {
+      if (projectIds.length === 0) return {};
+      const { data, error } = await client
+        .from("project_department_resources")
+        .select("project_id")
+        .in("project_id", [...projectIds]);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      for (const row of asRows(data)) {
+        const id = String(row.project_id);
+        counts[id] = (counts[id] ?? 0) + 1;
+      }
+      return counts;
+    },
+
+    /** The department that owns a project; its library is the one the project may link to. */
+    async projectDepartment(projectId: string): Promise<DepartmentCodeName> {
+      const { data, error } = await client
+        .from("projects")
+        .select("department:departments(code)")
+        .eq("id", projectId)
+        .maybeSingle();
+      if (error) throw error;
+      const department = (data as { department?: { code?: string } | null } | null)?.department;
+      if (!department?.code) throw new TypeError("Unexpected database response.");
+      return department.code as DepartmentCodeName;
+    },
+
     async listOrphans(olderThanMinutes: number): Promise<{ id: string; bucket_id: string; object_path: string }[]> {
       const { data, error } = await client.rpc("list_orphan_department_uploads", {
         p_older_than_minutes: olderThanMinutes,

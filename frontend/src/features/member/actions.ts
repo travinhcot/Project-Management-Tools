@@ -46,7 +46,25 @@ export async function getProjectTeammates(projectId: string): Promise<TeammatesR
   }
 }
 
-export type SubmitResult = { ok: true } | { ok: false; message: string };
+/** Changes the signed-in user's own display name (PATCH /api/auth/me). */
+export async function updateOwnName(fullName: string): Promise<SubmitResult> {
+  const name = fullName.trim();
+  if (!name || [...name].length > 200) {
+    return { ok: false, message: "Enter a name of 1–200 characters." };
+  }
+  try {
+    await backendFetch("/api/auth/me", { method: "PATCH", body: { full_name: name } });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return { ok: false, message: "Could not save your name. Try again later." };
+    }
+    throw error;
+  }
+  revalidatePath("/member", "layout");
+  return { ok: true };
+}
+
+export type SubmitResult ={ ok: true } | { ok: false; message: string };
 
 const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 const MAX_PACKAGE_BYTES = 10 * 1024 * 1024;

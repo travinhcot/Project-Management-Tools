@@ -69,6 +69,13 @@ const COPY: Record<FileSlotName, SlotCopy> = {
     hint: "Excel (.xlsx) only, up to 10 MB.",
     note: "Members of the team submit this from their project page. Upload one here to submit or replace it for them.",
   },
+  DOCUMENTATION: {
+    noun: "documentation",
+    title: "Project documentation",
+    allowLink: false,
+    hint: "Excel (.xlsx) or Word (.docx), up to 10 MB.",
+    note: "Members of the project can download this from their project page. Uploading a new file replaces the current one.",
+  },
 };
 
 function describe(source: ResourceSource) {
