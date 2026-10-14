@@ -213,7 +213,6 @@ export function ProjectResourceTiles({ project }: { project: MemberProject }) {
         title="Demo video guide"
         emptyHint="Shared after the kickstart"
       />
-      <SharedTiles project={project} />
     </div>
   );
 }

@@ -31,7 +31,7 @@ export const RESOURCE_SLOTS = [
   "DEMO_GUIDE",
   /** MARCOM: the Excel package a team submits at the end of an event/content project. */
   "FINAL_PACKAGE",
-  /** Any project: an Excel or Word file of project documentation, uploaded by staff. */
+  /** MARCOM: an Excel or Word file of project documentation, uploaded by staff. */
   "DOCUMENTATION",
 ] as const;
 export type ResourceSlot = (typeof RESOURCE_SLOTS)[number];
@@ -81,7 +81,7 @@ export const SLOT_RULES: Readonly<Record<ResourceSlot, SlotRule>> = {
   GITHUB_REPO: { appliesTo: TECH, requiredFor: [] },
   DEMO_GUIDE: { appliesTo: TECH, requiredFor: [] },
   FINAL_PACKAGE: { appliesTo: MARCOM, requiredFor: [] },
-  DOCUMENTATION: { appliesTo: ALL, requiredFor: [] },
+  DOCUMENTATION: { appliesTo: MARCOM, requiredFor: [] },
 };
 
 export function slotAppliesTo(slot: ResourceSlot, type: ProjectType): boolean {

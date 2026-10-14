@@ -1,9 +1,9 @@
 -- Project documentation and linked department resources. Apply after member-department-scope.schema.sql.
---   1. New slot DOCUMENTATION: one Excel or Word file per project, uploaded or replaced by staff
+--   1. New slot DOCUMENTATION (MARCOM projects: EVENT, CONTENT): one Excel or Word file per project, uploaded or replaced by staff
 --      (ADMIN / DEPT_ADMIN) and downloadable by the project's members. Uses the existing two-phase
 --      upload (admin_begin_file_upload -> finalize_file_upload) and admin_clear_project_resource.
 --      Twin of backend/src/shared/resource-rules.ts.
---   2. project_department_resources: which entries of the department's resource library a project
+--   2. project_department_resources (MARCOM projects only): which entries of the department's resource library a project
 --      links to. Staff set the whole list; staff of the department and the project's members read it.
 -- ALTER-based: safe on a DB with data.
 BEGIN;
@@ -15,7 +15,7 @@ CREATE OR REPLACE FUNCTION public.resource_slot_allowed(p_type text, p_slot text
 RETURNS boolean LANGUAGE sql IMMUTABLE SET search_path = '' AS $$
   SELECT CASE p_slot
     WHEN 'FIRST_MEETING' THEN true
-    WHEN 'DOCUMENTATION' THEN true
+    WHEN 'DOCUMENTATION' THEN p_type IN ('EVENT', 'CONTENT')
     WHEN 'SRS' THEN p_type IN ('SOFTWARE', 'HARDWARE', 'RESEARCH')
     WHEN 'GITHUB_REPO' THEN p_type IN ('SOFTWARE', 'HARDWARE', 'RESEARCH')
     WHEN 'DEMO_GUIDE' THEN p_type IN ('SOFTWARE', 'HARDWARE', 'RESEARCH')
@@ -115,10 +115,13 @@ $$;
 CREATE FUNCTION public.admin_set_project_department_resources(
   p_actor_id uuid, p_project_id uuid, p_resource_ids uuid[], p_request_id text
 ) RETURNS uuid[] LANGUAGE plpgsql VOLATILE SECURITY DEFINER SET search_path = '' AS $$
-DECLARE v_department uuid; v_ids uuid[] := coalesce(p_resource_ids, ARRAY[]::uuid[]);
+DECLARE v_department uuid; v_type text; v_ids uuid[] := coalesce(p_resource_ids, ARRAY[]::uuid[]);
 BEGIN
   PERFORM public.assert_staff_actor(p_actor_id);
-  PERFORM public.files_lock_project(p_project_id);          -- rejects an archived project
+  v_type := public.files_lock_project(p_project_id);        -- rejects an archived project
+  IF v_type NOT IN ('EVENT', 'CONTENT') THEN       -- only MARCOM projects link library entries
+    RAISE EXCEPTION 'RESOURCE_SLOT_NOT_ALLOWED' USING ERRCODE = 'P0001';
+  END IF;
   SELECT department_id INTO v_department FROM public.projects WHERE id = p_project_id;
   PERFORM public.department_scope_check(v_department);
 

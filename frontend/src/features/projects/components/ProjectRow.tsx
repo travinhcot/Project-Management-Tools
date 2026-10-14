@@ -7,6 +7,7 @@ import {
 } from "@/shared/components/ProjectTypePill";
 import { ProjectMemberList } from "@/features/projects/components/ProjectMemberList";
 import { ResourceTile } from "@/features/projects/components/ResourceTile";
+import { formatKickoff } from "@/features/projects/utils/format";
 import { StatusPill } from "@/features/projects/components/StatusPill";
 import type { Project, ResourceSlot } from "@/features/projects/models/project";
 
@@ -191,12 +192,21 @@ export function ProjectRow({
           />
         )}
 
-        <ResourcesStack
-          project={project}
-          linkedResourceCount={linkedResourceCount}
-          onEditResource={onEditResource}
-          onEditDepartmentResources={onEditDepartmentResources}
-        />
+        {project.kickoffAt ? (
+          <ResourceTile
+            label="Kickstart"
+            state="set"
+            value={formatKickoff(project.kickoffAt)}
+            onOpen={onEdit}
+          />
+        ) : (
+          <ResourceTile
+            label="Kickstart"
+            state="missing"
+            value="Set kickstart date"
+            onOpen={onEdit}
+          />
+        )}
 
         <SlotTile project={project} slot="GITHUB_REPO" onOpen={onEditResource} />
         <SlotTile project={project} slot="DEMO_GUIDE" onOpen={onEditResource} />
