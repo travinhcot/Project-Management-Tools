@@ -2,12 +2,12 @@ import type { ResourceService } from "../service/resource.service.ts";
 import type { FileService } from "../service/file.service.ts";
 
 import express, { Router } from "express";
-import { adminOnly } from "../../../shared/admin-only.ts";
+import { staffOnly } from "../../../shared/staff-only.ts";
 import { createFileController } from "../controller/file.controller.ts";
 import { createResourceController } from "../controller/resource.controller.ts";
 import { MAX_FILE_BYTES, UPLOAD_CONTENT_TYPES } from "../model/resource.model.ts";
 
-/** Mounted at /api/admin/projects (after requireAuth + requireRole("ADMIN")). */
+/** Mounted at /api/admin/projects (after requireAuth + requireRole("ADMIN", "DEPT_ADMIN"); department scope in SQL and app.ts). */
 export function createResourceAdminRouter(
   resources: ResourceService,
   files: FileService,
@@ -24,7 +24,7 @@ export function createResourceAdminRouter(
     res.set("Cache-Control", "no-store");
     next();
   });
-  router.use(adminOnly);
+  router.use(staffOnly);
 
   router.get("/:projectId/resources", resourceController.list);
   router.put("/:projectId/resources/:slot", resourceController.setLink);

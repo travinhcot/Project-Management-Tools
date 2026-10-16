@@ -31,8 +31,14 @@ export function createCampaignService(
   repository: EmailRepository,
   options: { appUrl: string; meetingLinks?: MeetingLinkGateway },
 ) {
-  async function requireCampaign(campaignId: string): Promise<Campaign> {
-    const campaign = await guarded(() => repository.findCampaign(campaignId));
+  /** `departmentId` set (a DEPT_ADMIN): a campaign outside it is reported as not found. */
+  async function requireCampaign(
+    campaignId: string,
+    departmentId?: string | null,
+  ): Promise<Campaign> {
+    const campaign = await guarded(() =>
+      repository.findCampaign(campaignId, departmentId),
+    );
     if (!campaign) throw NOT_FOUND;
     return campaign;
   }
@@ -45,22 +51,27 @@ export function createCampaignService(
       return { items: rows, page: query.page, size: query.size, total };
     },
 
-    get: requireCampaign,
+    get: (campaignId: string, departmentId?: string | null) =>
+      requireCampaign(campaignId, departmentId),
 
     async listDeliveries(
       campaignId: string,
       query: DeliveryListQuery,
+      departmentId?: string | null,
     ): Promise<Page<Delivery>> {
-      await requireCampaign(campaignId);
+      await requireCampaign(campaignId, departmentId);
       const { rows, total } = await guarded(() =>
-        repository.listDeliveries(campaignId, query),
+        repository.listDeliveries(campaignId, query, departmentId),
       );
       return { items: rows, page: query.page, size: query.size, total };
     },
 
     /** Renders the campaign's template with a sample recipient (admin preview). */
-    async preview(campaignId: string): Promise<RenderedEmail> {
-      const campaign = await requireCampaign(campaignId);
+    async preview(
+      campaignId: string,
+      departmentId?: string | null,
+    ): Promise<RenderedEmail> {
+      const campaign = await requireCampaign(campaignId, departmentId);
       const meetingUrl =
         campaign.kind === "KICKOFF" && campaign.project_id
           ? await options.meetingLinks

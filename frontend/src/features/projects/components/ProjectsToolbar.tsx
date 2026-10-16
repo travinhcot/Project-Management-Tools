@@ -5,12 +5,12 @@ import {
   PROJECT_STATUSES,
   STATUS_LABELS,
 } from "@/features/projects/models/project";
-import { PROJECT_TYPES } from "@/shared/models/project";
+import type { ProjectType } from "@/shared/models/project";
 
-export const TYPE_FILTER_OPTIONS = [
+export const typeFilterOptions = (types: readonly ProjectType[]) => [
   { value: "all", label: "All types" },
-  ...PROJECT_TYPES.map((type) => ({ value: type, label: projectTypeMeta[type].label })),
-] as const;
+  ...types.map((type) => ({ value: type, label: projectTypeMeta[type].label })),
+];
 
 export const STATUS_FILTER_OPTIONS = [
   { value: "all", label: "Status" },
@@ -28,7 +28,10 @@ export function ProjectsToolbar({
   status,
   onStatusChange,
   onCreate,
+  types,
 }: {
+  /** The project types to offer in the filter. */
+  types: readonly ProjectType[];
   query: string;
   onQueryChange: (value: string) => void;
   type: string;
@@ -56,7 +59,7 @@ export function ProjectsToolbar({
         label="Filter by type"
         value={type}
         onChange={onTypeChange}
-        options={TYPE_FILTER_OPTIONS}
+        options={typeFilterOptions(types)}
         className="h-11 w-full sm:w-[142px]"
       />
       <SelectBox

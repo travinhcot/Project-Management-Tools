@@ -21,7 +21,7 @@ export function Drawer({
   return (
     <div className="fixed inset-0 z-50 flex justify-end">
       <div
-        className="absolute inset-0 bg-ink/30"
+        className="absolute inset-0 bg-black/60"
         aria-hidden="true"
         onClick={onClose}
       />

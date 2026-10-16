@@ -13,7 +13,7 @@ export function StatCard({
   return (
     <div
       className={`flex flex-col gap-3 rounded-2xl p-5 ${
-        featured ? "bg-hero text-white shadow-hero" : "bg-surface shadow-card"
+        featured ? "bg-hero text-on-primary shadow-hero" : "bg-surface shadow-card"
       }`}
     >
       <p className={`text-xs font-medium ${featured ? "opacity-85" : "text-muted"}`}>{label}</p>

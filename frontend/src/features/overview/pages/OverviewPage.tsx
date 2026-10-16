@@ -3,6 +3,7 @@ import { AttentionCard } from "@/features/overview/components/AttentionCard";
 import { ProjectCard } from "@/features/overview/components/ProjectCard";
 import { StatCard } from "@/features/overview/components/StatCard";
 import { SemesterSwitcher } from "@/shared/components/SemesterSwitcher";
+import { getViewer } from "@/shared/auth/viewer";
 import { getDashboard } from "@/features/overview/service/dashboard.service";
 
 export async function OverviewPage({
@@ -11,6 +12,8 @@ export async function OverviewPage({
   searchParams: Promise<{ semester?: string | string[] }>;
 }) {
   const { semester: semesterParam } = await searchParams;
+  const viewer = await getViewer();
+  const marcom = viewer.role === "DEPT_ADMIN" && viewer.departmentCode === "MARCOM";
   const dashboard = await getDashboard(
     typeof semesterParam === "string" ? semesterParam : undefined,
   );
@@ -27,7 +30,9 @@ export async function OverviewPage({
         <div className="flex flex-col gap-1">
           <h1 className="text-2xl font-bold sm:text-[30px] text-ink">Project Management</h1>
           <p className="text-sm text-muted">
-            A clear view of this semester’s people and projects.
+            {marcom
+              ? "A clear view of this semester’s Marcom people, projects and content prep."
+              : "A clear view of this semester’s people and projects."}
           </p>
         </div>
         {semester && (
@@ -65,11 +70,16 @@ export async function OverviewPage({
         <StatCard
           label="Projects"
           value={projects.total}
-          caption={`${projects.software} software · ${projects.hardware} hardware · ${projects.research} research`}
+          caption={
+            (["software", "hardware", "research", "event", "content"] as const)
+              .filter((type) => projects[type] > 0)
+              .map((type) => `${projects[type]} ${type}`)
+              .join(" · ") || "No projects yet"
+          }
         />
       </section>
 
-      {warnings.length > 0 && <AttentionCard warnings={warnings} />}
+      {warnings.length > 0 && <AttentionCard warnings={warnings} marcom={marcom} />}
 
       <div className="flex items-center justify-between pt-3">
         <h2 className="text-xl font-semibold text-ink">

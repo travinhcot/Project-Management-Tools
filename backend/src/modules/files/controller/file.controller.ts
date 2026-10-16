@@ -30,9 +30,37 @@ export function createFileController(service: FileService) {
         );
       }
       const file = await service.upload({
+        as: "ADMIN",
         actorId: actor.userId,
         projectId,
         slot,
+        filename,
+        declaredType: (req.get("content-type") ?? "").split(";")[0].trim().toLowerCase(),
+        bytes: req.body,
+        requestId: randomUUID(),
+      });
+      res.status(201).json({ file });
+    },
+    /** A member submits (or replaces) the final package of a project they are assigned to. */
+    async memberUploadFinalPackage(
+      req: Request<{ projectId: string }>,
+      res: Response<unknown, ActorLocals>,
+    ) {
+      const actor = requireActor(res.locals);
+      const projectId = projectIdParam(req.params.projectId);
+      const filename = uploadFilename(req);
+      if (!Buffer.isBuffer(req.body)) {
+        throw new HttpError(
+          415,
+          "UNSUPPORTED_MEDIA_TYPE",
+          "Send the file as the raw request body with its own Content-Type.",
+        );
+      }
+      const file = await service.upload({
+        as: "MEMBER",
+        actorId: actor.userId,
+        projectId,
+        slot: "FINAL_PACKAGE",
         filename,
         declaredType: (req.get("content-type") ?? "").split(";")[0].trim().toLowerCase(),
         bytes: req.body,

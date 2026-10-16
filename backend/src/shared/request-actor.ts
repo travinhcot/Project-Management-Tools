@@ -1,9 +1,13 @@
+import type { AccountRole } from "./roles.ts";
+
 import { HttpError } from "./http-error.ts";
 
 /** Request-scoped caller, written by the auth middleware. Any module may read it. */
 export interface RequestActor {
   readonly userId: string;
-  readonly role: "ADMIN" | "MEMBER";
+  readonly role: AccountRole;
+  /** Department a DEPT_ADMIN is bound to; null for ADMIN (every department) and MEMBER. */
+  readonly departmentId: string | null;
 }
 
 /** Express res.locals shape for routes that run after requireAuth. */

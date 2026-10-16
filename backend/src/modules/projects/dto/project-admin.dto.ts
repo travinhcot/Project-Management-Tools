@@ -17,7 +17,14 @@ import {
 } from "../../../shared/query-params.ts";
 import { pageOf } from "../../../shared/pagination.ts";
 import { semesterIdParam } from "../common/project-params.ts";
-import { ARCHIVED_FILTERS, PROJECT_STATUSES, PROJECT_TYPES } from "../model/project.model.ts";
+import type { DepartmentCode } from "../model/project.model.ts";
+
+import {
+  ARCHIVED_FILTERS,
+  DEPARTMENT_PROJECT_TYPES,
+  PROJECT_STATUSES,
+  PROJECT_TYPES,
+} from "../model/project.model.ts";
 
 const MAX_NAME_LENGTH = 150;
 const MAX_DESCRIPTION_LENGTH = 2000;
@@ -100,14 +107,32 @@ export function createProjectBody(body: unknown): ProjectCreate {
   const input = objectBody(body);
   rejectUnknownKeys(
     input,
-    ["semester_id", "name", "type", "description", "status"],
-    "Only semester_id, name, type, description and status can be provided.",
+    ["semester_id", "name", "type", "description", "status", "department_code"],
+    "Only semester_id, name, type, description, status and department_code can be provided.",
   );
   if (input.semester_id === undefined) invalid("semester_id is required.");
+  let department_code: DepartmentCode | undefined;
+  if (input.department_code !== undefined) {
+    if (
+      typeof input.department_code !== "string" ||
+      !(input.department_code in DEPARTMENT_PROJECT_TYPES)
+    ) {
+      invalid("department_code must be TECH, MARCOM or HR.");
+    }
+    department_code = input.department_code as DepartmentCode;
+  }
+  const type = typeValue(input.type);
+  if (
+    department_code &&
+    !(DEPARTMENT_PROJECT_TYPES[department_code] as readonly string[]).includes(type)
+  ) {
+    invalid(`A ${department_code} project cannot have type ${type}.`);
+  }
   return {
+    department_code,
     semester_id: semesterIdParam(input.semester_id),
     name: nameValue(input.name),
-    type: typeValue(input.type),
+    type,
     description:
       input.description === undefined
         ? null

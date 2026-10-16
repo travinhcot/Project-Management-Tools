@@ -7,7 +7,7 @@ import { calendarFilename, calendarHref } from "@/features/member/utils/calendar
 const styles = {
   /** Solid button, e.g. "Download". */
   primary:
-    "rounded-lg bg-primary px-4 py-[9px] text-[13px] font-semibold text-white hover:bg-primary/90",
+    "rounded-lg bg-primary px-4 py-[9px] text-[13px] font-semibold text-on-primary hover:bg-primary/90",
   /** Outlined button, e.g. "Open link". */
   outline:
     "rounded-lg border border-primary bg-surface px-4 py-[9px] text-[13px] font-semibold text-accent hover:bg-accent-soft",

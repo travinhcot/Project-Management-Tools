@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AddToCalendar, ExternalLink, FileDownload } from "@/features/member/components/ResourceAction";
 import type { MemberProject, MemberResource, ResourceSlot } from "@/features/member/models/member";
 import { displayUrl, formatDayTime, formatSize } from "@/features/member/utils/format";
@@ -14,6 +15,7 @@ function Tile({
   line,
   strong,
   muted,
+  compact,
   children,
 }: {
   title: string;
@@ -21,10 +23,14 @@ function Tile({
   strong?: boolean;
   /** Dim the text of a tile that has nothing to show. */
   muted?: boolean;
+  /** Half-height tile, for two tiles stacked in one grid cell. */
+  compact?: boolean;
   children?: React.ReactNode;
 }) {
   return (
-    <div className="flex min-w-0 sm:min-h-[142px] flex-col items-start gap-3 rounded-lg bg-chrome p-3">
+    <div
+      className={`flex min-w-0 flex-col items-start rounded-lg bg-chrome p-3 ${compact ? "min-h-[64px] gap-1.5" : "gap-3 sm:min-h-[142px]"}`}
+    >
       <p className="text-[11px] font-semibold text-muted">{title}</p>
       <p
         className={`break-words text-xs ${strong ? "font-semibold" : "font-medium"} ${muted ? "text-muted" : "text-ink"}`}
@@ -44,11 +50,13 @@ function SlotTile({
   slot,
   title,
   emptyHint,
+  compact,
 }: {
   project: MemberProject;
   slot: ResourceSlot;
   title: string;
   emptyHint: string;
+  compact?: boolean;
 }) {
   const resource = findResource(project.resources, slot);
   return (
@@ -63,6 +71,7 @@ function SlotTile({
       }
       strong={Boolean(resource)}
       muted={!resource}
+      compact={compact}
     >
       {resource?.kind === "file" ? (
         <FileDownload projectId={project.id} fileId={resource.fileId} style="text">
@@ -79,12 +88,63 @@ function SlotTile({
   );
 }
 
+
+/** Staff documentation plus a way into the department resources linked to the project. */
+function SharedTiles({ project }: { project: MemberProject }) {
+  return (
+    <div className="flex flex-col gap-[11px]">
+      <Tile compact title="Project resources" line="Department resources for this project" strong>
+        <Link href={`/member/projects/${project.id}`} className="text-[11px] font-medium text-accent hover:underline">
+          View on project page →
+        </Link>
+      </Tile>
+      <SlotTile
+        compact
+        project={project}
+        slot="DOCUMENTATION"
+        title="Project documentation"
+        emptyHint="Your admin will add it"
+      />
+    </div>
+  );
+}
+
 /**
  * The setup tiles of a project row: SRS, first meeting, the type's own file (BOM or research
  * template), kickstart, GitHub repo and demo video guide.
  */
 export function ProjectResourceTiles({ project }: { project: MemberProject }) {
   const meeting = findResource(project.resources, "FIRST_MEETING");
+
+  if (project.type === "event" || project.type === "content") {
+    return (
+      <div className="grid min-w-0 flex-1 grid-cols-1 gap-[11px] min-[480px]:grid-cols-2 sm:grid-cols-3">
+        <Tile
+          title="First meeting"
+          line={project.kickoffAt ? formatDayTime(project.kickoffAt) : "Not scheduled yet"}
+          strong
+          muted={!project.kickoffAt}
+        >
+          {meeting?.kind === "link" ? (
+            <ExternalLink href={meeting.url} style="text">
+              Open meeting link →
+            </ExternalLink>
+          ) : (
+            <p className={hint}>
+              {project.kickoffAt ? "Link not shared yet" : "Your leader will share it"}
+            </p>
+          )}
+        </Tile>
+        <SlotTile
+          project={project}
+          slot="FINAL_PACKAGE"
+          title="Final package"
+          emptyHint="Submit it from the project page"
+        />
+        <SharedTiles project={project} />
+      </div>
+    );
+  }
 
   return (
     <div className="grid min-w-0 flex-1 grid-cols-1 gap-[11px] min-[480px]:grid-cols-2 sm:grid-cols-3">

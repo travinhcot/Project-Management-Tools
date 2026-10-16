@@ -6,7 +6,7 @@ import { Modal } from "@/shared/components/Modal";
 import { commitImport, uploadRosterImport } from "@/features/members/actions";
 import { ImportDropzone } from "@/features/members/components/import/ImportDropzone";
 import { ImportReview } from "@/features/members/components/import/ImportReview";
-import type { ImportSummary } from "@/features/members/models/member";
+import type { ImportProvisioning, ImportSummary } from "@/features/members/models/member";
 import type { SemesterSummary } from "@/features/projects/models/project";
 import { formatKickoff } from "@/features/projects/utils/format";
 import { validateCsvFile } from "@/features/members/utils/roster-import";
@@ -35,7 +35,7 @@ function Stepper({ step }: { step: 1 | 2 }) {
                 done
                   ? "bg-success-soft text-success"
                   : active
-                    ? "bg-primary text-white"
+                    ? "bg-primary text-on-primary"
                     : "bg-chrome text-muted"
               }`}
             >
@@ -63,6 +63,7 @@ export function ImportRosterModal({
   const [uploading, setUploading] = useState(false);
   const [committing, setCommitting] = useState(false);
   const [deactivateMissing, setDeactivateMissing] = useState(false);
+  const [provisioning, setProvisioning] = useState<ImportProvisioning | null>(null);
 
   async function handleFile(file: File) {
     const problem = validateCsvFile(file);
@@ -90,7 +91,14 @@ export function ImportRosterModal({
     setError(undefined);
     try {
       const result = await commitImport(summary.id, deactivateMissing);
-      if (result.ok) return onClose();
+      if (result.ok) {
+        const accounts = result.summary.provisioning;
+        // Only stop on a problem; a clean import just closes.
+        if (accounts && (accounts.error || accounts.skipped + accounts.failed + accounts.remaining > 0)) {
+          return setProvisioning(accounts);
+        }
+        return onClose();
+      }
       setError(result.message);
     } finally {
       setCommitting(false);
@@ -117,7 +125,33 @@ export function ImportRosterModal({
     >
       <Stepper step={summary ? 2 : 1} />
 
-      {summary ? (
+      {provisioning ? (
+        <>
+          <p className="text-[13px] text-ink">
+            {provisioning.error
+              ? "The roster was imported, but accounts could not be created automatically."
+              : `The roster was imported. ${provisioning.linked} ${provisioning.linked === 1 ? "account was" : "accounts were"} created.`}
+          </p>
+          {provisioning.remaining > 0 && (
+            <p className="text-xs text-muted">
+              {provisioning.remaining} more people still need accounts. Ask an operator to run
+              provision:roster.
+            </p>
+          )}
+          {provisioning.failures.length > 0 && (
+            <ul className="max-h-48 list-disc overflow-auto pl-5 text-xs text-muted">
+              {provisioning.failures.map((failure) => (
+                <li key={failure.email}>
+                  {failure.email}: {failure.reason}
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="flex justify-end">
+            <Button onClick={onClose}>Done</Button>
+          </div>
+        </>
+      ) : summary ? (
         <>
           <div className="flex flex-wrap items-center gap-3 rounded-2xl bg-surface shadow-card p-[18px]">
             <div className="flex min-w-0 flex-col gap-0.5">

@@ -88,7 +88,7 @@ export function ArchiveProjectDrawer({
           />
           <span
             aria-hidden="true"
-            className="flex size-[18px] shrink-0 items-center justify-center rounded bg-line text-[11px] font-bold text-transparent peer-checked:bg-primary peer-checked:text-white peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary"
+            className="flex size-[18px] shrink-0 items-center justify-center rounded bg-line text-[11px] font-bold text-transparent peer-checked:bg-primary peer-checked:text-on-primary peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-primary"
           >
             ✓
           </span>

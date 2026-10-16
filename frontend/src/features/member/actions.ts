@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { backendFetch } from "@/shared/api/backend";
 import { ApiError } from "@/shared/api/errors";
 import type { Teammate } from "@/features/member/models/member";
@@ -40,6 +41,65 @@ export async function getProjectTeammates(projectId: string): Promise<TeammatesR
   } catch (error) {
     if (error instanceof ApiError) {
       return { ok: false, message: "Could not load the team. Try again later." };
+    }
+    throw error;
+  }
+}
+
+/** Changes the signed-in user's own display name (PATCH /api/auth/me). */
+export async function updateOwnName(fullName: string): Promise<SubmitResult> {
+  const name = fullName.trim();
+  if (!name || [...name].length > 200) {
+    return { ok: false, message: "Enter a name of 1–200 characters." };
+  }
+  try {
+    await backendFetch("/api/auth/me", { method: "PATCH", body: { full_name: name } });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      return { ok: false, message: "Could not save your name. Try again later." };
+    }
+    throw error;
+  }
+  revalidatePath("/member", "layout");
+  return { ok: true };
+}
+
+export type SubmitResult ={ ok: true } | { ok: false; message: string };
+
+const XLSX_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+const MAX_PACKAGE_BYTES = 10 * 1024 * 1024;
+
+/**
+ * Submits (or replaces) the final package of an event or content project: an Excel workbook.
+ * The backend checks the assignment, the file type and its content; this only fails fast.
+ */
+export async function submitFinalPackage(
+  projectId: string,
+  formData: FormData,
+): Promise<SubmitResult> {
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, message: "Choose an Excel file (.xlsx) to submit." };
+  }
+  if (!file.name.toLowerCase().endsWith(".xlsx")) {
+    return { ok: false, message: "The final package must be an Excel file (.xlsx)." };
+  }
+  if (file.size > MAX_PACKAGE_BYTES) {
+    return { ok: false, message: "The file must be 10 MB or smaller." };
+  }
+  try {
+    await backendFetch(
+      `/api/me/projects/${encodeURIComponent(projectId)}/final-package?filename=${encodeURIComponent(file.name)}`,
+      { method: "POST", rawBody: { data: await file.arrayBuffer(), contentType: XLSX_TYPE } },
+    );
+    revalidatePath(`/member/projects/${projectId}`);
+    revalidatePath("/member/projects");
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      // Unknown project and "not on this team" look the same on purpose.
+      if (error.status === 404) return { ok: false, message: "You cannot submit for this project." };
+      return { ok: false, message: error.message };
     }
     throw error;
   }

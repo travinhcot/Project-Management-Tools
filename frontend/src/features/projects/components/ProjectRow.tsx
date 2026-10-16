@@ -7,9 +7,9 @@ import {
 } from "@/shared/components/ProjectTypePill";
 import { ProjectMemberList } from "@/features/projects/components/ProjectMemberList";
 import { ResourceTile } from "@/features/projects/components/ResourceTile";
+import { formatKickoff } from "@/features/projects/utils/format";
 import { StatusPill } from "@/features/projects/components/StatusPill";
 import type { Project, ResourceSlot } from "@/features/projects/models/project";
-import { formatKickoff } from "@/features/projects/utils/format";
 
 /** Tile wording per slot. Which slots a project shows comes from the backend's resource summary. */
 const SLOT_TILES: Record<ResourceSlot, { label: string; set: string; add: string }> = {
@@ -19,6 +19,12 @@ const SLOT_TILES: Record<ResourceSlot, { label: string; set: string; add: string
   RESEARCH_TEMPLATE: { label: "Research template", set: "View template", add: "Upload template" },
   GITHUB_REPO: { label: "GitHub repo", set: "Open repo link", add: "Add repo link" },
   DEMO_GUIDE: { label: "Demo video guide", set: "Open guide link", add: "Add guide link" },
+  FINAL_PACKAGE: { label: "Final package", set: "View package (Excel)", add: "Waiting for the team" },
+  DOCUMENTATION: {
+    label: "Project documentation",
+    set: "View documentation",
+    add: "Upload Excel / Word file",
+  },
 };
 
 function SlotTile({
@@ -45,17 +51,59 @@ function SlotTile({
   );
 }
 
+/** "Add project resources" (links the department library) with the documentation upload below it. */
+function ResourcesStack({
+  project,
+  linkedResourceCount,
+  onEditResource,
+  onEditDepartmentResources,
+}: {
+  project: Project;
+  linkedResourceCount: number;
+  onEditResource: (slot: ResourceSlot) => void;
+  onEditDepartmentResources: () => void;
+}) {
+  const { label, set, add } = SLOT_TILES.DOCUMENTATION;
+  const hasDocumentation = project.resources.present.includes("DOCUMENTATION");
+  return (
+    <div className="flex flex-col gap-[11px]">
+      <ResourceTile
+        compact
+        label="Project resources"
+        state={linkedResourceCount > 0 ? "set" : "empty"}
+        value={
+          linkedResourceCount > 0
+            ? `${linkedResourceCount} ${linkedResourceCount === 1 ? "resource" : "resources"} linked`
+            : "Add project resources"
+        }
+        onOpen={onEditDepartmentResources}
+      />
+      <ResourceTile
+        compact
+        label={label}
+        state={hasDocumentation ? "set" : "empty"}
+        value={hasDocumentation ? set : add}
+        onOpen={() => onEditResource("DOCUMENTATION")}
+      />
+    </div>
+  );
+}
+
 export function ProjectRow({
   project,
   onEdit,
   onEditResource,
   onEditMembers,
   onOpenGithub,
+  linkedResourceCount,
+  onEditDepartmentResources,
   onArchive,
 }: {
   project: Project;
   onEdit: () => void;
   onEditResource: (slot: ResourceSlot) => void;
+  linkedResourceCount: number;
+  onEditDepartmentResources: () => void;
   onEditMembers: () => void;
   onOpenGithub: () => void;
   onArchive: () => void;
@@ -99,8 +147,13 @@ export function ProjectRow({
           <Button variant="link" size="sm" className="w-full sm:w-[190px]" onClick={onEditMembers}>
             Add / remove members
           </Button>
-          <Button variant="link" size="sm" className="w-full sm:w-auto" onClick={onOpenGithub}>
-            GitHub activity
+          {project.type !== "event" && project.type !== "content" && (
+            <Button variant="link" size="sm" className="w-full sm:w-auto" onClick={onOpenGithub}>
+              GitHub activity
+            </Button>
+          )}
+          <Button variant="success" size="sm" className="w-full rounded-full sm:w-auto" onClick={onEdit}>
+            Edit
           </Button>
           <Button variant="danger-outline" size="sm" className="w-full sm:w-auto" onClick={onArchive}>
             Archive project
@@ -110,6 +163,18 @@ export function ProjectRow({
 
       <div className="h-px w-full shrink-0 bg-line xl:h-auto xl:w-px" />
 
+      {project.type === "event" || project.type === "content" ? (
+        <div className="grid min-w-0 flex-1 grid-cols-1 gap-[11px] min-[480px]:grid-cols-2 xl:grid-cols-3">
+          <SlotTile project={project} slot="FIRST_MEETING" onOpen={onEditResource} />
+          <SlotTile project={project} slot="FINAL_PACKAGE" onOpen={onEditResource} />
+          <ResourcesStack
+            project={project}
+            linkedResourceCount={linkedResourceCount}
+            onEditResource={onEditResource}
+            onEditDepartmentResources={onEditDepartmentResources}
+          />
+        </div>
+      ) : (
       <div className="grid min-w-0 flex-1 grid-cols-1 gap-[11px] min-[480px]:grid-cols-2 xl:grid-cols-3">
         <SlotTile project={project} slot="SRS" onOpen={onEditResource} />
         <SlotTile project={project} slot="FIRST_MEETING" onOpen={onEditResource} />
@@ -146,6 +211,7 @@ export function ProjectRow({
         <SlotTile project={project} slot="GITHUB_REPO" onOpen={onEditResource} />
         <SlotTile project={project} slot="DEMO_GUIDE" onOpen={onEditResource} />
       </div>
+      )}
     </article>
   );
 }

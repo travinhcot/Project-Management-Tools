@@ -46,12 +46,15 @@ export function createRosterImportRepository(client: SupabaseClient) {
       semesterId: string,
       page: number,
       size: number,
+      startedBy?: string,
     ): Promise<{ rows: RosterImportListItem[]; total: number }> {
       const from = (page - 1) * size;
-      const { data, error, count } = await client
+      let query = client
         .from("roster_imports")
         .select(listColumns, { count: "exact" })
-        .eq("semester_id", semesterId)
+        .eq("semester_id", semesterId);
+      if (startedBy) query = query.eq("initiated_by_user_id", startedBy);
+      const { data, error, count } = await query
         .order("created_at", { ascending: false })
         .order("id")
         .range(from, from + size - 1);

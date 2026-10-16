@@ -15,7 +15,14 @@ interface DashboardDto {
   empty: boolean;
   metrics: {
     roster: { active: number };
-    projects: { software: number; hardware: number; research?: number; total: number };
+    projects: {
+      software: number;
+      hardware: number;
+      research?: number;
+      event?: number;
+      content?: number;
+      total: number;
+    };
   } | null;
   warnings: {
     code: string;
@@ -32,7 +39,7 @@ interface ProjectDto {
   id: string;
   name: string;
   description: string | null;
-  type: "SOFTWARE" | "HARDWARE" | "RESEARCH";
+  type: "SOFTWARE" | "HARDWARE" | "RESEARCH" | "EVENT" | "CONTENT";
   member_count: number;
   kickoff: { scheduled_at: string | null } | null;
 }
@@ -103,6 +110,8 @@ export async function getDashboard(
         software: summary.metrics?.projects.software ?? 0,
         hardware: summary.metrics?.projects.hardware ?? 0,
         research: summary.metrics?.projects.research ?? 0,
+        event: summary.metrics?.projects.event ?? 0,
+        content: summary.metrics?.projects.content ?? 0,
         total: summary.metrics?.projects.total ?? 0,
       },
       warnings: summary.warnings.map(mapWarning),
@@ -125,6 +134,8 @@ export async function getDashboard(
       software: count("SOFTWARE"),
       hardware: count("HARDWARE"),
       research: count("RESEARCH"),
+      event: count("EVENT"),
+      content: count("CONTENT"),
       total: items.length,
     },
     warnings: [],

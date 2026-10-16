@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { LogoLoader } from "@/shared/components/LogoLoader";
 import { SignInFlow } from "@/features/auth/components/SignInFlow";
 import { safeNextPath } from "@/shared/auth/redirect";
 
@@ -16,11 +18,18 @@ export default async function Page({
     .filter(Boolean);
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
+      <LogoLoader once />
       <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 border-b border-line bg-topbar px-4 py-4 sm:px-[31px] sm:py-[22px]">
-        <span className="whitespace-pre-wrap text-base font-bold uppercase text-ink sm:text-lg">
-          {"NCT Hub  /  Project Management"}
+        <span className="flex items-center gap-2.5 whitespace-pre-wrap text-base font-bold uppercase text-ink sm:text-lg">
+          <img src="/landing/logo.png" alt="" className="h-8 w-auto object-contain" />
+          Project Management
         </span>
-        <span className="whitespace-pre text-[13px] font-medium text-muted">{"EN  /  VI"}</span>
+        <Link
+          href="/"
+          className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-sm font-medium text-muted transition hover:bg-chrome hover:text-ink"
+        >
+          <span aria-hidden="true">←</span> Back
+        </Link>
       </header>
       <main className="flex flex-1 flex-col items-center bg-hub gap-8 px-4 pb-20 pt-10 sm:pt-[72px]">
         <div className="flex flex-col items-center gap-1.5 text-center">

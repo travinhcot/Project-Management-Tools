@@ -53,6 +53,15 @@ export function fullNameInput(value: unknown): string {
   return value.trim();
 }
 
+/** Same rule as sign-in (ALLOWED_EMAIL_DOMAINS): an account for any other domain could never sign in. */
+export function emailDomainAllowed(email: string): boolean {
+  const domains = (process.env.ALLOWED_EMAIL_DOMAINS ?? "")
+    .split(",")
+    .map((domain) => domain.trim().toLowerCase().replace(/^@/, ""))
+    .filter(Boolean);
+  return domains.length === 0 || domains.includes(email.slice(email.lastIndexOf("@") + 1).toLowerCase());
+}
+
 export function emailInput(value: unknown): string {
   if (typeof value !== "string") invalid("email is required.");
   const problem = emailProblem(value);

@@ -1,5 +1,7 @@
 type ResourceTileProps = {
   label: string;
+  /** Half-height tile, for two tiles stacked in one grid cell. */
+  compact?: boolean;
 } & (
   | { state: "set"; value: string; onOpen: () => void }
   | { state: "missing"; value: string; onOpen: () => void }
@@ -9,6 +11,7 @@ type ResourceTileProps = {
 );
 
 const base = "flex min-h-[96px] flex-col items-start gap-3 sm:min-h-[142px] rounded-lg p-3 text-left";
+const compactBase = "flex min-h-[64px] flex-col items-start gap-1.5 rounded-lg p-3 text-left";
 
 export function ResourceTile(props: ResourceTileProps) {
   const heading = (
@@ -17,7 +20,7 @@ export function ResourceTile(props: ResourceTileProps) {
 
   if (props.state === "na") {
     return (
-      <div className={`${base} bg-chrome`}>
+      <div className={`${props.compact ? compactBase : base} bg-chrome`}>
         {heading}
         <span className="text-xs font-medium text-ink">{props.value}</span>
         <span className="text-[11px] font-medium text-muted">{props.note}</span>
@@ -31,7 +34,7 @@ export function ResourceTile(props: ResourceTileProps) {
     <button
       type="button"
       onClick={props.onOpen}
-      className={`${base} ${missing ? "bg-accent-soft" : "bg-chrome"} hover:ring-1 hover:ring-primary/40`}
+      className={`${props.compact ? compactBase : base} ${missing ? "bg-accent-soft" : "bg-chrome"} hover:ring-1 hover:ring-primary/40`}
     >
       {heading}
       <span

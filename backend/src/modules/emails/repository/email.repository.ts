@@ -49,6 +49,7 @@ export function createEmailRepository(client: SupabaseClient) {
       semesterId?: string;
       kind?: string;
       status?: string;
+      departmentId?: string | null;
     },
     limit: number,
     offset: number,
@@ -60,6 +61,7 @@ export function createEmailRepository(client: SupabaseClient) {
       p_status: filters.status ?? null,
       p_limit: limit,
       p_offset: offset,
+      p_department_id: filters.departmentId ?? null,
     });
     if (error) throw error;
     return (data ?? []) as WithTotal<Campaign>[];
@@ -70,6 +72,7 @@ export function createEmailRepository(client: SupabaseClient) {
     query: DeliveryListQuery,
     limit: number,
     offset: number,
+    departmentId?: string | null,
   ) {
     const { data, error } = await client.rpc("admin_list_deliveries", {
       p_campaign_id: campaignId,
@@ -77,6 +80,7 @@ export function createEmailRepository(client: SupabaseClient) {
       p_search: query.search ?? null,
       p_limit: limit,
       p_offset: offset,
+      p_department_id: departmentId ?? null,
     });
     if (error) throw error;
     return (data ?? []) as WithTotal<Delivery>[];
@@ -96,6 +100,7 @@ export function createEmailRepository(client: SupabaseClient) {
         semesterId: query.semesterId,
         kind: query.kind,
         status: query.status,
+        departmentId: query.departmentId,
       };
       const rows = await campaignPage(
         filters,
@@ -111,24 +116,29 @@ export function createEmailRepository(client: SupabaseClient) {
       return { rows: rows.map(toCampaign), total };
     },
 
-    async findCampaign(campaignId: string): Promise<Campaign | null> {
-      const rows = await campaignPage({ campaignId }, 1, 0);
+    async findCampaign(
+      campaignId: string,
+      departmentId?: string | null,
+    ): Promise<Campaign | null> {
+      const rows = await campaignPage({ campaignId, departmentId }, 1, 0);
       return rows[0] ? toCampaign(rows[0]) : null;
     },
 
     async listDeliveries(
       campaignId: string,
       query: DeliveryListQuery,
+      departmentId?: string | null,
     ): Promise<{ rows: Delivery[]; total: number }> {
       const rows = await deliveryPage(
         campaignId,
         query,
         query.size,
         (query.page - 1) * query.size,
+        departmentId,
       );
       let total = Number(rows[0]?.total_count ?? 0);
       if (rows.length === 0 && query.page > 1) {
-        const first = await deliveryPage(campaignId, query, 1, 0);
+        const first = await deliveryPage(campaignId, query, 1, 0, departmentId);
         total = Number(first[0]?.total_count ?? 0);
       }
       return {

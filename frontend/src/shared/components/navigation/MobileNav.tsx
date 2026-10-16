@@ -35,7 +35,7 @@ function WorkspaceDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-start md:hidden">
-      <div className="absolute inset-0 bg-ink/30" aria-hidden="true" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/60" aria-hidden="true" onClick={onClose} />
       <div
         ref={panelRef}
         role="dialog"
@@ -80,8 +80,8 @@ function WorkspaceDrawer({
                 aria-current={active ? "page" : undefined}
                 className={`flex h-[42px] items-start gap-2 rounded-lg p-3 text-sm ${
                   active
-                    ? "bg-white/40 font-semibold text-accent"
-                    : "font-medium text-muted hover:bg-white/40"
+                    ? "bg-accent-soft font-semibold text-accent"
+                    : "font-medium text-muted hover:bg-chrome"
                 }`}
               >
                 <NavIcon name={item.icon} />

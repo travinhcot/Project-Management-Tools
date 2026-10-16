@@ -1,6 +1,8 @@
 import type { ActorLocals } from "../../../shared/request-actor.ts";
 
-export type AccountRole = "ADMIN" | "MEMBER";
+import type { AccountRole } from "../../../shared/roles.ts";
+
+export type { AccountRole };
 
 /** The profile shape auth needs. Implemented by the users module and wired in server.ts. */
 export interface AccountProfile {
@@ -9,6 +11,8 @@ export interface AccountProfile {
   readonly normalized_email: string;
   readonly full_name: string;
   readonly role: AccountRole;
+  readonly department_id: string | null;
+  readonly department_code: string | null;
   readonly is_active: boolean;
   readonly created_at: string;
   readonly updated_at: string;

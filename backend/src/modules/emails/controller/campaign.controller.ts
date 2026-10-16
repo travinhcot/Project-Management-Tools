@@ -4,6 +4,7 @@ import type { ProcessorService } from "../service/processor.service.ts";
 import type { ActorLocals } from "../../../shared/request-actor.ts";
 
 import { randomUUID } from "node:crypto";
+import { scopeFor } from "../../../shared/department-scope.ts";
 import { requireActor } from "../../../shared/request-actor.ts";
 import {
   campaignIdParam,
@@ -69,35 +70,43 @@ export function createCampaignController(service: CampaignService) {
       res.status(201).json({ campaign });
     },
     async list(req: Request, res: Response<unknown, ActorLocals>) {
-      requireActor(res.locals);
+      const actor = requireActor(res.locals);
       res.json(
-        await service.list(
-          listCampaignsQuery(req.query as Record<string, unknown>),
-        ),
+        await service.list({
+          ...listCampaignsQuery(req.query as Record<string, unknown>),
+          departmentId: scopeFor(actor),
+        }),
       );
     },
     async get(req: CampaignRequest, res: Response<unknown, ActorLocals>) {
-      requireActor(res.locals);
+      const actor = requireActor(res.locals);
       res.json({
-        campaign: await service.get(campaignIdParam(req.params.campaignId)),
+        campaign: await service.get(
+          campaignIdParam(req.params.campaignId),
+          scopeFor(actor),
+        ),
       });
     },
     async listDeliveries(
       req: CampaignRequest,
       res: Response<unknown, ActorLocals>,
     ) {
-      requireActor(res.locals);
+      const actor = requireActor(res.locals);
       res.json(
         await service.listDeliveries(
           campaignIdParam(req.params.campaignId),
           listDeliveriesQuery(req.query as Record<string, unknown>),
+          scopeFor(actor),
         ),
       );
     },
     async preview(req: CampaignRequest, res: Response<unknown, ActorLocals>) {
-      requireActor(res.locals);
+      const actor = requireActor(res.locals);
       res.json({
-        preview: await service.preview(campaignIdParam(req.params.campaignId)),
+        preview: await service.preview(
+          campaignIdParam(req.params.campaignId),
+          scopeFor(actor),
+        ),
       });
     },
     async reschedule(

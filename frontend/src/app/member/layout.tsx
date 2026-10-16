@@ -1,4 +1,9 @@
-import { memberNav } from "@/config/navigation";
+import {
+  DEPARTMENT_WORKSPACE_LABELS,
+  hasMemberOverview,
+  memberDashboardPath,
+} from "@/config/departments";
+import { memberNavFor } from "@/config/navigation";
 import { getMemberStatus } from "@/features/member/service/member.service";
 import { Sidebar } from "@/shared/components/navigation/Sidebar";
 import { TopBar } from "@/shared/components/navigation/TopBar";
@@ -7,6 +12,11 @@ const HEADING = "MEMBER";
 
 export default async function MemberLayout({ children }: { children: React.ReactNode }) {
   const status = await getMemberStatus();
+  const overview = hasMemberOverview(status.departmentCode);
+  const dashboard = overview
+    ? (memberDashboardPath(status.departmentCode) ?? "/member/overview")
+    : "/member/projects";
+  const memberNav = memberNavFor(dashboard, { overview, departmentCode: status.departmentCode });
   // Without a roster entry only the profile stays usable.
   const disabledHrefs = status.eligible
     ? []
@@ -16,6 +26,9 @@ export default async function MemberLayout({ children }: { children: React.React
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
       <TopBar
+        workspaceLabel={
+          status.departmentCode ? DEPARTMENT_WORKSPACE_LABELS[status.departmentCode] : undefined
+        }
         userLabel={who ? `${who} · Member` : "Member"}
         nav={{ heading: HEADING, items: memberNav, disabledHrefs }}
       />
@@ -24,7 +37,7 @@ export default async function MemberLayout({ children }: { children: React.React
           heading={HEADING}
           items={memberNav}
           disabledHrefs={disabledHrefs}
-          toolHref="/member/overview"
+          toolHref={dashboard}
           note={
             status.eligible
               ? {

@@ -13,6 +13,7 @@ import { createProjectsInterface } from "./modules/projects/interface/projects.i
 import { createPortalInterface } from "./modules/portal/interface/portal.interface.ts";
 import { createAuditInterface } from "./modules/audit/interface/audit.interface.ts";
 import { createGithubInterface } from "./modules/github/interface/github.interface.ts";
+import { createDepartmentResourcesInterface } from "./modules/department-resources/interface/department-resources.interface.ts";
 import { createDashboardInterface } from "./modules/dashboard/interface/dashboard.interface.ts";
 import {
   createEmailsInterface,
@@ -35,7 +36,10 @@ const auth = createAuthInterface({
   audit: audit.recorder,
 });
 const members = createMembersInterface(adminClient);
-const roster = createRosterInterface(adminClient);
+const roster = createRosterInterface(adminClient, {
+  profiles: users.service,
+  audit: audit.recorder,
+});
 // semesters needs project counts, while projects (built below) needs semesters.service.
 // The gateway resolves `projects` at call time, which breaks the construction cycle.
 const projectStats: ProjectStatsGateway = {
@@ -111,7 +115,12 @@ const github = createGithubInterface(
       : undefined,
   },
 );
+const departmentResources = createDepartmentResourcesInterface(adminClient, {
+  bucketId: process.env.PROJECT_FILES_BUCKET || "project-files",
+  internalSecret: process.env.INTERNAL_SECRET,
+});
 const app = createApplication({
+  database: adminClient,
   auth,
   users,
   semesters,
@@ -124,6 +133,7 @@ const app = createApplication({
   audit,
   dashboard,
   github,
+  departmentResources,
 });
 // In-process scheduler: sends due campaigns every minute.
 // Set EMAIL_SCHEDULER=off when an external cron calls /api/internal/campaigns/process.

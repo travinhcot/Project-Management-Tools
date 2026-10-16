@@ -22,6 +22,8 @@ export interface RosterMemberView extends RosterMember {
 }
 
 export interface RosterListQuery {
+  /** Set by the controller from the actor (null = every department). Never from the client. */
+  readonly departmentId?: string | null;
   readonly semesterId: string;
   readonly search?: string;
   readonly status?: RosterStatus;
@@ -48,7 +50,7 @@ export interface RosterDeleteImpact {
   readonly full_name: string;
   readonly email: string;
   readonly has_account: boolean;
-  readonly account_role: "ADMIN" | "MEMBER" | null;
+  readonly account_role: "ADMIN" | "DEPT_ADMIN" | "MEMBER" | null;
   /** Roster entries removed: this one plus the account's entries in other semesters. */
   readonly roster_entries: number;
   readonly projects: number;

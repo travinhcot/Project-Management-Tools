@@ -41,6 +41,13 @@ export function assignmentError(error: unknown): HttpError {
       "This person is not assigned to the project.",
     );
   }
+  if (code === "42501" && message === "DEPARTMENT_MISMATCH") {
+    return new HttpError(
+      409,
+      "DEPARTMENT_MISMATCH",
+      "This person belongs to a different department than the project.",
+    );
+  }
   if (code === "P0001") {
     switch (message) {
       case "PROJECT_ARCHIVED":

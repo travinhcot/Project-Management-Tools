@@ -1,11 +1,12 @@
 import type { ButtonHTMLAttributes } from "react";
 
 const variants = {
-  primary: "bg-primary text-white hover:bg-primary/90",
+  primary: "bg-primary text-on-primary hover:bg-primary/90",
   outline: "border border-line bg-surface text-ink hover:bg-chrome",
-  danger: "bg-danger text-white hover:bg-danger/90",
+  danger: "bg-danger text-on-primary hover:bg-danger/90",
   "danger-outline":
     "border border-danger-line bg-surface text-danger hover:bg-danger-soft",
+  success: "bg-success text-on-primary hover:bg-success/90",
   link: "border border-link-line bg-surface text-accent hover:bg-accent-soft",
   /** Borderless text action, e.g. "Edit" inside a table row. */
   ghost: "text-accent hover:bg-accent-soft",

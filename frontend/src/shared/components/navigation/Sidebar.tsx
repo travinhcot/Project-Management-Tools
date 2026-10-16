@@ -73,8 +73,8 @@ export function Sidebar({
               aria-current={active ? "page" : undefined}
               className={`flex h-[42px] shrink-0 items-start gap-2 whitespace-nowrap rounded-lg p-3 text-sm ${
                 active
-                  ? "bg-white/40 font-semibold text-accent"
-                  : "font-medium text-muted hover:bg-white/40"
+                  ? "bg-accent-soft font-semibold text-accent"
+                  : "font-medium text-muted hover:bg-chrome"
               }`}
             >
               <NavIcon name={item.icon} />
@@ -86,7 +86,7 @@ export function Sidebar({
       <p className="mt-7 text-[11px] font-bold text-muted">TOOLS</p>
       <Link
         href={toolHref}
-        className="flex h-11 items-start gap-2 rounded-lg bg-white/40 p-3 text-accent"
+        className="flex h-11 items-start gap-2 rounded-lg bg-accent-soft p-3 text-accent"
       >
         <span className="text-base font-bold leading-none">◈</span>
         <span className="text-[13px] font-semibold leading-none">

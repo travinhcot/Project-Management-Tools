@@ -1,11 +1,11 @@
 import type { RosterImportService } from "../service/roster-import.service.ts";
 
 import express, { Router } from "express";
-import { adminOnly } from "../../../shared/admin-only.ts";
+import { staffOnly } from "../../../shared/staff-only.ts";
 import { createRosterImportController } from "../controller/roster-import.controller.ts";
 import { CSV_CONTENT_TYPES } from "../dto/roster-import.dto.ts";
 
-/** Mounted at /api/admin (after requireAuth + requireRole("ADMIN")). */
+/** Mounted at /api/admin (after requireAuth + requireRole("ADMIN", "DEPT_ADMIN"); a department admin only imports into, and sees imports of, their own department). */
 export function createRosterAdminRouter(imports: RosterImportService) {
   const router = Router();
   const controller = createRosterImportController(imports);
@@ -15,7 +15,7 @@ export function createRosterAdminRouter(imports: RosterImportService) {
     res.set("Cache-Control", "no-store");
     next();
   });
-  router.use(adminOnly);
+  router.use(staffOnly);
 
   router.post(
     "/semesters/:semesterId/roster/imports",

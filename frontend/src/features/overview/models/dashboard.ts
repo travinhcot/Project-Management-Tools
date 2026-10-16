@@ -33,7 +33,14 @@ export interface Dashboard {
   /** Every semester, newest first, for the switcher. */
   semesters: DashboardSemester[];
   roster: { active: number };
-  projects: { software: number; hardware: number; research: number; total: number };
+  projects: {
+    software: number;
+    hardware: number;
+    research: number;
+    event: number;
+    content: number;
+    total: number;
+  };
   /** Warnings are only computed for the current semester; empty for past ones. */
   warnings: DashboardWarning[];
   recentProjects: DashboardProject[];

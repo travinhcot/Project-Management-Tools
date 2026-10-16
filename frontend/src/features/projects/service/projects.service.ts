@@ -24,7 +24,7 @@ export interface ProjectDto {
   semester_id: string;
   name: string;
   description: string | null;
-  type: "SOFTWARE" | "HARDWARE" | "RESEARCH";
+  type: "SOFTWARE" | "HARDWARE" | "RESEARCH" | "EVENT" | "CONTENT";
   status: "PLANNING" | "ONGOING" | "COMPLETED" | "FAILED";
   updated_at: string;
   member_count: number;
@@ -103,6 +103,8 @@ export function mapResources(resources: ResourceDto[]): ProjectResources {
     researchTemplate: source("RESEARCH_TEMPLATE"),
     githubRepo: source("GITHUB_REPO"),
     demoGuide: source("DEMO_GUIDE"),
+    finalPackage: source("FINAL_PACKAGE"),
+    documentation: source("DOCUMENTATION"),
   };
 }
 

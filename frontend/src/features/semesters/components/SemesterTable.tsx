@@ -23,8 +23,9 @@ export function SemesterTable({
   today: string;
   /** Semester whose "set as current" impact is being reviewed. */
   highlightId: string | null;
-  onEdit: (semester: Semester) => void;
-  onSetCurrent: (semester: Semester) => void;
+  /** Both omitted: the table is read-only (a department admin cannot change semesters). */
+  onEdit?: (semester: Semester) => void;
+  onSetCurrent?: (semester: Semester) => void;
 }) {
   return (
     <div className="min-w-0 flex-1 overflow-x-auto rounded-2xl bg-surface shadow-card py-1.5">
@@ -80,15 +81,17 @@ export function SemesterTable({
                 </td>
                 <td className="py-3.5 pr-4">
                   <div className="flex items-center gap-3.5">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => onEdit(semester)}
-                      aria-label={`Edit ${semester.name}`}
-                    >
-                      Edit
-                    </Button>
-                    {!semester.isCurrent && (
+                    {onEdit && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onEdit(semester)}
+                        aria-label={`Edit ${semester.name}`}
+                      >
+                        Edit
+                      </Button>
+                    )}
+                    {onSetCurrent && !semester.isCurrent && (
                       <Button
                         variant="ghost"
                         size="sm"

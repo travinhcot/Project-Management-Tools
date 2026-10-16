@@ -44,6 +44,10 @@ export async function backendFetch<T>(
   }
 
   if (response.status === 401) redirect("/sign-in?expired=1");
-  if (!response.ok) throw await toApiError(response);
+  if (!response.ok) {
+    const error = await toApiError(response);
+    console.error(`[backendFetch] ${method} ${path} -> ${error.status} ${error.code}`);
+    throw error;
+  }
   return (response.status === 204 ? undefined : await response.json()) as T;
 }

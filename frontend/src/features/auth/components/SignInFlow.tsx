@@ -95,7 +95,6 @@ export function SignInFlow({
   if (step === "code") {
     return (
       <form noValidate onSubmit={submitCode} className={cardClass} aria-label="Enter your code">
-        <p className="text-[11px] font-bold text-accent">STEP 2</p>
         <h2 className="text-xl font-bold text-ink">Enter your code</h2>
         <p className="break-all text-[13px] text-muted">
           If {email.trim()} is on the roster, a code was sent.
@@ -149,8 +148,7 @@ export function SignInFlow({
 
   return (
     <form noValidate onSubmit={sendCode} className={cardClass} aria-label="Get a sign-in code">
-      <p className="text-[11px] font-bold text-accent">STEP 1</p>
-      <h2 className="text-xl font-bold text-ink">Get a sign-in code</h2>
+      <h2 className="text-center text-xl font-bold text-ink">Get a sign-in code</h2>
       <Field label="School email" htmlFor="sign-in-email" error={error}>
         <TextInput
           id="sign-in-email"

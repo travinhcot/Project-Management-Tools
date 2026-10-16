@@ -4,6 +4,10 @@ import {
   ExternalLink,
   FileDownload,
 } from "@/features/member/components/ResourceAction";
+import type { DepartmentResource } from "@/features/department-resources/models/department-resource";
+import { getLinkedDepartmentResources } from "@/features/department-resources/service/department-resources.service";
+import { LinkedResourceDownload } from "@/features/member/components/LinkedResourceAction";
+import { FinalPackageCard } from "@/features/member/components/FinalPackageCard";
 import { GithubActivityPanel } from "@/features/github/components/GithubActivityPanel";
 import { MemberPageHeader } from "@/features/member/components/MemberPageHeader";
 import { NoAccessCard } from "@/features/member/components/NoAccessCard";
@@ -71,7 +75,44 @@ const FILE_ITEMS: { slot: ResourceSlot; title: string }[] = [
   { slot: "RESEARCH_TEMPLATE", title: "Research template" },
   { slot: "GITHUB_REPO", title: "GitHub repository" },
   { slot: "DEMO_GUIDE", title: "Demo video guide" },
+  { slot: "DOCUMENTATION", title: "Project documentation" },
 ];
+
+/** Library entries the admin linked to this project; an error here never hides the rest of the page. */
+async function LinkedResources({ projectId }: { projectId: string }) {
+  let linked: DepartmentResource[];
+  try {
+    linked = await getLinkedDepartmentResources(projectId);
+  } catch {
+    return null;
+  }
+  if (linked.length === 0) return null;
+  return (
+    <section className="flex min-w-0 flex-col gap-3.5 rounded-2xl bg-surface shadow-card p-5">
+      <h2 className="text-xl font-semibold text-ink">Project resources</h2>
+      {linked.map((resource) => (
+        <ResourceItem
+          key={resource.id}
+          title={resource.title}
+          detail={
+            resource.kind === "file"
+              ? `${resource.filename ?? "File"} · ${formatSize(resource.sizeBytes ?? 0)}`
+              : displayUrl(resource.url ?? "")
+          }
+          action={
+            resource.kind === "file" ? (
+              <LinkedResourceDownload id={resource.id} />
+            ) : resource.url ? (
+              <ExternalLink href={resource.url} style="outline">
+                Open link
+              </ExternalLink>
+            ) : null
+          }
+        />
+      ))}
+    </section>
+  );
+}
 
 function Resources({ project }: { project: MemberProjectDetail }) {
   const meeting = findResource(project.resources, "FIRST_MEETING");
@@ -203,8 +244,17 @@ export async function MemberProjectPage({ id }: { id: string }) {
 
       <div className="flex flex-col items-stretch gap-5 lg:flex-row lg:items-start">
         <div className="flex min-w-0 flex-1 flex-col gap-5">
+          {(project.type === "event" || project.type === "content") && (
+            <FinalPackageCard
+              projectId={project.id}
+              current={findResource(project.resources, "FINAL_PACKAGE")}
+            />
+          )}
           <Resources project={project} />
-          <GithubActivityPanel projectId={project.id} audience="member" />
+          <LinkedResources projectId={project.id} />
+          {project.type !== "event" && project.type !== "content" && (
+            <GithubActivityPanel projectId={project.id} audience="member" />
+          )}
         </div>
         <div className="flex w-full shrink-0 flex-col gap-5 lg:w-[360px]">
           <TeamCard teammates={project.teammates} me={status.fullName} />

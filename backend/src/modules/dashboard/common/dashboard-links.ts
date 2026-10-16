@@ -42,6 +42,12 @@ export const WARNING_META: Readonly<
     link: LINKS.projects,
     itemLink: projectLink,
   },
+  PROJECTS_WITHOUT_FINAL_PACKAGE: {
+    severity: "info",
+    message: "Projects with a team that have not submitted a final package.",
+    link: LINKS.projects,
+    itemLink: projectLink,
+  },
   CAMPAIGNS_WITH_FAILURES: {
     severity: "error",
     message: "Campaigns that finished with failed deliveries.",

@@ -3,6 +3,7 @@ import type { AuthService } from "../service/auth.service.ts";
 import type { AuthLocals, AccountRole } from "../model/auth.model.ts";
 
 import { HttpError } from "../../../shared/http-error.ts";
+import { ACCOUNT_ROLES } from "../../../shared/roles.ts";
 
 export function createAuthMiddleware(service: AuthService) {
   const requireAuth: RequestHandler<Record<string, string>, unknown, unknown, Record<string, string>, AuthLocals> = async (req, res, next) => {
@@ -14,15 +15,19 @@ export function createAuthMiddleware(service: AuthService) {
       const context = await service.authenticate(match[1]);
       res.locals.auth = context;
       // Shared request contract (shared/request-actor.ts) read by other modules' routes.
-      res.locals.actor = { userId: context.profile.id, role: context.profile.role };
+      res.locals.actor = {
+        userId: context.profile.id,
+        role: context.profile.role,
+        departmentId: context.profile.department_id,
+      };
       res.locals.accessToken = match[1];
       next();
     } catch (error) { next(error); }
   };
 
   function requireRole(...roles: AccountRole[]): typeof requireAuth {
-    if (!roles.length || roles.some((role) => !["ADMIN", "MEMBER"].includes(role))) {
-      throw new TypeError("requireRole expects ADMIN or MEMBER.");
+    if (!roles.length || roles.some((role) => !ACCOUNT_ROLES.includes(role))) {
+      throw new TypeError("requireRole expects an account role.");
     }
     return (_req, res, next) => {
       const profile = res.locals.auth?.profile;

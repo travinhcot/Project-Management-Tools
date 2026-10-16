@@ -8,6 +8,9 @@ import {
   type ProjectStatus,
 } from "@/features/projects/models/project";
 import { isProjectType } from "@/shared/models/project";
+import { creatableTypes } from "@/config/departments";
+import { getProjectLinkCounts } from "@/features/department-resources/service/department-resources.service";
+import { getViewer } from "@/shared/auth/viewer";
 
 export const metadata: Metadata = { title: "Projects" };
 
@@ -31,6 +34,19 @@ function parseFilters(params: SearchParams): ProjectFilters {
 
 export default async function Page({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const filters = parseFilters(await searchParams);
-  const [list, semesters] = await Promise.all([getProjects(filters), getSemesterOptions()]);
-  return <ProjectsPage list={list} filters={filters} semesters={semesters} />;
+  const [list, semesters, viewer] = await Promise.all([
+    getProjects(filters),
+    getSemesterOptions(),
+    getViewer(),
+  ]);
+  const linkedCounts = await getProjectLinkCounts(list.items.map((project) => project.id));
+  return (
+    <ProjectsPage
+      list={list}
+      linkedCounts={linkedCounts}
+      filters={filters}
+      semesters={semesters}
+      allowedTypes={creatableTypes(viewer)}
+    />
+  );
 }
