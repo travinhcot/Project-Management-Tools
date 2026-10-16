@@ -29,7 +29,7 @@ export default async function Page({
       resources={resources}
       department={department}
       departmentLabel={DEPARTMENT_LABELS[department]}
-      switchable={viewer.role === "ADMIN"}
+      switchable={false}
       audience="admin"
     />
   );
