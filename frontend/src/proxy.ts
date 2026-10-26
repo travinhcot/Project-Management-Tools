@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { API_BASE_URL } from "@/shared/api/config";
+import { API_BASE_URL, authProxyHeaders } from "@/shared/api/config";
 import {
   isMemberPath,
   landingFor,
@@ -23,11 +23,12 @@ const SIGN_IN_PATH = "/sign-in";
 
 async function refreshSession(
   refreshToken: string,
+  forwardedFor: string | null,
 ): Promise<BackendSession | null> {
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...authProxyHeaders(forwardedFor) },
       body: JSON.stringify({ refresh_token: refreshToken }),
       cache: "no-store",
     });
@@ -120,7 +121,7 @@ export async function proxy(request: NextRequest) {
   const refreshToken = request.cookies.get(REFRESH_COOKIE)?.value;
   if (!refreshToken) return toSignIn();
 
-  const session = await refreshSession(refreshToken);
+  const session = await refreshSession(refreshToken, request.headers.get("x-forwarded-for"));
   if (session) {
     const live = await fetchLiveRole(session.access_token);
     if (live.status === "ok") currentRole = live.role;

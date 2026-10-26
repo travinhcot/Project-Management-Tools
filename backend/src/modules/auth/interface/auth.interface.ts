@@ -9,14 +9,14 @@ import { createAuthMiddleware } from "../middleware/auth.middleware.ts";
 import { createAuthRouter } from "../routes/auth.routes.ts";
 
 /** Public entry point for auth wiring and protection of other modules' routes. */
-export function createAuthInterface({ createAuthClient, adminClient, users, audit }: { createAuthClient: () => SupabaseClient; adminClient: SupabaseClient; users: ProfileGateway; audit?: AuditRecorder }) {
+export function createAuthInterface({ createAuthClient, adminClient, users, audit, authProxySecret }: { createAuthClient: () => SupabaseClient; adminClient: SupabaseClient; users: ProfileGateway; audit?: AuditRecorder; authProxySecret?: string }) {
   const service = createAuthService(
     createAuthRepository(createAuthClient, adminClient),
     users,
     audit,
   );
   const middleware = createAuthMiddleware(service);
-  return { router: createAuthRouter(service, middleware), ...middleware };
+  return { router: createAuthRouter(service, middleware, { clientIpSecret: authProxySecret }), ...middleware };
 }
 
 export type AuthInterface = ReturnType<typeof createAuthInterface>;
