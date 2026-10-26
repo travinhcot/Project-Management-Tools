@@ -34,6 +34,7 @@ const auth = createAuthInterface({
   adminClient,
   users: users.service,
   audit: audit.recorder,
+  authProxySecret: process.env.AUTH_PROXY_SECRET || undefined,
 });
 const members = createMembersInterface(adminClient);
 const roster = createRosterInterface(adminClient, {

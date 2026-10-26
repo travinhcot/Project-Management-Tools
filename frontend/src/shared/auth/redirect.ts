@@ -29,6 +29,8 @@ export function safeNextPath(value: string | string[] | null | undefined): strin
     !next.startsWith("/") ||
     next.startsWith("//") ||
     next.includes("\\") ||
+    // URL parsing drops tabs/newlines, so "/\t/evil.example" would become "//evil.example".
+    /[\u0000-\u001f\u007f]/.test(next) ||
     next.startsWith("/sign-in")
   ) {
     return DEFAULT_LANDING;

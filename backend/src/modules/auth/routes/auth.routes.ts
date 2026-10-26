@@ -5,10 +5,14 @@ import { Router } from "express";
 import { createAuthController } from "../controller/auth.controller.ts";
 import { createAuthRateLimit } from "../middleware/rate-limit.middleware.ts";
 
-export function createAuthRouter(service: AuthService, middleware: AuthMiddleware) {
+export function createAuthRouter(
+  service: AuthService,
+  middleware: AuthMiddleware,
+  { clientIpSecret }: { clientIpSecret?: string } = {},
+) {
   const router = Router();
   const controller = createAuthController(service);
-  const rateLimit = createAuthRateLimit();
+  const rateLimit = createAuthRateLimit({ clientIpSecret });
   router.use((_req, res, next) => {
     res.set("Cache-Control", "no-store");
     next();

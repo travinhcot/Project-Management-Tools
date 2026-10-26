@@ -1,8 +1,8 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { API_BASE_URL } from "@/shared/api/config";
+import { API_BASE_URL, authProxyHeaders } from "@/shared/api/config";
 import { resolveLanding } from "@/shared/auth/redirect";
 import {
   ACCESS_COOKIE,
@@ -24,12 +24,14 @@ const UNAVAILABLE: AuthResult = {
 
 async function post(path: string, body?: unknown, token?: string): Promise<Response | null> {
   try {
+    const forwardedFor = (await headers()).get("x-forwarded-for");
     return await fetch(`${API_BASE_URL}${path}`, {
       method: "POST",
       cache: "no-store",
       headers: {
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...authProxyHeaders(forwardedFor),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
