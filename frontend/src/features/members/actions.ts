@@ -91,19 +91,28 @@ export async function commitImport(
 export async function addMember(
   semesterId: string,
   input: MemberInput,
-): Promise<ActionResult> {
+): Promise<ActionResult<{ warning?: string }>> {
   const result = await run(async () => {
-    await backendFetch(`/api/admin/semesters/${semesterId}/roster`, {
+    const data = await backendFetch<{
+      account: { status: string; detail: string } | null;
+    }>(`/api/admin/semesters/${semesterId}/roster`, {
       method: "POST",
       body: {
         email: input.email,
         full_name: input.fullName,
         major: input.major || undefined,
+        department: input.department,
       },
     });
-    return {};
+    const status = data.account?.status;
+    return status === "skipped" || status === "failed"
+      ? {
+          warning: `Added to the roster, but no account was created (${data.account?.detail}), so they won't appear in User & Access yet.`,
+        }
+      : {};
   });
   revalidatePath(MEMBERS_PATH);
+  revalidatePath("/users-access");
   return result;
 }
 

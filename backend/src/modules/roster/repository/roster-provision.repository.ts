@@ -33,6 +33,19 @@ export function createRosterProvisionRepository(client: SupabaseClient) {
       return ((data ?? []) as unknown as Row[]).map(toCandidate);
     },
 
+    /** One ACTIVE entry that still has no account, or null. */
+    async candidate(rosterMemberId: string): Promise<ProvisionCandidate | null> {
+      const { data, error } = await client
+        .from("roster_members")
+        .select(columns)
+        .eq("id", rosterMemberId)
+        .eq("status", "ACTIVE")
+        .is("user_id", null)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? toCandidate(data as unknown as Row) : null;
+    },
+
     async listUnlinked(semesterId: string): Promise<ProvisionCandidate[]> {
       const rows: ProvisionCandidate[] = [];
       for (let from = 0; ; from += 1000) {

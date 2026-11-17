@@ -36,6 +36,8 @@ export interface RosterMemberCreate {
   readonly email: string;
   readonly full_name: string;
   readonly major: string | null;
+  /** Department code; required from ADMIN, ignored for DEPT_ADMIN (the database uses theirs). */
+  readonly department?: "TECH" | "MARCOM" | "HR";
 }
 
 export interface RosterMemberChanges {

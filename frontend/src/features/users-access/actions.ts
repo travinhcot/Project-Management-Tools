@@ -23,3 +23,17 @@ export async function updateUserAccess(id: string, change: AccessChange): Promis
     revalidatePath("/users-access");
   }
 }
+
+/** Permanently deletes an account and its roster history (DELETE /api/admin/users/:id). */
+export async function deleteUser(id: string): Promise<ActionResult> {
+  try {
+    await backendFetch(`/api/admin/users/${id}`, { method: "DELETE" });
+    return { ok: true };
+  } catch (error) {
+    if (error instanceof ApiError) return { ok: false, code: error.code, message: error.message };
+    throw error;
+  } finally {
+    revalidatePath("/users-access");
+    revalidatePath("/members");
+  }
+}

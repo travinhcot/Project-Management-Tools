@@ -94,6 +94,25 @@ export function createUserRepository(client: SupabaseClient) {
       if (!updated) throw new Error("Updated user not found.");
       return updated;
     },
+    /** Deletes the account and its roster history, then the auth user (app_users.id references it). */
+    async deleteUser(input: {
+      actorId: string;
+      targetId: string;
+      requestId: string;
+    }): Promise<{ authUserRemoved: boolean }> {
+      const { error } = await client.rpc("admin_delete_user", {
+        p_actor_id: input.actorId,
+        p_target_id: input.targetId,
+        p_request_id: input.requestId,
+      });
+      if (error) throw error;
+      const { error: authError } = await client.auth.admin.deleteUser(input.targetId);
+      if (authError) {
+        console.error("User deleted, but its auth user could not be removed:", input.targetId);
+        return { authUserRemoved: false };
+      }
+      return { authUserRemoved: true };
+    },
     async updateName(id: string, fullName: string): Promise<AppUser | null> {
       const { data, error } = await client
         .from("app_users")

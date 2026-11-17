@@ -36,10 +36,12 @@ const auth = createAuthInterface({
   audit: audit.recorder,
   authProxySecret: process.env.AUTH_PROXY_SECRET || undefined,
 });
-const members = createMembersInterface(adminClient);
 const roster = createRosterInterface(adminClient, {
   profiles: users.service,
   audit: audit.recorder,
+});
+const members = createMembersInterface(adminClient, {
+  provisioner: roster.provisioning,
 });
 // semesters needs project counts, while projects (built below) needs semesters.service.
 // The gateway resolves `projects` at call time, which breaks the construction cycle.

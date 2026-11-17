@@ -36,6 +36,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<Sea
       filters={filters}
       semesters={semesters}
       canImport={viewer.role === "ADMIN" || viewer.role === "DEPT_ADMIN"}
+      canChooseDepartment={viewer.role === "ADMIN"}
     />
   );
 }

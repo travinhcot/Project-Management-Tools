@@ -1,13 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createRosterMemberRepository } from "../repository/roster-member.repository.ts";
-import { createRosterMemberService } from "../service/roster-member.service.ts";
+import {
+  createRosterMemberService,
+  type AccountProvisioner,
+} from "../service/roster-member.service.ts";
 import { createMemberAdminRouter } from "../routes/member-admin.routes.ts";
 
 /** Public members-module entry point. Only composition roots import this file. */
-export function createMembersInterface(databaseClient: SupabaseClient) {
+export function createMembersInterface(
+  databaseClient: SupabaseClient,
+  { provisioner }: { provisioner?: AccountProvisioner } = {},
+) {
   const members = createRosterMemberService(
     createRosterMemberRepository(databaseClient),
+    provisioner,
   );
   return {
     /** What other modules may ask of members, handed to them as a port in server.ts. */

@@ -3,6 +3,7 @@ import { UsersAccessPage } from "@/features/users-access/pages/UsersAccessPage";
 import { getCurrentUserId, getUsers } from "@/features/users-access/service/users.service";
 import { USER_ROLES, type UserFilters, type UserRole } from "@/features/users-access/models/user";
 import { requireSuperAdmin } from "@/shared/auth/viewer";
+import { ACTIVE_DEPARTMENTS, type DepartmentCode } from "@/config/departments";
 
 export const metadata: Metadata = { title: "Users & access" };
 
@@ -13,11 +14,15 @@ const first = (value: string | string[] | undefined) => (Array.isArray(value) ? 
 function parseFilters(params: SearchParams): UserFilters {
   const role = first(params.role);
   const status = first(params.status);
+  const department = first(params.department);
   const page = Number(first(params.page));
   return {
     search: first(params.q)?.trim().slice(0, 100) ?? "",
     role: USER_ROLES.includes(role as UserRole) ? (role as UserRole) : "all",
     status: status === "active" || status === "inactive" ? status : "all",
+    department: ACTIVE_DEPARTMENTS.includes(department as DepartmentCode)
+      ? (department as DepartmentCode)
+      : "all",
     page: Number.isInteger(page) && page >= 1 ? page : 1,
   };
 }

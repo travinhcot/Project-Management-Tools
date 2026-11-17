@@ -43,6 +43,20 @@ function accessError(error: unknown): HttpError {
     );
   if (code === "P0002")
     return new HttpError(404, "USER_NOT_FOUND", "User not found.");
+  if (code === "P0001" && message === "USER_IS_ADMIN") {
+    return new HttpError(
+      409,
+      "USER_IS_ADMIN",
+      "Admin accounts and your own account cannot be deleted.",
+    );
+  }
+  if (code === "23503") {
+    return new HttpError(
+      409,
+      "USER_HAS_HISTORY",
+      "This user has activity history, so they cannot be deleted. Deactivate them instead.",
+    );
+  }
   if (code === "P0001" && message === "LAST_ADMIN") {
     return new HttpError(
       409,
@@ -171,6 +185,13 @@ export function createUserService(repository: UserRepository) {
           change,
           requestId,
         });
+      } catch (error) {
+        throw accessError(error);
+      }
+    },
+    async deleteUser(actorId: string, targetId: string, requestId: string) {
+      try {
+        return await repository.deleteUser({ actorId, targetId, requestId });
       } catch (error) {
         throw accessError(error);
       }

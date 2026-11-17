@@ -38,6 +38,7 @@ export async function getUsers(filters: UserFilters): Promise<UserListPage> {
   const params = new URLSearchParams({ page: String(filters.page), size: String(PAGE_SIZE) });
   if (filters.search) params.set("search", filters.search);
   if (filters.role !== "all") params.set("role", filters.role);
+  if (filters.department !== "all") params.set("department", filters.department);
   if (filters.status !== "all") params.set("active", String(filters.status === "active"));
   const data = await backendFetch<{ items: UserDto[]; page: number; size: number; total: number }>(
     `/api/admin/users?${params}`,

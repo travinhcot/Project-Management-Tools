@@ -104,4 +104,6 @@ export interface MemberInput {
   fullName: string;
   email: string;
   major: string;
+  /** Set by ADMIN only; a department admin's member goes to their own department. */
+  department?: "TECH" | "MARCOM" | "HR";
 }
