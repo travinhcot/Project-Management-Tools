@@ -5,6 +5,7 @@ import type { ActorLocals } from "../../../shared/request-actor.ts";
 import { randomUUID } from "node:crypto";
 import { scopeFor } from "../../../shared/department-scope.ts";
 import { requireActor } from "../../../shared/request-actor.ts";
+import { invalid } from "../../../shared/query-params.ts";
 import { rosterMemberIdParam, semesterIdParam } from "../common/member-params.ts";
 import {
   createRosterMemberBody,
@@ -25,13 +26,18 @@ export function createRosterMemberController(service: RosterMemberService) {
     },
     async add(req: Request<{ semesterId: string }>, res: Response<unknown, ActorLocals>) {
       const actor = requireActor(res.locals);
-      const member = await service.add(
+      const { department, ...body } = createRosterMemberBody(req.body);
+      // A department admin always adds to their own department (the database enforces it too).
+      if (scopeFor(actor) === null && !department) {
+        invalid("Choose a department.");
+      }
+      const result = await service.add(
         actor.userId,
         semesterIdParam(req.params.semesterId),
-        createRosterMemberBody(req.body),
+        actor.role === "ADMIN" ? { ...body, department } : body,
         randomUUID(),
       );
-      res.status(201).json({ member });
+      res.status(201).json(result);
     },
     async update(req: Request<{ rosterMemberId: string }>, res: Response<unknown, ActorLocals>) {
       const actor = requireActor(res.locals);

@@ -29,6 +29,7 @@ export interface UserFilters {
   search: string;
   role: UserRole | "all";
   status: "all" | "active" | "inactive";
+  department: DepartmentCode | "all";
   page: number;
 }
 

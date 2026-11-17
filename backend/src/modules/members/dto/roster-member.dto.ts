@@ -19,6 +19,7 @@ import {
   majorInput,
 } from "../../../shared/roster-rules.ts";
 import { pageOf } from "../../../shared/pagination.ts";
+import { DEPARTMENT_CODES, type DepartmentCodeName } from "../../../shared/department-scope.ts";
 import { semesterIdParam } from "../common/member-params.ts";
 import { ROSTER_STATUSES } from "../model/roster-member.model.ts";
 
@@ -50,11 +51,23 @@ export function listRosterQuery(
 
 export function createRosterMemberBody(body: unknown): RosterMemberCreate {
   const input = objectBody(body);
-  rejectUnknownKeys(input, ["email", "full_name", "major"], "Only email, full_name and major can be provided.");
+  rejectUnknownKeys(
+    input,
+    ["email", "full_name", "major", "department"],
+    "Only email, full_name, major and department can be provided.",
+  );
+  const department = input.department;
+  if (
+    department !== undefined &&
+    (typeof department !== "string" || !DEPARTMENT_CODES.includes(department as DepartmentCodeName))
+  ) {
+    invalid("department must be TECH, MARCOM or HR.");
+  }
   return {
     email: emailInput(input.email),
     full_name: fullNameInput(input.full_name),
     major: input.major === undefined ? null : majorInput(input.major),
+    ...(department === undefined ? {} : { department: department as DepartmentCodeName }),
   };
 }
 

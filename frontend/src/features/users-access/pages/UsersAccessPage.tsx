@@ -4,7 +4,8 @@ import { useEffect, useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Button } from "@/shared/components/Button";
 import { SelectBox } from "@/shared/components/Field";
-import { updateUserAccess } from "@/features/users-access/actions";
+import { ACTIVE_DEPARTMENTS, DEPARTMENT_LABELS } from "@/config/departments";
+import { deleteUser, updateUserAccess } from "@/features/users-access/actions";
 import { UsersTable } from "@/features/users-access/components/UsersTable";
 import type {
   AccessChange,
@@ -19,6 +20,11 @@ const ROLE_OPTIONS = [
   { value: "DEPT_ADMIN", label: "Dept admins" },
   { value: "MEMBER", label: "Members" },
 ] as const;
+
+const DEPARTMENT_OPTIONS = [
+  { value: "all", label: "All departments" },
+  ...ACTIVE_DEPARTMENTS.map((code) => ({ value: code, label: DEPARTMENT_LABELS[code] })),
+];
 
 const STATUS_OPTIONS = [
   { value: "all", label: "All statuses" },
@@ -42,6 +48,7 @@ export function UsersAccessPage({
   const [search, setSearch] = useState(filters.search);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState<string>();
   const [, startChange] = useTransition();
 
@@ -51,6 +58,7 @@ export function UsersAccessPage({
     if (merged.search) params.set("q", merged.search);
     if (merged.role !== "all") params.set("role", merged.role);
     if (merged.status !== "all") params.set("status", merged.status);
+    if (merged.department !== "all") params.set("department", merged.department);
     if (merged.page > 1) params.set("page", String(merged.page));
     const query = params.toString();
     router.replace(query ? `${pathname}?${query}` : pathname);
@@ -78,14 +86,31 @@ export function UsersAccessPage({
 
   function toggleActive(user: AppUser) {
     if (user.isActive && confirmingId !== user.id) {
+      setDeletingId(null);
       setConfirmingId(user.id);
       return;
     }
     change(user, { isActive: !user.isActive });
   }
 
+  function remove(user: AppUser) {
+    if (deletingId !== user.id) {
+      setConfirmingId(null);
+      setDeletingId(user.id);
+      return;
+    }
+    setError(undefined);
+    setDeletingId(null);
+    setBusyId(user.id);
+    startChange(async () => {
+      const result = await deleteUser(user.id);
+      if (!result.ok) setError(result.message);
+      setBusyId(null);
+    });
+  }
+
   const pageCount = Math.max(1, Math.ceil(list.total / list.size));
-  const hasFilters = filters.search || filters.role !== "all" || filters.status !== "all";
+  const hasFilters = filters.search || filters.role !== "all" || filters.status !== "all" || filters.department !== "all";
 
   return (
     <div className="flex flex-col gap-[22px]">
@@ -137,6 +162,13 @@ export function UsersAccessPage({
           className="h-11 w-full sm:w-[150px]"
         />
         <SelectBox
+          label="Filter by department"
+          value={filters.department}
+          onChange={(value) => navigate({ department: value as UserFilters["department"] })}
+          options={DEPARTMENT_OPTIONS}
+          className="h-11 w-full sm:w-[170px]"
+        />
+        <SelectBox
           label="Filter by status"
           value={filters.status}
           onChange={(value) => navigate({ status: value as UserFilters["status"] })}
@@ -161,7 +193,12 @@ export function UsersAccessPage({
           confirmingId={confirmingId}
           onRoleChange={(user, access) => change(user, access)}
           onToggleActive={toggleActive}
-          onCancelConfirm={() => setConfirmingId(null)}
+          deletingId={deletingId}
+          onDelete={remove}
+          onCancelConfirm={() => {
+            setConfirmingId(null);
+            setDeletingId(null);
+          }}
         />
       )}
 

@@ -14,5 +14,6 @@ export function createUserAdminRouter(service: UsersService) {
   router.use(adminOnly);
   router.get("/", controller.list);
   router.patch("/:userId", controller.updateAccess);
+  router.delete("/:userId", controller.remove);
   return router;
 }

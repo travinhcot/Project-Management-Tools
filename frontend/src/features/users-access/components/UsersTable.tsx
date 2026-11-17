@@ -6,7 +6,10 @@ import {
   DEPARTMENT_LABELS,
   type DepartmentCode,
 } from "@/config/departments";
-import type { AccessChange, AppUser } from "@/features/users-access/models/user";
+import type {
+  AccessChange,
+  AppUser,
+} from "@/features/users-access/models/user";
 
 /** One dropdown value per access level: super-admin, one admin per department, member. */
 type AccessLevel = "ADMIN" | "MEMBER" | `DEPT_ADMIN:${DepartmentCode}`;
@@ -29,7 +32,10 @@ function levelOf(user: AppUser): AccessLevel {
 
 function changeFor(level: AccessLevel): AccessChange {
   if (level.startsWith("DEPT_ADMIN:")) {
-    return { role: "DEPT_ADMIN", departmentCode: level.split(":")[1] as DepartmentCode };
+    return {
+      role: "DEPT_ADMIN",
+      departmentCode: level.split(":")[1] as DepartmentCode,
+    };
   }
   return { role: level as "ADMIN" | "MEMBER" };
 }
@@ -51,6 +57,8 @@ export function UsersTable({
   confirmingId,
   onRoleChange,
   onToggleActive,
+  deletingId,
+  onDelete,
   onCancelConfirm,
 }: {
   users: AppUser[];
@@ -62,6 +70,10 @@ export function UsersTable({
   onRoleChange: (user: AppUser, change: AccessChange) => void;
   /** Called to activate, to start a deactivation, and to confirm one. */
   onToggleActive: (user: AppUser) => void;
+  /** User whose permanent delete is awaiting confirmation. */
+  deletingId: string | null;
+  /** Called to start a delete, and again to confirm it. */
+  onDelete: (user: AppUser) => void;
   onCancelConfirm: () => void;
 }) {
   return (
@@ -69,11 +81,21 @@ export function UsersTable({
       <table className="w-full min-w-[860px] border-collapse text-left">
         <thead>
           <tr className="text-[11px] font-bold text-muted">
-            <th scope="col" className="px-4 py-2.5 font-bold">USER</th>
-            <th scope="col" className="w-[190px] py-2.5 pr-3 font-bold">ACCESS</th>
-            <th scope="col" className="w-[130px] py-2.5 pr-3 font-bold">DEPARTMENT</th>
-            <th scope="col" className="w-[110px] py-2.5 pr-3 font-bold">STATUS</th>
-            <th scope="col" className="w-[130px] py-2.5 pr-3 font-bold">LAST SIGN-IN</th>
+            <th scope="col" className="px-4 py-2.5 font-bold">
+              USER
+            </th>
+            <th scope="col" className="w-[190px] py-2.5 pr-3 font-bold">
+              ACCESS
+            </th>
+            <th scope="col" className="w-[130px] py-2.5 pr-3 font-bold">
+              DEPARTMENT
+            </th>
+            <th scope="col" className="w-[110px] py-2.5 pr-3 font-bold">
+              STATUS
+            </th>
+            <th scope="col" className="w-[130px] py-2.5 pr-3 font-bold">
+              LAST SIGN-IN
+            </th>
             <th scope="col" className="w-[190px] py-2.5 pr-4 font-bold">
               <span className="sr-only">Actions</span>
             </th>
@@ -84,15 +106,24 @@ export function UsersTable({
             const isSelf = user.id === currentUserId;
             const busy = busyId === user.id;
             const confirming = confirmingId === user.id;
+            const deleting = deletingId === user.id;
+            // The backend refuses these too; admins must be demoted first.
+            const canDelete = !isSelf && user.role !== "ADMIN";
             return (
               <tr key={user.id} className="border-t border-line/60">
                 <th scope="row" className="px-4 py-3 text-left">
                   <span className="flex flex-col">
                     <span className="text-sm font-semibold text-ink">
                       {user.fullName}
-                      {isSelf && <span className="ml-2 text-xs font-medium text-muted">(you)</span>}
+                      {isSelf && (
+                        <span className="ml-2 text-xs font-medium text-muted">
+                          (you)
+                        </span>
+                      )}
                     </span>
-                    <span className="text-xs font-normal text-muted">{user.email}</span>
+                    <span className="text-xs font-normal text-muted">
+                      {user.email}
+                    </span>
                   </span>
                 </th>
                 <td className="py-3 pr-3">
@@ -100,8 +131,15 @@ export function UsersTable({
                     aria-label={`Role for ${user.fullName}`}
                     value={levelOf(user)}
                     disabled={busy || isSelf}
-                    title={isSelf ? "You cannot change your own role" : undefined}
-                    onChange={(event) => onRoleChange(user, changeFor(event.target.value as AccessLevel))}
+                    title={
+                      isSelf ? "You cannot change your own role" : undefined
+                    }
+                    onChange={(event) =>
+                      onRoleChange(
+                        user,
+                        changeFor(event.target.value as AccessLevel),
+                      )
+                    }
                     className="h-[30px] rounded-lg border border-line bg-surface px-2 text-[13px] text-ink disabled:opacity-60"
                   >
                     {ACCESS_LEVELS.map((level) => (
@@ -114,7 +152,9 @@ export function UsersTable({
                 <td className="py-3 pr-3">
                   {user.role === "ADMIN" || user.role === "DEPT_ADMIN" ? (
                     <span className="text-[13px] text-muted">
-                      {user.departmentCode ? DEPARTMENT_LABELS[user.departmentCode] : "All departments"}
+                      {user.departmentCode
+                        ? DEPARTMENT_LABELS[user.departmentCode]
+                        : "All departments"}
                     </span>
                   ) : (
                     <select
@@ -122,7 +162,9 @@ export function UsersTable({
                       value={user.departmentCode ?? ""}
                       disabled={busy || isSelf}
                       onChange={(event) =>
-                        onRoleChange(user, { departmentCode: event.target.value as DepartmentCode })
+                        onRoleChange(user, {
+                          departmentCode: event.target.value as DepartmentCode,
+                        })
                       }
                       className="h-[30px] rounded-lg border border-line bg-surface px-2 text-[13px] text-ink disabled:opacity-60"
                     >
@@ -139,44 +181,90 @@ export function UsersTable({
                     {user.isActive ? "Active" : "Inactive"}
                   </Pill>
                 </td>
-                <td className="py-3 pr-3 text-[13px] text-ink">{formatSignIn(user.lastSignInAt)}</td>
+                <td className="py-3 pr-3 text-[13px] text-ink">
+                  {formatSignIn(user.lastSignInAt)}
+                </td>
                 <td className="py-3 pr-4">
-                  {confirming ? (
+                  {deleting ? (
                     <div className="flex items-center gap-2">
                       <Button
                         variant="danger"
                         size="sm"
                         disabled={busy}
-                        onClick={() => onToggleActive(user)}
-                        aria-label={`Confirm deactivating ${user.fullName}`}
+                        onClick={() => onDelete(user)}
+                        aria-label={`Confirm permanently deleting ${user.fullName}`}
                       >
-                        Confirm
+                        Delete permanently
                       </Button>
-                      <Button variant="outline" size="sm" disabled={busy} onClick={onCancelConfirm}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={busy}
+                        onClick={onCancelConfirm}
+                      >
                         Cancel
                       </Button>
                     </div>
-                  ) : user.isActive ? (
-                    <Button
-                      variant="danger-outline"
-                      size="sm"
-                      disabled={busy || isSelf}
-                      title={isSelf ? "You cannot deactivate your own account" : undefined}
-                      onClick={() => onToggleActive(user)}
-                      aria-label={`Deactivate ${user.fullName}`}
-                    >
-                      Deactivate
-                    </Button>
                   ) : (
-                    <Button
-                      variant="link"
-                      size="sm"
-                      disabled={busy}
-                      onClick={() => onToggleActive(user)}
-                      aria-label={`Activate ${user.fullName}`}
-                    >
-                      Activate
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {confirming ? (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="danger"
+                            size="sm"
+                            disabled={busy}
+                            onClick={() => onToggleActive(user)}
+                            aria-label={`Confirm deactivating ${user.fullName}`}
+                          >
+                            Confirm
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            disabled={busy}
+                            onClick={onCancelConfirm}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      ) : user.isActive ? (
+                        <Button
+                          variant="danger-outline"
+                          size="sm"
+                          disabled={busy || isSelf}
+                          title={
+                            isSelf
+                              ? "You cannot deactivate your own account"
+                              : undefined
+                          }
+                          onClick={() => onToggleActive(user)}
+                          aria-label={`Deactivate ${user.fullName}`}
+                        >
+                          Deactivate
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="link"
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => onToggleActive(user)}
+                          aria-label={`Activate ${user.fullName}`}
+                        >
+                          Activate
+                        </Button>
+                      )}
+                      {canDelete && !confirming && (
+                        <Button
+                          variant="danger-outline"
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => onDelete(user)}
+                          aria-label={`Delete ${user.fullName}`}
+                        >
+                          Delete
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </td>
               </tr>

@@ -15,7 +15,21 @@ function view(member: RosterMember): RosterMemberView {
   return { ...member, linked: member.user_id !== null };
 }
 
-export function createRosterMemberService(repository: RosterMemberRepository) {
+/** Outcome of creating the login account for a manually added member. */
+export interface AccountResult {
+  readonly status: "linked" | "would" | "skipped" | "failed";
+  readonly detail: string;
+}
+
+/** What members needs from roster provisioning (wired in server.ts). Must not throw. */
+export interface AccountProvisioner {
+  provisionRosterMember(rosterMemberId: string): Promise<AccountResult | null>;
+}
+
+export function createRosterMemberService(
+  repository: RosterMemberRepository,
+  provisioner?: AccountProvisioner,
+) {
   return {
     async list(query: RosterListQuery): Promise<Page<RosterMemberView>> {
       try {
@@ -36,14 +50,23 @@ export function createRosterMemberService(repository: RosterMemberRepository) {
       semesterId: string,
       member: RosterMemberCreate,
       requestId: string,
-    ): Promise<RosterMemberView> {
+    ): Promise<{ member: RosterMemberView; account: AccountResult | null }> {
+      let added: RosterMember;
       try {
-        return view(
-          await repository.add({ actorId, semesterId, member, requestId }),
-        );
+        added = await repository.add({ actorId, semesterId, member, requestId });
       } catch (error) {
         throw memberError(error);
       }
+      // Same as CSV import: give the person an account so they show up in User & Access.
+      const account =
+        added.user_id === null && provisioner
+          ? await provisioner.provisionRosterMember(added.id)
+          : null;
+      const shown = view(added);
+      return {
+        member: { ...shown, linked: shown.linked || account?.status === "linked" },
+        account: account && { status: account.status, detail: account.detail },
+      };
     },
 
     async update(

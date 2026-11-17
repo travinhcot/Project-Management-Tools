@@ -19,12 +19,15 @@ export function MembersPage({
   filters,
   semesters,
   canImport,
+  canChooseDepartment,
 }: {
   list: MemberListPage;
   filters: MemberFilters;
   semesters: SemesterOption[];
   /** Only the super-admin imports a roster CSV. */
   canImport: boolean;
+  /** ADMIN picks the department on manual add; a department admin adds to their own. */
+  canChooseDepartment: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -159,6 +162,7 @@ export function MembersPage({
       {semester && adding && (
         <AddMemberDrawer
           semester={semester}
+          canChooseDepartment={canChooseDepartment}
           onClose={() => setAdding(false)}
           onAdded={() => {
             setAdding(false);

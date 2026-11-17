@@ -33,5 +33,14 @@ export function createUserAdminController(service: UsersService) {
       );
       res.json({ user });
     },
+    async remove(req: Request<{ userId: string }>, res: Response<unknown, ActorLocals>) {
+      const actor = requireActor(res.locals);
+      const result = await service.deleteUser(
+        actor.userId,
+        userIdParam(req.params.userId),
+        randomUUID(),
+      );
+      res.json({ deleted: true, auth_user_removed: result.authUserRemoved });
+    },
   };
 }

@@ -72,6 +72,17 @@ export function createRosterProvisionService(
     provisionMembers,
     unlinkedForSemester: (semesterId: string) => repository.listUnlinked(semesterId),
 
+    /** After a manual add: never throws, so a saved roster entry is never reported as failed. */
+    async provisionRosterMember(rosterMemberId: string): Promise<ProvisionResult | null> {
+      try {
+        const candidate = await repository.candidate(rosterMemberId);
+        return candidate ? ((await provisionMembers([candidate]))[0] ?? null) : null;
+      } catch (error) {
+        console.error("Roster member provisioning failed:", reasonOf(error));
+        return { email: "", full_name: "", status: "failed", detail: reasonOf(error) };
+      }
+    },
+
     /** After an import commit: never throws, so a committed import is never reported as failed. */
     async provisionImport(
       importId: string,

@@ -84,7 +84,8 @@ export function createRosterMemberRepository(client: SupabaseClient) {
         p_email: input.member.email,
         p_full_name: input.member.full_name,
         p_other_info: {},
-        p_department: null,
+        // Department code text; the roster_members_sync_department trigger maps it to department_id.
+        p_department: input.member.department ?? null,
         p_birth_year: null,
         p_major: input.member.major,
         p_request_id: input.requestId,
