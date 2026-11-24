@@ -169,6 +169,20 @@ export async function uploadResourceFile(
   });
 }
 
+/** Signed links expire after a few minutes, so one is made per click. The backend scopes dept admins to their department. */
+export async function createResourceDownloadUrl(
+  id: string,
+  fileId: string,
+): Promise<ActionResult<{ url: string }>> {
+  return run(async () => {
+    const link = await backendFetch<{ url: string }>(
+      `/api/admin/projects/${encodeURIComponent(id)}/files/${encodeURIComponent(fileId)}/download-url`,
+      { method: "POST" },
+    );
+    return { url: link.url };
+  });
+}
+
 export async function getProjectMembers(
   id: string,
 ): Promise<ActionResult<{ members: ProjectMember[] }>> {
