@@ -50,7 +50,7 @@ interface ResourceDto {
   source_type: "LINK" | "FILE";
   url: string | null;
   label: string | null;
-  file: { original_filename: string; size_bytes: number } | null;
+  file: { id: string; original_filename: string; size_bytes: number } | null;
 }
 
 export const toBackendType = (type: ProjectType) => type.toUpperCase() as ProjectDto["type"];
@@ -89,7 +89,12 @@ export function mapProject(dto: ProjectDto): Project {
 
 function toSource(dto: ResourceDto | undefined): ResourceSource | null {
   if (dto?.source_type === "FILE" && dto.file) {
-    return { kind: "file", filename: dto.file.original_filename, sizeBytes: dto.file.size_bytes };
+    return {
+      kind: "file",
+      fileId: dto.file.id,
+      filename: dto.file.original_filename,
+      sizeBytes: dto.file.size_bytes,
+    };
   }
   return dto?.url ? { kind: "link", url: dto.url, label: dto.label } : null;
 }

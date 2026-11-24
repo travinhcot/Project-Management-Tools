@@ -4,6 +4,7 @@ import { useRef, useState, type DragEvent, type FormEvent } from "react";
 import { Button } from "@/shared/components/Button";
 import { Drawer } from "@/shared/components/Drawer";
 import { Field } from "@/shared/components/Field";
+import { createResourceDownloadUrl } from "@/features/projects/actions";
 import { ResourceLinkFields } from "@/features/projects/components/drawers/ResourceLinkFields";
 import {
   FILE_EXTENSIONS,
@@ -97,7 +98,7 @@ export function ResourceFileDrawer({
   error,
 }: {
   slot: FileSlotName;
-  project: Pick<Project, "name">;
+  project: Pick<Project, "id" | "name">;
   /** The resource as it is on the backend right now. */
   current: ResourceSource | null;
   semester: SemesterSummary;
@@ -123,7 +124,24 @@ export function ResourceFileDrawer({
     current?.kind === "link" ? (current.label ?? "") : "",
   );
   const [errors, setErrors] = useState<{ url?: string; label?: string }>({});
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string>();
   const inputRef = useRef<HTMLInputElement>(null);
+
+  async function download() {
+    if (current?.kind !== "file") return;
+    setDownloading(true);
+    setDownloadError(undefined);
+    try {
+      const result = await createResourceDownloadUrl(project.id, current.fileId);
+      if (result.ok) window.location.assign(result.url);
+      else setDownloadError("This file is not available right now. Try again later.");
+    } catch {
+      setDownloadError("The download could not be started. Try again.");
+    } finally {
+      setDownloading(false);
+    }
+  }
   const accept = FILE_EXTENSIONS[slot].map((ext) => `.${ext}`).join(",");
 
   function pick(next: File | undefined) {
@@ -174,6 +192,28 @@ export function ResourceFileDrawer({
           <span className="text-xs text-muted">
             Saving a new {copy.noun} replaces this one.
           </span>
+          {current.kind === "file" && (
+            <div className="mt-1.5 flex flex-col items-start gap-1">
+              <Button variant="outline" size="sm" onClick={download} disabled={downloading}>
+                {downloading ? "Preparing…" : `Download ${copy.noun}`}
+              </Button>
+              {downloadError && (
+                <span role="alert" className="text-[11px] text-danger-text">
+                  {downloadError}
+                </span>
+              )}
+            </div>
+          )}
+          {current.kind === "link" && (
+            <a
+              href={current.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1.5 text-xs font-semibold text-accent hover:underline"
+            >
+              Open link →
+            </a>
+          )}
         </div>
       )}
 

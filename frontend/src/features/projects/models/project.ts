@@ -42,7 +42,7 @@ export type LinkSlotName = "FIRST_MEETING" | "BOM" | "GITHUB_REPO" | "DEMO_GUIDE
 
 /** A resource is either an uploaded file or an external https link. */
 export type ResourceSource =
-  | { kind: "file"; filename: string; sizeBytes: number }
+  | { kind: "file"; fileId: string; filename: string; sizeBytes: number }
   | { kind: "link"; url: string; label: string | null };
 
 /**
